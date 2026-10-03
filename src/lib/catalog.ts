@@ -154,10 +154,10 @@ export const findLlm = (id: string) => LLM_MODELS.find((m) => m.id === id);
 export const findTts = (id: string) => TTS_MODELS.find((m) => m.id === id);
 
 export type Usage = {
-  audioSeconds?: number;
-  inputTokens?: number;
-  outputTokens?: number;
-  ttsChars?: number;
+  audioSeconds?: number | undefined;
+  inputTokens?: number | undefined;
+  outputTokens?: number | undefined;
+  ttsChars?: number | undefined;
 };
 
 export type CostBreakdown = { stt: number; llm: number; tts: number; total: number };
