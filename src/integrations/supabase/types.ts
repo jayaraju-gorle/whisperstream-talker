@@ -14,7 +14,77 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      conversations: {
+        Row: {
+          agents: Json
+          compare: boolean
+          created_at: string
+          id: string
+          mode: string
+          title: string
+          user_id: string
+        }
+        Insert: {
+          agents?: Json
+          compare?: boolean
+          created_at?: string
+          id?: string
+          mode?: string
+          title?: string
+          user_id: string
+        }
+        Update: {
+          agents?: Json
+          compare?: boolean
+          created_at?: string
+          id?: string
+          mode?: string
+          title?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      turns: {
+        Row: {
+          agent: string
+          assistant_text: string
+          conversation_id: string
+          created_at: string
+          id: string
+          metrics: Json
+          user_id: string
+          user_text: string
+        }
+        Insert: {
+          agent?: string
+          assistant_text?: string
+          conversation_id: string
+          created_at?: string
+          id?: string
+          metrics?: Json
+          user_id: string
+          user_text?: string
+        }
+        Update: {
+          agent?: string
+          assistant_text?: string
+          conversation_id?: string
+          created_at?: string
+          id?: string
+          metrics?: Json
+          user_id?: string
+          user_text?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "turns_conversation_id_fkey"
+            columns: ["conversation_id"]
+            isOneToOne: false
+            referencedRelation: "conversations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
