@@ -10,12 +10,19 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as ApiLlmRouteImport } from './routes/api/llm'
 import { Route as ApiProvidersRouteImport } from './routes/api/providers'
 import { Route as ApiSttRouteImport } from './routes/api/stt'
+import { Route as ApiTtsRouteImport } from './routes/api/tts'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiLlmRoute = ApiLlmRouteImport.update({
+  id: '/api/llm',
+  path: '/api/llm',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiProvidersRoute = ApiProvidersRouteImport.update({
@@ -28,35 +35,48 @@ const ApiSttRoute = ApiSttRouteImport.update({
   path: '/api/stt',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiTtsRoute = ApiTtsRouteImport.update({
+  id: '/api/tts',
+  path: '/api/tts',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/api/llm': typeof ApiLlmRoute
   '/api/providers': typeof ApiProvidersRoute
   '/api/stt': typeof ApiSttRoute
+  '/api/tts': typeof ApiTtsRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/api/llm': typeof ApiLlmRoute
   '/api/providers': typeof ApiProvidersRoute
   '/api/stt': typeof ApiSttRoute
+  '/api/tts': typeof ApiTtsRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/api/llm': typeof ApiLlmRoute
   '/api/providers': typeof ApiProvidersRoute
   '/api/stt': typeof ApiSttRoute
+  '/api/tts': typeof ApiTtsRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/api/providers' | '/api/stt'
+  fullPaths: '/' | '/api/llm' | '/api/providers' | '/api/stt' | '/api/tts'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/api/providers' | '/api/stt'
-  id: '__root__' | '/' | '/api/providers' | '/api/stt'
+  to: '/' | '/api/llm' | '/api/providers' | '/api/stt' | '/api/tts'
+  id: '__root__' | '/' | '/api/llm' | '/api/providers' | '/api/stt' | '/api/tts'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  ApiLlmRoute: typeof ApiLlmRoute
   ApiProvidersRoute: typeof ApiProvidersRoute
   ApiSttRoute: typeof ApiSttRoute
+  ApiTtsRoute: typeof ApiTtsRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -66,6 +86,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/llm': {
+      id: '/api/llm'
+      path: '/api/llm'
+      fullPath: '/api/llm'
+      preLoaderRoute: typeof ApiLlmRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/providers': {
@@ -82,13 +109,22 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiSttRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/tts': {
+      id: '/api/tts'
+      path: '/api/tts'
+      fullPath: '/api/tts'
+      preLoaderRoute: typeof ApiTtsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  ApiLlmRoute: ApiLlmRoute,
   ApiProvidersRoute: ApiProvidersRoute,
   ApiSttRoute: ApiSttRoute,
+  ApiTtsRoute: ApiTtsRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
