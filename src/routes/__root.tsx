@@ -79,9 +79,9 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "Cascade Lab — Voice AI Playground" },
+      { title: "Conversational AI Flows Studio — Voice AI Playground" },
       { name: "description", content: "Compare speech-to-text, AI model and voice providers with live latency and cost metrics." },
-      { property: "og:title", content: "Cascade Lab — Voice AI Playground" },
+      { property: "og:title", content: "Conversational AI Flows Studio — Voice AI Playground" },
       { property: "og:description", content: "Compare speech-to-text, AI model and voice providers with live latency and cost metrics." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },

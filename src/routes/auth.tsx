@@ -13,9 +13,9 @@ export const Route = createFileRoute("/auth")({
   validateSearch: z.object({ next: z.string().optional() }),
   head: () => ({
     meta: [
-      { title: "Sign in — Cascade Lab" },
+      { title: "Sign in — Conversational AI Flows Studio" },
       { name: "description", content: "Sign in to save voice agent sessions, metrics and comparisons." },
-      { property: "og:title", content: "Sign in — Cascade Lab" },
+      { property: "og:title", content: "Sign in — Conversational AI Flows Studio" },
       { property: "og:description", content: "Sign in to save voice agent sessions, metrics and comparisons." },
     ],
   }),
@@ -76,7 +76,7 @@ function AuthPage() {
     <div className="flex min-h-screen items-center justify-center px-4">
       <div className="w-full max-w-sm rounded-lg border border-border bg-card p-6 shadow-2xl">
         <Link to="/" className="mb-6 flex items-center gap-2 font-semibold">
-          <AudioWaveform className="h-5 w-5 text-primary" /> Cascade Lab
+          <AudioWaveform className="h-5 w-5 text-primary" /> Conversational AI Flows Studio
         </Link>
         <h1 className="text-xl font-semibold">{mode === "in" ? "Sign in" : "Create account"}</h1>
         <p className="mt-1 text-sm text-muted-foreground">Your sessions and metrics are saved to your account.</p>

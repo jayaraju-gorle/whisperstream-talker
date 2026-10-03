@@ -4,13 +4,13 @@ import { ArrowRight, AudioWaveform, Columns2, Gauge, Mic, Shuffle } from "lucide
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "Cascade Lab — Test voice AI stacks side by side" },
+      { title: "Conversational AI Flows Studio — Test voice AI stacks side by side" },
       {
         name: "description",
         content:
           "Talk to AI voice agents, swap speech-to-text, AI model and voice providers, and compare latency and cost live.",
       },
-      { property: "og:title", content: "Cascade Lab — Test voice AI stacks side by side" },
+      { property: "og:title", content: "Conversational AI Flows Studio — Test voice AI stacks side by side" },
       {
         property: "og:description",
         content: "Swap speech, model and voice providers and compare voice-to-voice latency and cost in real time.",
@@ -33,7 +33,7 @@ function Index() {
     <div className="min-h-screen">
       <header className="mx-auto flex max-w-6xl items-center justify-between px-6 py-5">
         <div className="flex items-center gap-2 font-semibold">
-          <AudioWaveform className="h-5 w-5 text-primary" /> Cascade Lab
+          <AudioWaveform className="h-5 w-5 text-primary" /> Conversational AI Flows Studio
         </div>
         <Link to="/auth" className="text-sm text-muted-foreground hover:text-foreground">
           Sign in
