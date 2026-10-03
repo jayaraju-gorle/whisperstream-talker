@@ -6,9 +6,9 @@ import { formatUsd } from "@/lib/catalog";
 export const Route = createFileRoute("/_authenticated/history")({
   head: () => ({
     meta: [
-      { title: "History — Cascade Lab" },
+      { title: "History — Conversational AI Flows Studio" },
       { name: "description", content: "Past voice agent sessions with latency and cost per turn." },
-      { property: "og:title", content: "History — Cascade Lab" },
+      { property: "og:title", content: "History — Conversational AI Flows Studio" },
       { property: "og:description", content: "Past voice agent sessions with latency and cost per turn." },
     ],
   }),

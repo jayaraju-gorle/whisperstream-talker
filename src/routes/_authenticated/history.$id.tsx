@@ -9,9 +9,9 @@ import { Button } from "@/components/ui/button";
 export const Route = createFileRoute("/_authenticated/history/$id")({
   head: () => ({
     meta: [
-      { title: "Session — Cascade Lab" },
+      { title: "Session — Conversational AI Flows Studio" },
       { name: "description", content: "Transcript and per-turn metrics for a saved session." },
-      { property: "og:title", content: "Session — Cascade Lab" },
+      { property: "og:title", content: "Session — Conversational AI Flows Studio" },
       { property: "og:description", content: "Transcript and per-turn metrics for a saved session." },
     ],
   }),

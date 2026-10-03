@@ -17,9 +17,9 @@ import { cn } from "@/lib/utils";
 export const Route = createFileRoute("/_authenticated/playground")({
   head: () => ({
     meta: [
-      { title: "Playground — Cascade Lab" },
+      { title: "Playground — Conversational AI Flows Studio" },
       { name: "description", content: "Talk to voice agents and compare provider stacks with live latency and cost." },
-      { property: "og:title", content: "Playground — Cascade Lab" },
+      { property: "og:title", content: "Playground — Conversational AI Flows Studio" },
       { property: "og:description", content: "Talk to voice agents and compare provider stacks with live latency and cost." },
     ],
   }),
