@@ -45,7 +45,7 @@ export const Route = createFileRoute("/api/tts")({
                 isGemini
                   ? {
                       model: m.model,
-                      contents: [{ parts: [{ text }] }],
+                      contents: [{ role: "user", parts: [{ text }] }],
                       generationConfig: {
                         responseModalities: ["AUDIO"],
                         speechConfig: { voiceConfig: { prebuiltVoiceConfig: { voiceName: voice } } },
@@ -64,7 +64,7 @@ export const Route = createFileRoute("/api/tts")({
                   for await (const ev of readSse(body)) {
                     if (ev.type === "speech.audio.delta" && ev.audio) controller.enqueue(b64ToBytes(ev.audio));
                     else if (ev.type === "speech.audio.done") done = true;
-                    else if (ev.type === "error" || ev.error) {
+                    else if (ev.type === "error" || String(ev.type ?? "").endsWith("error") || ev.error) {
                       controller.error(new Error(ev.error?.message ?? "Speech failed"));
                       return;
                     }
