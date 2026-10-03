@@ -5,15 +5,15 @@ import { getAudioContext, PcmPlayer } from "./audio/engine";
 import { SentenceChunker } from "./sentence-chunker";
 
 export type TurnMetrics = {
-  sttMs?: number;
-  llmTtfbMs?: number;
-  llmTotalMs?: number;
-  ttsTtfbMs?: number;
-  v2vMs?: number; // end of user speech (or send) -> first agent audio
-  inputTokens?: number;
-  outputTokens?: number;
-  ttsChars?: number;
-  audioSeconds?: number;
+  sttMs?: number | undefined;
+  llmTtfbMs?: number | undefined;
+  llmTotalMs?: number | undefined;
+  ttsTtfbMs?: number | undefined;
+  v2vMs?: number | undefined; // end of user speech (or send) -> first agent audio
+  inputTokens?: number | undefined;
+  outputTokens?: number | undefined;
+  ttsChars?: number | undefined;
+  audioSeconds?: number | undefined;
   cost: CostBreakdown;
 };
 
@@ -64,7 +64,7 @@ export class AgentRunner {
   }
 
   async run(
-    input: { audio?: Blob; audioSeconds?: number; text?: string; startedAt: number; speak: boolean },
+    input: { audio?: Blob; audioSeconds?: number | undefined; text?: string; startedAt: number; speak: boolean },
     cb: TurnCallbacks,
   ): Promise<{ userText: string; reply: string; metrics: TurnMetrics } | null> {
     this.interrupt();
@@ -106,7 +106,7 @@ export class AgentRunner {
 
       // ---- LLM (streamed) ----
       cb.onStatus?.("thinking");
-      const system = SCENARIOS.find((s) => s.id === cfg.scenario)?.prompt ?? SCENARIOS[0].prompt;
+      const system = SCENARIOS.find((s) => s.id === cfg.scenario)?.prompt ?? SCENARIOS[0]!.prompt;
       const l0 = performance.now();
       const res = await fetch("/api/llm", {
         method: "POST",
@@ -147,7 +147,7 @@ export class AgentRunner {
             if (signal.aborted) return;
             continue;
           }
-          const r = await ttsJobs[playIndex++];
+          const r = (await ttsJobs[playIndex++])!;
           if (!r.ok || !r.body) throw new Error(await readError(r, "Speech failed"));
           const reader = r.body.getReader();
           for (;;) {
@@ -181,7 +181,7 @@ export class AgentRunner {
           const line = buf.slice(0, nl);
           buf = buf.slice(nl + 1);
           if (!line) continue;
-          const ev = JSON.parse(line) as { t: string; v?: string; in?: number; out?: number; error?: string };
+          const ev = JSON.parse(line) as { t: string; v?: string; in?: number | undefined; out?: number | undefined; error?: string };
           if (ev.t === "d" && ev.v) {
             if (m.llmTtfbMs == null) {
               m.llmTtfbMs = performance.now() - l0;

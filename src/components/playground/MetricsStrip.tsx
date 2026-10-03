@@ -13,7 +13,7 @@ function Cell({ k, v, strong }: { k: string; v: string; strong?: boolean }) {
   );
 }
 
-export function MetricsStrip({ m, voice }: { m?: TurnMetrics; voice: boolean }) {
+export function MetricsStrip({ m, voice }: { m?: TurnMetrics | undefined; voice: boolean }) {
   return (
     <div className="grid grid-cols-3 gap-px overflow-hidden rounded border border-border bg-border sm:grid-cols-6">
       <Cell k="STT" v={voice ? ms(m?.sttMs) : "—"} />

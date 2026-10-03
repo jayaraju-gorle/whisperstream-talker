@@ -171,7 +171,7 @@ export class MicCapture {
 
   private onFrame(frame: Float32Array) {
     let sum = 0;
-    for (let i = 0; i < frame.length; i++) sum += frame[i] * frame[i];
+    for (let i = 0; i < frame.length; i++) sum += frame[i]! * frame[i]!;
     const rms = Math.sqrt(sum / frame.length);
     if (this.paused) {
       this.cb.onLevel?.(rms, false);
@@ -226,7 +226,7 @@ function encodeWav(chunks: Float32Array[], inRate: number, outRate: number): Blo
     const start = Math.floor(i * ratio);
     const end = Math.min(total, Math.floor((i + 1) * ratio));
     let s = 0;
-    for (let j = start; j < end; j++) s += merged[j];
+    for (let j = start; j < end; j++) s += merged[j]!;
     const v = Math.max(-1, Math.min(1, s / Math.max(1, end - start)));
     pcm[i] = v < 0 ? v * 0x8000 : v * 0x7fff;
   }

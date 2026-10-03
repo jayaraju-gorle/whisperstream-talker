@@ -67,10 +67,10 @@ function Playground() {
   }, []);
 
   useEffect(() => {
-    configs.forEach((c, i) => (runners.current[i].config = c));
+    configs.forEach((c, i) => (runners.current[i]!.config = c));
   }, [configs]);
   useEffect(() => {
-    muted.forEach((m, i) => runners.current[i].player.setMuted(m));
+    muted.forEach((m, i) => runners.current[i]!.player.setMuted(m));
   }, [muted]);
   useEffect(() => {
     if (mic.current) mic.current.vad = { silenceMs, sensitivity };
@@ -104,7 +104,7 @@ function Playground() {
             setTurns((all) => all.map((list, j) => (j !== i ? list : list.map((t) => (t.id === turnId ? { ...t, ...p } : t)))));
           setTurns((all) => all.map((list, j) => (j !== i ? list : [...list, { id: turnId, user: input.text ?? "…", assistant: "", pending: true }])));
           try {
-            const r = await runners.current[i].run(input, {
+            const r = await runners.current[i]!.run(input, {
               onUserText: (t) => patch({ user: t }),
               onDelta: (t) => patch({ assistant: t }),
               onMetrics: (m) => patch({ metrics: m }),
@@ -121,10 +121,10 @@ function Playground() {
               await supabase.from("turns").insert({
                 conversation_id: cid,
                 user_id: user.id,
-                agent: LABELS[i],
+                agent: LABELS[i]!,
                 user_text: r.userText,
                 assistant_text: r.reply,
-                metrics: { ...r.metrics, config: runners.current[i].config },
+                metrics: JSON.parse(JSON.stringify({ ...r.metrics, config: runners.current[i]!.config })),
               });
             }
           } catch (e) {
@@ -156,7 +156,7 @@ function Playground() {
         },
         onUtterance: (wav, seconds, endedAt) => {
           const idxs = live.current.compare ? [0, 1] : [0];
-          if (!live.current.bargeIn && idxs.some((i) => runners.current[i].busy)) return;
+          if (!live.current.bargeIn && idxs.some((i) => runners.current[i]!.busy)) return;
           runTurn({ audio: wav, audioSeconds: seconds, startedAt: endedAt, speak: true });
         },
       },
@@ -214,11 +214,11 @@ function Playground() {
               <Switch checked={bargeIn} onCheckedChange={setBargeIn} /> Interrupt when I speak
             </label>
             <label className="flex w-48 items-center gap-2 text-xs text-muted-foreground">
-              Pause <Slider min={300} max={1500} step={50} value={[silenceMs]} onValueChange={([v]) => setSilenceMs(v)} />
+              Pause <Slider min={300} max={1500} step={50} value={[silenceMs]} onValueChange={([v]) => setSilenceMs(v ?? 700)} />
               <span className="w-12 font-mono">{silenceMs}ms</span>
             </label>
             <label className="flex w-44 items-center gap-2 text-xs text-muted-foreground">
-              Mic sensitivity <Slider min={0} max={1} step={0.05} value={[sensitivity]} onValueChange={([v]) => setSensitivity(v)} />
+              Mic sensitivity <Slider min={0} max={1} step={0.05} value={[sensitivity]} onValueChange={([v]) => setSensitivity(v ?? 0.5)} />
             </label>
           </>
         ) : (
@@ -236,14 +236,14 @@ function Playground() {
         {activeIdx.map((i) => (
           <AgentPanel
             key={i}
-            label={LABELS[i]}
-            config={configs[i]}
+            label={LABELS[i]!}
+            config={configs[i]!}
             onConfig={(c) => setConfigs((all) => all.map((x, j) => (j === i ? c : x)))}
             available={available}
-            turns={turns[i]}
-            status={status[i]}
+            turns={turns[i]!}
+            status={status[i]!}
             voice={mode === "voice"}
-            muted={muted[i]}
+            muted={muted[i]!}
             onMute={() => setMuted((m) => m.map((x, j) => (j === i ? !x : x)))}
             wide={!compare}
           />
