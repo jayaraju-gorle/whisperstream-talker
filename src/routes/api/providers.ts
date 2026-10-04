@@ -3,6 +3,7 @@ import { PROVIDERS, type ProviderId } from "@/lib/catalog";
 import { json, providerKey, verifyRequest } from "@/lib/server/auth.server";
 
 export const Route = createFileRoute("/api/providers")({
+  staticData: { sitemap: false },
   server: {
     handlers: {
       GET: async ({ request }) => {

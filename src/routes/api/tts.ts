@@ -22,6 +22,7 @@ function b64ToBytes(b64: string) {
 
 // Always streams raw PCM: 24 kHz, signed 16-bit little-endian, mono.
 export const Route = createFileRoute("/api/tts")({
+  staticData: { sitemap: false },
   server: {
     handlers: {
       POST: async ({ request }) => {

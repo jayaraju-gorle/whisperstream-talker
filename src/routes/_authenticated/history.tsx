@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { formatUsd } from "@/lib/catalog";
 
 export const Route = createFileRoute("/_authenticated/history")({
+  staticData: { sitemap: false },
   head: () => ({
     meta: [
       { title: "History — Conversational AI Flows Studio" },

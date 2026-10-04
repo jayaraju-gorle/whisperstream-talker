@@ -12,6 +12,7 @@ import {
 
 // Accepts multipart: file (audio/wav), sttId, language. Returns { text }.
 export const Route = createFileRoute("/api/stt")({
+  staticData: { sitemap: false },
   server: {
     handlers: {
       POST: async ({ request }) => {

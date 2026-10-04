@@ -3,6 +3,7 @@ import { ArrowRight, Columns2, Gauge, Mic, Shuffle } from "lucide-react";
 import { Logo } from "@/components/Logo";
 
 export const Route = createFileRoute("/")({
+  staticData: { sitemap: true },
   head: () => ({
     meta: [
       { title: "Conversational AI Flows Studio — Test voice AI stacks side by side" },

@@ -4,6 +4,7 @@ import { History, LogOut } from "lucide-react";
 import { Logo } from "@/components/Logo";
 
 export const Route = createFileRoute("/_authenticated")({
+  staticData: { sitemap: "exclude-subtree" },
   ssr: false,
   beforeLoad: async ({ location }) => {
     const { data } = await supabase.auth.getSession();
