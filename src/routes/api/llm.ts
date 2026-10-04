@@ -22,6 +22,7 @@ const Body = z.object({
 // Streams newline-delimited JSON events:
 // {"t":"d","v":"text delta"} | {"t":"u","in":n,"out":n} | {"t":"e","error":"..."}
 export const Route = createFileRoute("/api/llm")({
+  staticData: { sitemap: false },
   server: {
     handlers: {
       POST: async ({ request }) => {

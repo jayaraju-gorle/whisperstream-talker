@@ -1,5 +1,6 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
+import { useEffect } from "react";
 import { ArrowLeft, Trash2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { findLlm, findStt, findTts } from "@/lib/catalog";
@@ -7,12 +8,14 @@ import { TurnMetricLine } from "@/components/playground/MetricsStrip";
 import { Button } from "@/components/ui/button";
 
 export const Route = createFileRoute("/_authenticated/history/$id")({
+  staticData: { sitemap: false },
   head: () => ({
     meta: [
       { title: "Session — Conversational AI Flows Studio" },
       { name: "description", content: "Transcript and per-turn metrics for a saved session." },
       { property: "og:title", content: "Session — Conversational AI Flows Studio" },
       { property: "og:description", content: "Transcript and per-turn metrics for a saved session." },
+      { name: "robots", content: "noindex" },
     ],
   }),
   component: SessionPage,
@@ -32,6 +35,11 @@ function SessionPage() {
       return { conv: c.data, turns: t.data ?? [] };
     },
   });
+
+  const sessionTitle = data?.conv.title;
+  useEffect(() => {
+    if (sessionTitle) document.title = `${sessionTitle} — Session — Conversational AI Flows Studio`;
+  }, [sessionTitle]);
 
   if (!data) return <main className="p-8 text-muted-foreground">Loading…</main>;
   const agents = data.conv.compare ? ["A", "B"] : ["A"];

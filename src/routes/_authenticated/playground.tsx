@@ -15,6 +15,7 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/_authenticated/playground")({
+  staticData: { sitemap: false },
   head: () => ({
     meta: [
       { title: "Playground — Conversational AI Flows Studio" },
