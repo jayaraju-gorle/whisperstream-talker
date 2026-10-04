@@ -6,16 +6,16 @@ export const Route = createFileRoute("/")({
   staticData: { sitemap: true },
   head: () => ({
     meta: [
-      { title: "Conversational AI Flows Studio — Test voice AI stacks side by side" },
+      { title: "Conversational AI Flows Studio — Test voice and text AI stacks side by side" },
       {
         name: "description",
         content:
-          "Talk to AI voice agents, swap speech-to-text, AI model and voice providers, and compare latency and cost live.",
+          "Talk or type to AI agents, swap speech-to-text, AI model and voice providers, and compare latency and cost live — in voice and text modes.",
       },
-      { property: "og:title", content: "Conversational AI Flows Studio — Test voice AI stacks side by side" },
+      { property: "og:title", content: "Conversational AI Flows Studio — Test voice and text AI stacks side by side" },
       {
         property: "og:description",
-        content: "Swap speech, model and voice providers and compare voice-to-voice latency and cost in real time.",
+        content: "Swap speech, model and voice providers and compare latency and cost in real time — with both voice and text conversations.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
@@ -41,17 +41,18 @@ export const Route = createFileRoute("/")({
               name: "Conversational AI Flows Studio",
               url: "https://conversationalaistudio.online/",
               description:
-                "Browser-based voice AI test bench: swap speech-to-text, LLM and text-to-speech providers and compare voice-to-voice latency and cost per turn, side by side.",
+                "Browser-based voice and text AI test bench: swap speech-to-text, LLM and text-to-speech providers and compare latency and cost per turn, side by side, in live voice or plain text conversations.",
               applicationCategory: "DeveloperApplication",
               operatingSystem: "Any (web browser)",
               browserRequirements: "Requires a modern browser with microphone access",
               isPartOf: { "@id": "https://conversationalaistudio.online/#website" },
               featureList: [
                 "Live voice and text conversations with AI agents",
+                "Text-only mode for testing LLM stacks without speech providers",
                 "Swappable STT, LLM and TTS providers (OpenAI, Groq, Deepgram, ElevenLabs, Lovable AI)",
                 "Real-time latency metrics: time to first token, time to first audio, voice-to-voice",
                 "Estimated cost per turn and per session",
-                "Side-by-side comparison of two voice agent stacks",
+                "Side-by-side comparison of two agent stacks in voice or text",
                 "Saved session history",
               ],
               offers: { "@type": "Offer", price: "0", priceCurrency: "USD" },
