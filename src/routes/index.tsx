@@ -19,6 +19,46 @@ export const Route = createFileRoute("/")({
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
+      { property: "og:url", content: "https://conversationalaistudio.online/" },
+    ],
+    links: [{ rel: "canonical", href: "https://conversationalaistudio.online/" }],
+    scripts: [
+      {
+        type: "application/ld+json",
+        children: JSON.stringify({
+          "@context": "https://schema.org",
+          "@graph": [
+            {
+              "@type": "WebSite",
+              "@id": "https://conversationalaistudio.online/#website",
+              url: "https://conversationalaistudio.online/",
+              name: "Conversational AI Flows Studio",
+              inLanguage: "en",
+            },
+            {
+              "@type": "WebApplication",
+              "@id": "https://conversationalaistudio.online/#app",
+              name: "Conversational AI Flows Studio",
+              url: "https://conversationalaistudio.online/",
+              description:
+                "Browser-based voice AI test bench: swap speech-to-text, LLM and text-to-speech providers and compare voice-to-voice latency and cost per turn, side by side.",
+              applicationCategory: "DeveloperApplication",
+              operatingSystem: "Any (web browser)",
+              browserRequirements: "Requires a modern browser with microphone access",
+              isPartOf: { "@id": "https://conversationalaistudio.online/#website" },
+              featureList: [
+                "Live voice and text conversations with AI agents",
+                "Swappable STT, LLM and TTS providers (OpenAI, Groq, Deepgram, ElevenLabs, Lovable AI)",
+                "Real-time latency metrics: time to first token, time to first audio, voice-to-voice",
+                "Estimated cost per turn and per session",
+                "Side-by-side comparison of two voice agent stacks",
+                "Saved session history",
+              ],
+              offers: { "@type": "Offer", price: "0", priceCurrency: "USD" },
+            },
+          ],
+        }),
+      },
     ],
   }),
   component: Index,
