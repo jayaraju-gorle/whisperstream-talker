@@ -1,6 +1,7 @@
 import { createFileRoute, Link, Outlet, redirect, useNavigate } from "@tanstack/react-router";
 import { supabase } from "@/integrations/supabase/client";
-import { AudioWaveform, History, LogOut } from "lucide-react";
+import { History, LogOut } from "lucide-react";
+import { Logo } from "@/components/Logo";
 
 export const Route = createFileRoute("/_authenticated")({
   ssr: false,
@@ -19,7 +20,7 @@ function Layout() {
     <div className="flex min-h-screen flex-col">
       <header className="flex items-center gap-4 border-b border-border bg-background/80 px-4 py-2.5 backdrop-blur">
         <Link to="/playground" className="flex items-center gap-2 font-semibold tracking-tight">
-          <AudioWaveform className="h-5 w-5 text-primary" />
+          <Logo className="h-6 w-6" />
           Conversational AI Flows Studio
         </Link>
         <nav className="flex items-center gap-1 text-sm">

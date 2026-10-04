@@ -2,7 +2,7 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { z } from "zod";
 import { toast } from "sonner";
-import { AudioWaveform } from "lucide-react";
+import { Logo } from "@/components/Logo";
 import { supabase } from "@/integrations/supabase/client";
 import { lovable } from "@/integrations/lovable/index";
 import { Button } from "@/components/ui/button";
@@ -76,7 +76,7 @@ function AuthPage() {
     <div className="flex min-h-screen items-center justify-center px-4">
       <div className="w-full max-w-sm rounded-lg border border-border bg-card p-6 shadow-2xl">
         <Link to="/" className="mb-6 flex items-center gap-2 font-semibold">
-          <AudioWaveform className="h-5 w-5 text-primary" /> Conversational AI Flows Studio
+          <Logo className="h-7 w-7" /> Conversational AI Flows Studio
         </Link>
         <h1 className="text-xl font-semibold">{mode === "in" ? "Sign in" : "Create account"}</h1>
         <p className="mt-1 text-sm text-muted-foreground">Your sessions and metrics are saved to your account.</p>

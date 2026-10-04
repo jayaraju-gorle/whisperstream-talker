@@ -1,5 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { ArrowRight, AudioWaveform, Columns2, Gauge, Mic, Shuffle } from "lucide-react";
+import { ArrowRight, Columns2, Gauge, Mic, Shuffle } from "lucide-react";
+import { Logo } from "@/components/Logo";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -33,7 +34,7 @@ function Index() {
     <div className="min-h-screen">
       <header className="mx-auto flex max-w-6xl items-center justify-between px-6 py-5">
         <div className="flex items-center gap-2 font-semibold">
-          <AudioWaveform className="h-5 w-5 text-primary" /> Conversational AI Flows Studio
+          <Logo className="h-6 w-6" /> Conversational AI Flows Studio
         </div>
         <Link to="/auth" className="text-sm text-muted-foreground hover:text-foreground">
           Sign in
