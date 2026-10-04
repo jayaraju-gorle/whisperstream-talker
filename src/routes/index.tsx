@@ -6,16 +6,16 @@ export const Route = createFileRoute("/")({
   staticData: { sitemap: true },
   head: () => ({
     meta: [
-      { title: "Conversational AI Flows Studio — Test voice AI stacks side by side" },
+      { title: "Conversational AI Flows Studio — Test voice and text AI stacks side by side" },
       {
         name: "description",
         content:
-          "Talk to AI voice agents, swap speech-to-text, AI model and voice providers, and compare latency and cost live.",
+          "Talk or type to AI agents, swap speech-to-text, AI model and voice providers, and compare latency and cost live — in voice and text modes.",
       },
-      { property: "og:title", content: "Conversational AI Flows Studio — Test voice AI stacks side by side" },
+      { property: "og:title", content: "Conversational AI Flows Studio — Test voice and text AI stacks side by side" },
       {
         property: "og:description",
-        content: "Swap speech, model and voice providers and compare voice-to-voice latency and cost in real time.",
+        content: "Swap speech, model and voice providers and compare latency and cost in real time — with both voice and text conversations.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
@@ -41,17 +41,18 @@ export const Route = createFileRoute("/")({
               name: "Conversational AI Flows Studio",
               url: "https://conversationalaistudio.online/",
               description:
-                "Browser-based voice AI test bench: swap speech-to-text, LLM and text-to-speech providers and compare voice-to-voice latency and cost per turn, side by side.",
+                "Browser-based voice and text AI test bench: swap speech-to-text, LLM and text-to-speech providers and compare latency and cost per turn, side by side, in live voice or plain text conversations.",
               applicationCategory: "DeveloperApplication",
               operatingSystem: "Any (web browser)",
               browserRequirements: "Requires a modern browser with microphone access",
               isPartOf: { "@id": "https://conversationalaistudio.online/#website" },
               featureList: [
                 "Live voice and text conversations with AI agents",
+                "Text-only mode for testing LLM stacks without speech providers",
                 "Swappable STT, LLM and TTS providers (OpenAI, Groq, Deepgram, ElevenLabs, Lovable AI)",
                 "Real-time latency metrics: time to first token, time to first audio, voice-to-voice",
                 "Estimated cost per turn and per session",
-                "Side-by-side comparison of two voice agent stacks",
+                "Side-by-side comparison of two agent stacks in voice or text",
                 "Saved session history",
               ],
               offers: { "@type": "Offer", price: "0", priceCurrency: "USD" },
@@ -82,13 +83,13 @@ function Index() {
         </Link>
       </header>
       <main className="mx-auto max-w-6xl px-6 pb-24 pt-12">
-        <p className="font-mono text-xs uppercase tracking-[0.2em] text-primary">Voice agent test bench</p>
+        <p className="font-mono text-xs uppercase tracking-[0.2em] text-primary">Voice &amp; text agent test bench</p>
         <h1 className="mt-4 max-w-3xl text-5xl font-semibold leading-[1.05] tracking-tight md:text-6xl">
-          Hear the difference between voice AI stacks before you commit.
+          Hear — and read — the difference between AI stacks before you commit.
         </h1>
         <p className="mt-6 max-w-xl text-lg text-muted-foreground">
           Speak or type to an agent, swap the transcription, model and voice provider, and watch latency and cost tick
-          up on every turn. Run two stacks side by side.
+          up on every turn. Test in full voice or text-only mode, and run two stacks side by side.
         </p>
         <div className="mt-8 flex gap-3">
           <Link
@@ -117,10 +118,10 @@ function Index() {
 
         <div className="mt-16 grid gap-6 md:grid-cols-4">
           {[
-            { icon: Mic, t: "Live voice", d: "Your mic is captured in the browser, and the agent replies as it thinks, sentence by sentence." },
-            { icon: Shuffle, t: "Swap providers", d: "Lovable AI, OpenAI, Groq, Deepgram and ElevenLabs for each step." },
+            { icon: Mic, t: "Live voice & text", d: "Talk through your mic or just type — the agent replies as it thinks, sentence by sentence, spoken or written." },
+            { icon: Shuffle, t: "Swap providers", d: "Lovable AI, OpenAI, Groq, Deepgram and ElevenLabs for each step — or skip speech entirely in text mode." },
             { icon: Gauge, t: "Real metrics", d: "Time to first token, time to first audio, voice-to-voice latency and cost per step." },
-            { icon: Columns2, t: "Compare", d: "Speak once and two differently configured agents answer side by side." },
+            { icon: Columns2, t: "Compare", d: "One message, two differently configured agents answering side by side — in voice or text." },
           ].map(({ icon: Icon, t, d }) => (
             <div key={t} className="border-t border-border pt-4">
               <Icon className="h-5 w-5 text-primary" />
