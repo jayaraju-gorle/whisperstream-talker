@@ -133,7 +133,7 @@ export function LivePanel({
               </Select>
             </Field>
             <Field label="Knowledge">
-              <div><KnowledgePicker kbs={library.kbs} value={sessionKbs} onChange={setSessionKbs} disabled={active} /></div>
+              <div><KnowledgePicker kbs={library.kbs} value={sessionKbs} onChange={setSessionKbs} disabled={active} scenarioId={scenario} scenarios={library.scenarios} /></div>
             </Field>
             <Field label="Language">
               <Select value={language} disabled={active} onValueChange={setLanguage}>

@@ -4,19 +4,25 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
 import type { KnowledgeBase } from "@/lib/library";
+import { activeKbIds, type CustomScenario } from "@/lib/library";
 
 export function KnowledgePicker({
   kbs,
   value,
   onChange,
   disabled,
+  scenarioId,
+  scenarios = [],
 }: {
   kbs: KnowledgeBase[];
   value: string[];
   onChange: (ids: string[]) => void;
   disabled?: boolean;
+  scenarioId?: string;
+  scenarios?: CustomScenario[];
 }) {
-  const count = value.filter((id) => kbs.some((k) => k.id === id)).length;
+  const attached = scenarioId ? activeKbIds(scenarioId, scenarios, []) : [];
+  const count = [...new Set([...attached, ...value])].filter((id) => kbs.some((k) => k.id === id)).length;
   return (
     <Popover>
       <PopoverTrigger asChild>
@@ -34,10 +40,12 @@ export function KnowledgePicker({
             {kbs.map((k) => (
               <label key={k.id} className="flex cursor-pointer items-center gap-2 text-sm">
                 <Checkbox
-                  checked={value.includes(k.id)}
+                  checked={attached.includes(k.id) || value.includes(k.id)}
+                  disabled={attached.includes(k.id)}
                   onCheckedChange={(c) => onChange(c ? [...value, k.id] : value.filter((x) => x !== k.id))}
                 />
                 <span className="truncate">{k.name}</span>
+                {attached.includes(k.id) && <span className="ml-auto shrink-0 text-[10px] text-muted-foreground">Attached</span>}
               </label>
             ))}
           </div>
