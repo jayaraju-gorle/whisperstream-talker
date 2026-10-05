@@ -11,6 +11,8 @@ import {
 } from "@/lib/server/auth.server";
 
 // Accepts multipart: file (audio/wav), sttId, language. Returns { text }.
+const sarvamLang = (l: string | undefined) => (l ? `${l}-IN` : "unknown");
+
 export const Route = createFileRoute("/api/stt")({
   staticData: { sitemap: false },
   server: {
@@ -89,6 +91,23 @@ export const Route = createFileRoute("/api/stt")({
             if (!res.ok) return upstreamError(res, "Transcription");
             const j = (await res.json()) as any;
             return json({ text: (j?.results?.channels?.[0]?.alternatives?.[0]?.transcript ?? "").trim() });
+          }
+          if (m.provider === "sarvam") {
+            const key = providerKey("SARVAM_API_KEY");
+            if (!key) return json({ error: `${m.label} needs an API key` }, 400);
+            const fd = new FormData();
+            fd.append("file", new Blob([await file.arrayBuffer()], { type: "audio/wav" }), "speech.wav");
+            fd.append("model", m.model);
+            fd.append("language_code", sarvamLang(lang));
+            const res = await fetch("https://api.sarvam.ai/speech-to-text", {
+              method: "POST",
+              headers: { "api-subscription-key": key },
+              body: fd,
+              signal: request.signal,
+            });
+            if (!res.ok) return upstreamError(res, "Transcription");
+            const j = (await res.json()) as { transcript?: string };
+            return json({ text: (j.transcript ?? "").trim() });
           }
           return json({ error: "Unsupported provider" }, 400);
         } catch (e) {

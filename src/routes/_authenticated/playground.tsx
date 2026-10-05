@@ -1,9 +1,11 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
-import { Mic, MicOff, RotateCcw, Send, Square, Volume2, VolumeX } from "lucide-react";
+import { Mic, MicOff, Play, RotateCcw, Send, Square, Volume2, VolumeX } from "lucide-react";
+import { LivePanel } from "@/components/playground/LivePanel";
+import { useCurrency } from "@/hooks/use-currency";
 import { supabase } from "@/integrations/supabase/client";
-import { DEFAULT_AGENT_A, DEFAULT_AGENT_B, findLlm, findStt, findTts, formatUsd, type AgentConfig, type ProviderId } from "@/lib/catalog";
+import { DEFAULT_AGENT_A, DEFAULT_AGENT_B, findLlm, findStt, findTts, SCENARIOS, type AgentConfig, type ProviderId } from "@/lib/catalog";
 import { AgentRunner, type TurnMetrics } from "@/lib/pipeline";
 import { MicCapture } from "@/lib/audio/engine";
 import { AgentConfigForm } from "@/components/playground/AgentConfigForm";
@@ -33,7 +35,7 @@ const LABELS = ["A", "B"] as const;
 
 function Playground() {
   const { user } = Route.useRouteContext();
-  const [mode, setMode] = useState<"voice" | "text">("voice");
+  const [mode, setMode] = useState<"voice" | "text" | "live">("voice");
   const [compare, setCompare] = useState(false);
   const [configs, setConfigs] = useState<AgentConfig[]>([DEFAULT_AGENT_A, DEFAULT_AGENT_B]);
   const [turns, setTurns] = useState<Turn[][]>([[], []]);
@@ -48,6 +50,8 @@ function Playground() {
   const [sensitivity, setSensitivity] = useState(0.5);
   const [speakReplies, setSpeakReplies] = useState(true);
   const [draft, setDraft] = useState("");
+  const [simulating, setSimulating] = useState(false);
+  const simRef = useRef(false);
 
   const runners = useRef<AgentRunner[]>([new AgentRunner(DEFAULT_AGENT_A), new AgentRunner(DEFAULT_AGENT_B)]);
   const mic = useRef<MicCapture | null>(null);
@@ -186,7 +190,27 @@ function Playground() {
   }
 
   function stopAll() {
+    simRef.current = false;
     runners.current.forEach((r) => r.interrupt());
+  }
+
+  // Auto-play the scenario's sample caller lines through the active agent(s).
+  async function simulate() {
+    if (simRef.current) return stopAll();
+    const sample = SCENARIOS.find((x) => x.id === configs[0]!.scenario)?.sample ?? [];
+    if (!sample.length) return;
+    if (micOn) await toggleMic();
+    resetSession();
+    simRef.current = true;
+    setSimulating(true);
+    const speak = mode === "voice" ? true : speakReplies;
+    for (const line of sample) {
+      if (!simRef.current) break;
+      await runTurn({ text: line, startedAt: performance.now(), speak });
+      await new Promise((res) => setTimeout(res, 600));
+    }
+    simRef.current = false;
+    setSimulating(false);
   }
 
   const anyBusy = activeIdx.some((i) => status[i] !== "idle");
@@ -196,20 +220,22 @@ function Playground() {
       {/* Control rail */}
       <div className="flex flex-wrap items-center gap-x-6 gap-y-3 border-b border-border px-4 py-3">
         <div className="flex rounded-md border border-border p-0.5 text-sm">
-          {(["voice", "text"] as const).map((m) => (
+          {(["voice", "text", "live"] as const).map((m) => (
             <button
               key={m}
               onClick={() => setMode(m)}
               className={cn("rounded px-3 py-1 capitalize", mode === m ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground")}
             >
-              {m}
+              {m === "live" ? "Live S2S" : m}
             </button>
           ))}
         </div>
+        {mode !== "live" && (
         <label className="flex items-center gap-2 text-sm">
           <Switch checked={compare} onCheckedChange={(v) => { setCompare(v); resetSession(); }} /> Compare two agents
         </label>
-        {mode === "voice" ? (
+        )}
+        {mode === "live" ? null : mode === "voice" ? (
           <>
             <label className="flex items-center gap-2 text-sm">
               <Switch checked={bargeIn} onCheckedChange={setBargeIn} /> Interrupt when I speak
@@ -227,11 +253,19 @@ function Playground() {
             <Switch checked={speakReplies} onCheckedChange={setSpeakReplies} /> Speak replies
           </label>
         )}
-        <Button variant="ghost" size="sm" className="ml-auto" onClick={resetSession}>
+        {mode !== "live" && (
+          <Button variant={simulating ? "outline" : "secondary"} size="sm" className="ml-auto" onClick={simulate}
+            title="Auto-play the selected scenario's sample conversation">
+            {simulating ? <Square className="mr-1.5 h-3.5 w-3.5" /> : <Play className="mr-1.5 h-3.5 w-3.5" />}
+            {simulating ? "Stop simulation" : "Simulate scenario"}
+          </Button>
+        )}
+        <Button variant="ghost" size="sm" className={mode === "live" ? "ml-auto" : ""} onClick={resetSession}>
           <RotateCcw className="mr-1.5 h-3.5 w-3.5" /> New session
         </Button>
       </div>
 
+      {mode === "live" ? <LivePanel available={available} /> : (<>
       {/* Agents */}
       <div className={cn("grid flex-1 gap-px bg-border", compare ? "md:grid-cols-2" : "grid-cols-1")}>
         {activeIdx.map((i) => (
@@ -312,6 +346,7 @@ function Playground() {
           </form>
         )}
       </div>
+      </>)}
     </div>
   );
 }
@@ -329,6 +364,7 @@ function AgentPanel(props: {
   wide: boolean;
 }) {
   const { label, config, turns, status, voice } = props;
+  const { fmt: formatUsd } = useCurrency();
   const last = [...turns].reverse().find((t) => t.metrics)?.metrics;
   const done = turns.filter((t) => t.metrics && !t.pending);
   const total = done.reduce((s, t) => s + (t.metrics?.cost.total ?? 0), 0);

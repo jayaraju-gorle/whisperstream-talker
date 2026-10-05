@@ -1,4 +1,9 @@
 - [x] Hide the published-site Lovable badge.
 - [x] Add a no-cost guest demo and a close action on sign-in.
 - [x] Create account profiles and initialize them when users sign in.
-- [x] Verify guest navigation and protected live AI access.
+- [x] Verify guest navigation and protected live AI access.- [x] Scenario simulation (auto-play sample conversations)
+- [x] Multi-currency display with location default and saved preference
+- [x] Sarvam STT/LLM/TTS models (waiting on SARVAM_API_KEY)
+- [x] Built-in Live S2S calls
+- [ ] Gemini Live S2S — blocked: needs a Google AI key
+- [ ] OpenAI Realtime S2S — blocked: needs an OpenAI key

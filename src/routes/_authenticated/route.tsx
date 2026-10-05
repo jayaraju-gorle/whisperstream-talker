@@ -1,3 +1,4 @@
+import { CurrencySelect } from "@/components/CurrencySelect";
 import { createFileRoute, Link, Outlet, redirect, useNavigate } from "@tanstack/react-router";
 import { supabase } from "@/integrations/supabase/client";
 import { History, LogOut } from "lucide-react";
@@ -41,6 +42,7 @@ function Layout() {
           </Link>
         </nav>
         <div className="ml-auto flex items-center gap-3 text-xs text-muted-foreground">
+          <CurrencySelect />
           <span className="hidden font-mono sm:inline">{user.email}</span>
           <button
             onClick={async () => {
