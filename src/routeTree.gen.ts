@@ -15,6 +15,7 @@ import { Route as AuthRouteImport } from './routes/auth'
 import { Route as DemoRouteImport } from './routes/demo'
 import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as AuthenticatedHistoryRouteImport } from './routes/_authenticated/history'
+import { Route as AuthenticatedLibraryRouteImport } from './routes/_authenticated/library'
 import { Route as AuthenticatedPlaygroundRouteImport } from './routes/_authenticated/playground'
 import { Route as ApiLlmRouteImport } from './routes/api/llm'
 import { Route as ApiProvidersRouteImport } from './routes/api/providers'
@@ -50,6 +51,11 @@ const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
 const AuthenticatedHistoryRoute = AuthenticatedHistoryRouteImport.update({
   id: '/history',
   path: '/history',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedLibraryRoute = AuthenticatedLibraryRouteImport.update({
+  id: '/library',
+  path: '/library',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedPlaygroundRoute = AuthenticatedPlaygroundRouteImport.update({
@@ -94,6 +100,7 @@ export interface FileRoutesByFullPath {
   '/demo': typeof DemoRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/history': typeof AuthenticatedHistoryRouteWithChildren
+  '/library': typeof AuthenticatedLibraryRoute
   '/playground': typeof AuthenticatedPlaygroundRoute
   '/api/llm': typeof ApiLlmRoute
   '/api/providers': typeof ApiProvidersRoute
@@ -108,6 +115,7 @@ export interface FileRoutesByTo {
   '/demo': typeof DemoRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/history': typeof AuthenticatedHistoryRouteWithChildren
+  '/library': typeof AuthenticatedLibraryRoute
   '/playground': typeof AuthenticatedPlaygroundRoute
   '/api/llm': typeof ApiLlmRoute
   '/api/providers': typeof ApiProvidersRoute
@@ -124,6 +132,7 @@ export interface FileRoutesById {
   '/demo': typeof DemoRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/_authenticated/history': typeof AuthenticatedHistoryRouteWithChildren
+  '/_authenticated/library': typeof AuthenticatedLibraryRoute
   '/_authenticated/playground': typeof AuthenticatedPlaygroundRoute
   '/api/llm': typeof ApiLlmRoute
   '/api/providers': typeof ApiProvidersRoute
@@ -140,6 +149,7 @@ export interface FileRouteTypes {
     | '/demo'
     | '/sitemap.xml'
     | '/history'
+    | '/library'
     | '/playground'
     | '/api/llm'
     | '/api/providers'
@@ -154,6 +164,7 @@ export interface FileRouteTypes {
     | '/demo'
     | '/sitemap.xml'
     | '/history'
+    | '/library'
     | '/playground'
     | '/api/llm'
     | '/api/providers'
@@ -169,6 +180,7 @@ export interface FileRouteTypes {
     | '/demo'
     | '/sitemap.xml'
     | '/_authenticated/history'
+    | '/_authenticated/library'
     | '/_authenticated/playground'
     | '/api/llm'
     | '/api/providers'
@@ -233,6 +245,13 @@ declare module '@tanstack/react-router' {
       path: '/history'
       fullPath: '/history'
       preLoaderRoute: typeof AuthenticatedHistoryRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/library': {
+      id: '/_authenticated/library'
+      path: '/library'
+      fullPath: '/library'
+      preLoaderRoute: typeof AuthenticatedLibraryRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/playground': {
@@ -300,11 +319,13 @@ const AuthenticatedHistoryRouteWithChildren =
 
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedHistoryRoute: typeof AuthenticatedHistoryRouteWithChildren
+  AuthenticatedLibraryRoute: typeof AuthenticatedLibraryRoute
   AuthenticatedPlaygroundRoute: typeof AuthenticatedPlaygroundRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedHistoryRoute: AuthenticatedHistoryRouteWithChildren,
+  AuthenticatedLibraryRoute: AuthenticatedLibraryRoute,
   AuthenticatedPlaygroundRoute: AuthenticatedPlaygroundRoute,
 }
 
