@@ -5,6 +5,8 @@ import { BookOpen, FileUp, Play, Plus, Save, Trash2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useLibrary } from "@/hooks/use-library";
 import type { CustomScenario, KnowledgeBase } from "@/lib/library";
+import { activeKbIds } from "@/lib/library";
+import { SCENARIOS } from "@/lib/catalog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -84,13 +86,15 @@ function ScenarioEditor({ userId, items, kbs, refresh }: { userId: string; items
   const [lines, setLines] = useState("");
   const [kbIds, setKbIds] = useState<string[]>([]);
   const [saving, setSaving] = useState(false);
+  const builtin = SCENARIOS.find((x) => `builtin:${x.id}` === sel);
 
   useEffect(() => {
     const s = items.find((x) => x.id === sel);
-    setLabel(s?.label ?? "");
-    setPrompt(s?.prompt ?? "");
-    setLines(s?.sample.join("\n") ?? "");
-    setKbIds(s?.kb_ids ?? []);
+    const b = SCENARIOS.find((x) => `builtin:${x.id}` === sel);
+    setLabel(s?.label ?? b?.label ?? "");
+    setPrompt(s?.prompt ?? b?.prompt ?? "");
+    setLines(s?.sample.join("\n") ?? b?.sample.join("\n") ?? "");
+    setKbIds(s?.kb_ids ?? (b ? activeKbIds(b.id, items, []) : []));
   }, [sel, items]);
 
   async function save() {
@@ -124,21 +128,21 @@ function ScenarioEditor({ userId, items, kbs, refresh }: { userId: string; items
 
   return (
     <div className="mt-3 grid gap-5 md:grid-cols-[220px_1fr]">
-      <ListPane items={items} selected={sel} onSelect={setSel} onNew={() => setSel(null)} name={(s) => s.label} empty="No custom scenarios yet." />
+      <ListPane items={[...SCENARIOS.map((s) => ({ id: `builtin:${s.id}`, label: s.label })), ...items]} selected={sel} onSelect={setSel} onNew={() => setSel(null)} name={(s) => s.label} empty="No scenarios yet." />
       <div className="space-y-4 rounded-md border border-border p-4">
         <label className="block space-y-1">
           <Label>Name</Label>
-          <Input value={label} onChange={(e) => setLabel(e.target.value)} placeholder="e.g. Dental clinic reception" maxLength={120} />
+          <Input value={label} readOnly={!!builtin} onChange={(e) => setLabel(e.target.value)} placeholder="e.g. Dental clinic reception" maxLength={120} />
         </label>
         <label className="block space-y-1">
           <Label>Agent instructions</Label>
-          <Textarea rows={5} value={prompt} onChange={(e) => setPrompt(e.target.value)} maxLength={6000}
+          <Textarea rows={5} value={prompt} readOnly={!!builtin} onChange={(e) => setPrompt(e.target.value)} maxLength={6000}
             placeholder="You are the receptionist at Smile Dental. Help callers book, move or cancel appointments…" />
           <span className="text-[11px] text-muted-foreground">Short spoken-reply rules are added automatically.</span>
         </label>
         <label className="block space-y-1">
           <Label>Caller lines (one per line)</Label>
-          <Textarea rows={6} value={lines} onChange={(e) => setLines(e.target.value)} className="font-mono text-xs"
+          <Textarea rows={6} value={lines} readOnly={!!builtin} onChange={(e) => setLines(e.target.value)} className="font-mono text-xs"
             placeholder={"Hi, I'd like to book a cleaning.\nMy name is Priya.\nAny morning next week works."} />
           <span className="text-[11px] text-muted-foreground">The simulator plays these one at a time, waiting for each reply.</span>
         </label>
@@ -150,7 +154,7 @@ function ScenarioEditor({ userId, items, kbs, refresh }: { userId: string; items
             <div className="flex flex-wrap gap-x-5 gap-y-2">
               {kbs.map((k) => (
                 <label key={k.id} className="flex items-center gap-2 text-sm">
-                  <Checkbox checked={kbIds.includes(k.id)} onCheckedChange={(c) => setKbIds(c ? [...kbIds, k.id] : kbIds.filter((x) => x !== k.id))} />
+                  <Checkbox checked={kbIds.includes(k.id)} disabled={!!builtin} onCheckedChange={(c) => setKbIds(c ? [...kbIds, k.id] : kbIds.filter((x) => x !== k.id))} />
                   {k.name}
                 </label>
               ))}
@@ -158,13 +162,13 @@ function ScenarioEditor({ userId, items, kbs, refresh }: { userId: string; items
           )}
         </div>
         <div className="flex flex-wrap items-center gap-2 border-t border-border pt-4">
-          <Button size="sm" onClick={save} disabled={saving}><Save className="mr-1.5 h-3.5 w-3.5" /> {sel ? "Save changes" : "Create scenario"}</Button>
-          {sel && <Button size="sm" variant="ghost" onClick={remove}><Trash2 className="mr-1.5 h-3.5 w-3.5" /> Delete</Button>}
+          {!builtin && <Button size="sm" onClick={save} disabled={saving}><Save className="mr-1.5 h-3.5 w-3.5" /> {sel ? "Save changes" : "Create scenario"}</Button>}
+          {sel && !builtin && <Button size="sm" variant="ghost" onClick={remove}><Trash2 className="mr-1.5 h-3.5 w-3.5" /> Delete</Button>}
           <Button size="sm" variant="outline" asChild className="ml-auto">
             <Link to="/playground"><Play className="mr-1.5 h-3.5 w-3.5" /> Run in playground</Link>
           </Button>
         </div>
-        {sel && <p className="text-[11px] text-muted-foreground">In the playground, pick this under Scenario → "My scenarios", then press Simulate scenario.</p>}
+        {builtin ? <p className="text-[11px] text-muted-foreground">Built-in reference scenario · choose it in the playground to run it.</p> : sel && <p className="text-[11px] text-muted-foreground">In the playground, pick this under Scenario → "My scenarios", then press Simulate scenario.</p>}
       </div>
     </div>
   );
@@ -175,6 +179,7 @@ function KbEditor({ userId, items, refresh }: { userId: string; items: Knowledge
   const [name, setName] = useState("");
   const [content, setContent] = useState("");
   const [saving, setSaving] = useState(false);
+  const builtin = sel?.startsWith("builtin:") ?? false;
 
   useEffect(() => {
     const k = items.find((x) => x.id === sel);
@@ -218,25 +223,25 @@ function KbEditor({ userId, items, refresh }: { userId: string; items: Knowledge
       <div className="space-y-4 rounded-md border border-border p-4">
         <label className="block space-y-1">
           <Label>Name</Label>
-          <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="e.g. Clinic FAQ & prices" maxLength={120} />
+          <Input value={name} readOnly={builtin} onChange={(e) => setName(e.target.value)} placeholder="e.g. Clinic FAQ & prices" maxLength={120} />
         </label>
         <label className="block space-y-1">
           <div className="flex items-center justify-between">
             <Label>Content</Label>
             <span className="font-mono text-[10px] text-muted-foreground">{content.length.toLocaleString()} / 60,000</span>
           </div>
-          <Textarea rows={14} value={content} onChange={(e) => setContent(e.target.value)} maxLength={60000} className="font-mono text-xs"
+          <Textarea rows={14} value={content} readOnly={builtin} onChange={(e) => setContent(e.target.value)} maxLength={60000} className="font-mono text-xs"
             placeholder="Paste FAQs, prices, opening hours, policies…" />
         </label>
         <div className="flex flex-wrap items-center gap-2 border-t border-border pt-4">
-          <Button size="sm" onClick={save} disabled={saving}><Save className="mr-1.5 h-3.5 w-3.5" /> {sel ? "Save changes" : "Create"}</Button>
-          <Button size="sm" variant="outline" asChild>
+          {!builtin && <Button size="sm" onClick={save} disabled={saving}><Save className="mr-1.5 h-3.5 w-3.5" /> {sel ? "Save changes" : "Create"}</Button>}
+          {!builtin && <Button size="sm" variant="outline" asChild>
             <label className="cursor-pointer">
               <FileUp className="mr-1.5 h-3.5 w-3.5" /> Load text file
               <input type="file" accept=".txt,.md,.csv,.json,text/*" className="hidden" onChange={(e) => onFile(e.target.files?.[0])} />
             </label>
-          </Button>
-          {sel && <Button size="sm" variant="ghost" onClick={remove}><Trash2 className="mr-1.5 h-3.5 w-3.5" /> Delete</Button>}
+          </Button>}
+          {sel && !builtin && <Button size="sm" variant="ghost" onClick={remove}><Trash2 className="mr-1.5 h-3.5 w-3.5" /> Delete</Button>}
         </div>
         <p className="flex items-start gap-1.5 text-[11px] leading-relaxed text-muted-foreground">
           <BookOpen className="mt-0.5 h-3 w-3 shrink-0" />
