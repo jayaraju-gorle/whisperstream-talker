@@ -45,6 +45,9 @@ export class AgentRunner {
   history: Message[] = [];
   player = new PcmPlayer();
   private ctrl: AbortController | null = null;
+  /** Builds the system prompt (scenario + knowledge). Defaults to the built-in scenario prompt. */
+  systemFor: (cfg: AgentConfig) => string = (cfg) =>
+    SCENARIOS.find((s) => s.id === cfg.scenario)?.prompt ?? SCENARIOS[0]!.prompt;
 
   constructor(public config: AgentConfig) {}
 
@@ -106,7 +109,7 @@ export class AgentRunner {
 
       // ---- LLM (streamed) ----
       cb.onStatus?.("thinking");
-      const system = SCENARIOS.find((s) => s.id === cfg.scenario)?.prompt ?? SCENARIOS[0]!.prompt;
+      const system = this.systemFor(cfg);
       const l0 = performance.now();
       const res = await fetch("/api/llm", {
         method: "POST",

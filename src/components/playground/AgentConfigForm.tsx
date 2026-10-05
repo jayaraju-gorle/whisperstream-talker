@@ -15,6 +15,7 @@ type Props = {
   config: AgentConfig;
   onChange: (c: AgentConfig) => void;
   available: Partial<Record<ProviderId, boolean>>;
+  customScenarios?: { id: string; label: string }[];
 };
 
 function grouped<T extends { provider: ProviderId; id: string; label: string }>(items: T[]) {
@@ -66,7 +67,7 @@ function ModelSelect<T extends { provider: ProviderId; id: string; label: string
   );
 }
 
-export function AgentConfigForm({ config, onChange, available }: Props) {
+export function AgentConfigForm({ config, onChange, available, customScenarios = [] }: Props) {
   const tts = findTts(config.ttsId);
   return (
     <div className="grid grid-cols-2 gap-2.5">
@@ -95,9 +96,20 @@ export function AgentConfigForm({ config, onChange, available }: Props) {
         <Select value={config.scenario} onValueChange={(v) => onChange({ ...config, scenario: v })}>
           <SelectTrigger className="h-8 text-xs"><SelectValue /></SelectTrigger>
           <SelectContent>
-            {SCENARIOS.map((s) => (
-              <SelectItem key={s.id} value={s.id} className="text-xs">{s.label}</SelectItem>
-            ))}
+            <SelectGroup>
+              <SelectLabel className="text-[10px] uppercase tracking-wider">Built-in</SelectLabel>
+              {SCENARIOS.map((s) => (
+                <SelectItem key={s.id} value={s.id} className="text-xs">{s.label}</SelectItem>
+              ))}
+            </SelectGroup>
+            {customScenarios.length > 0 && (
+              <SelectGroup>
+                <SelectLabel className="text-[10px] uppercase tracking-wider">My scenarios</SelectLabel>
+                {customScenarios.map((s) => (
+                  <SelectItem key={s.id} value={`custom:${s.id}`} className="text-xs">{s.label}</SelectItem>
+                ))}
+              </SelectGroup>
+            )}
           </SelectContent>
         </Select>
       </label>

@@ -628,7 +628,9 @@ export function bindLiveConnection(
         }
         starting = true;
         const scenario = SCENARIOS.find((x) => x.id === event.scenario) ?? SCENARIOS[0]!;
-        config = { ...config, persona: scenario.prompt.replace(/Reply in the user's language\./, "") };
+        const persona =
+          typeof event.persona === "string" && event.persona.trim() ? event.persona.slice(0, 50000) : scenario.prompt;
+        config = { ...config, persona: persona.replace(/Reply in the user's language\./, "") };
         startOptions = {
           token: typeof event.token === "string" ? event.token : "",
           voice: LIVE_VOICES.includes(event.voice) ? event.voice : "marin",
