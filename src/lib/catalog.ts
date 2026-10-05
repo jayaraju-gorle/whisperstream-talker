@@ -140,57 +140,55 @@ export const LANGUAGES = [
   { id: "mr", label: "Marathi" },
 ];
 
-const VOICE_RULES =
-  "You are speaking out loud. Reply in one to three short, natural sentences. No markdown, lists, emoji or URLs. Reply in the user's language.";
-
+// Verbatim personas and caller lines from conversational-ai-playground/server/bot.py.
+// Legacy "generic" corresponds to the general scenario in this app.
 export type Scenario = { id: string; label: string; prompt: string; sample: string[] };
 
 export const SCENARIOS: Scenario[] = [
   {
     id: "general",
-    label: "General assistant",
-    prompt: `You are a friendly, helpful assistant. ${VOICE_RULES}`,
+    label: "General Assistant",
+    prompt: "You are a helpful business assistant for customer-facing sales and support conversations.",
     sample: [
-      "Hi! Can you suggest a quick dinner I can cook in 20 minutes?",
-      "I don't eat meat. Something with paneer or tofu?",
-      "Great, what do I need to buy for that?",
-      "Thanks, that's all!",
+      "Hi, who are you and what can you help me with?",
+      "What kind of businesses do you usually assist?",
+      "Alright, thanks. That's all for now.",
     ],
   },
   {
     id: "hospital",
-    label: "Hospital appointments",
-    prompt: `You are the front desk agent for City Care Hospital. Help callers book, move or cancel doctor appointments. Ask for name, department and preferred day one question at a time. Invent plausible open slots. ${VOICE_RULES}`,
+    label: "Hospital — Appointment Booking",
+    prompt: "You are the appointment booking assistant for Sunrise Multi-Speciality Hospital. Help callers book, reschedule, or cancel doctor appointments. Collect one detail at a time: the patient's name, the specialty or doctor they need (General Medicine, Cardiology, Orthopedics, Pediatrics, Dermatology, ENT), and their preferred date and time. Consultations are available Monday to Saturday, 9 AM to 1 PM and 5 PM to 8 PM. Resolve relative dates like 'this week' or 'tomorrow' to concrete dates yourself and state them — do not ask for exact calendar dates. This is a product demo, so simulate realistic slot availability — occasionally a requested slot is taken and you offer the nearest alternatives. If the caller says any nearby slot works or asks you to confirm, pick the best available slot yourself and confirm it — do not keep asking them to choose. Before confirming, read back the full booking details. Never give medical advice; for emergencies, tell the caller to visit the emergency department immediately.",
     sample: [
       "Hi, I'd like to book an appointment with a cardiologist.",
       "My name is Ravi Kumar.",
-      "Sometime this week, morning around 10 if possible, but any nearby slot works.",
+      "Sometime this week, morning around 10 if possible — but any nearby slot works for me.",
       "Yes, please book whichever slot is closest and confirm it.",
       "No, that's all. Thank you!",
     ],
   },
   {
     id: "bank",
-    label: "Bank support",
-    prompt: `You are a support agent for Northwind Bank. Help with card blocks, balance questions and disputes. Never ask for full card numbers or PINs. ${VOICE_RULES}`,
+    label: "Bank — Customer Support",
+    prompt: "You are a customer support agent for Horizon Bank. Help customers with blocking a lost or stolen card, checking account balance, recent transactions, branch locations and timings, and general product questions about savings accounts, fixed deposits, and credit cards. Before discussing any account-specific detail, verify identity by asking for the customer's registered name and the last four digits of their account number. This is a product demo, so simulate plausible account data after verification. Never ask for full card numbers, PINs, passwords, or OTPs — if a caller offers one, tell them never to share it. For a lost card, treat it as urgent: verify, confirm the card is blocked, and reassure the customer.",
     sample: [
-      "Hi, I think I lost my debit card. Can you block it?",
-      "My name is Anita Sharma and the last four digits of my account are 4821.",
-      "Yes, please block it right away.",
-      "Can I get a replacement card sent to my home address?",
-      "Great, thanks for the help.",
+      "Hi, I think I lost my debit card. I'm really worried.",
+      "My name is Priya Sharma, account ending 4321.",
+      "Yes, please block the card immediately.",
+      "How do I get a replacement card?",
+      "Thanks, that's very helpful. Bye.",
     ],
   },
   {
     id: "ecommerce",
-    label: "E-commerce orders",
-    prompt: `You are an order assistant for an online store. Help track orders, start returns and answer delivery questions. Ask for the order number when needed and invent plausible order statuses. ${VOICE_RULES}`,
+    label: "E-commerce — Order Support",
+    prompt: "You are the order support assistant for QuickKart, an online shopping platform. Help customers track orders, process returns and refunds, and answer questions about delivery times and payment issues. Ask for the order ID or the customer's registered phone number to look up an order. This is a product demo, so simulate plausible order details. Returns are accepted within 7 days of delivery; refunds take 3 to 5 business days. Be empathetic when a customer reports a problem, and summarize the resolution before ending.",
     sample: [
-      "Hi, where is my order? It hasn't arrived yet.",
-      "The order number is 50213.",
-      "Okay. If it's late, can I return it once it arrives?",
-      "How long will the refund take?",
-      "Alright, thank you!",
+      "Hi, my order hasn't arrived yet and it's been a week.",
+      "The order ID is QK12345.",
+      "It was supposed to arrive two days ago.",
+      "If it doesn't arrive by then, can I get a refund?",
+      "Okay, thank you for the help.",
     ],
   },
 ];
