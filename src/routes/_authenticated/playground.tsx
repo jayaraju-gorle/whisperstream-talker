@@ -3,9 +3,12 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import { Mic, MicOff, Play, RotateCcw, Send, Square, Volume2, VolumeX } from "lucide-react";
 import { LivePanel } from "@/components/playground/LivePanel";
+import { KnowledgePicker } from "@/components/playground/KnowledgePicker";
+import { useLibrary } from "@/hooks/use-library";
+import { buildSystemPrompt, scenarioSample } from "@/lib/library";
 import { useCurrency } from "@/hooks/use-currency";
 import { supabase } from "@/integrations/supabase/client";
-import { DEFAULT_AGENT_A, DEFAULT_AGENT_B, findLlm, findStt, findTts, SCENARIOS, type AgentConfig, type ProviderId } from "@/lib/catalog";
+import { DEFAULT_AGENT_A, DEFAULT_AGENT_B, findLlm, findStt, findTts, type AgentConfig, type ProviderId } from "@/lib/catalog";
 import { AgentRunner, type TurnMetrics } from "@/lib/pipeline";
 import { MicCapture } from "@/lib/audio/engine";
 import { AgentConfigForm } from "@/components/playground/AgentConfigForm";
@@ -52,6 +55,10 @@ function Playground() {
   const [draft, setDraft] = useState("");
   const [simulating, setSimulating] = useState(false);
   const simRef = useRef(false);
+  const library = useLibrary();
+  const [sessionKbs, setSessionKbs] = useState<string[]>([]);
+  const libRef = useRef({ library, sessionKbs });
+  libRef.current = { library, sessionKbs };
 
   const runners = useRef<AgentRunner[]>([new AgentRunner(DEFAULT_AGENT_A), new AgentRunner(DEFAULT_AGENT_B)]);
   const mic = useRef<MicCapture | null>(null);
@@ -71,6 +78,14 @@ function Playground() {
     };
   }, []);
 
+  useEffect(() => {
+    runners.current.forEach((r) => {
+      r.systemFor = (cfg) => {
+        const { library: l, sessionKbs: s } = libRef.current;
+        return buildSystemPrompt(cfg.scenario, l.scenarios, l.kbs, s);
+      };
+    });
+  }, []);
   useEffect(() => {
     configs.forEach((c, i) => (runners.current[i]!.config = c));
   }, [configs]);
@@ -197,8 +212,8 @@ function Playground() {
   // Auto-play the scenario's sample caller lines through the active agent(s).
   async function simulate() {
     if (simRef.current) return stopAll();
-    const sample = SCENARIOS.find((x) => x.id === configs[0]!.scenario)?.sample ?? [];
-    if (!sample.length) return;
+    const sample = scenarioSample(configs[0]!.scenario, library.scenarios);
+    if (!sample.length) return void toast.info("This scenario has no caller lines yet. Add some in the library.");
     if (micOn) await toggleMic();
     resetSession();
     simRef.current = true;
@@ -253,6 +268,7 @@ function Playground() {
             <Switch checked={speakReplies} onCheckedChange={setSpeakReplies} /> Speak replies
           </label>
         )}
+        {mode !== "live" && <KnowledgePicker kbs={library.kbs} value={sessionKbs} onChange={setSessionKbs} />}
         {mode !== "live" && (
           <Button variant={simulating ? "outline" : "secondary"} size="sm" className="ml-auto" onClick={simulate}
             title="Auto-play the selected scenario's sample conversation">
@@ -265,7 +281,7 @@ function Playground() {
         </Button>
       </div>
 
-      {mode === "live" ? <LivePanel available={available} /> : (<>
+      {mode === "live" ? <LivePanel available={available} library={library} /> : (<>
       {/* Agents */}
       <div className={cn("grid flex-1 gap-px bg-border", compare ? "md:grid-cols-2" : "grid-cols-1")}>
         {activeIdx.map((i) => (
@@ -275,6 +291,7 @@ function Playground() {
             config={configs[i]!}
             onConfig={(c) => setConfigs((all) => all.map((x, j) => (j === i ? c : x)))}
             available={available}
+            customScenarios={library.scenarios}
             turns={turns[i]!}
             status={status[i]!}
             voice={mode === "voice"}
@@ -356,6 +373,7 @@ function AgentPanel(props: {
   config: AgentConfig;
   onConfig: (c: AgentConfig) => void;
   available: Partial<Record<ProviderId, boolean>>;
+  customScenarios: { id: string; label: string }[];
   turns: Turn[];
   status: Status;
   voice: boolean;
@@ -389,7 +407,7 @@ function AgentPanel(props: {
               {props.muted ? <VolumeX className="h-4 w-4" /> : <Volume2 className="h-4 w-4" />}
             </button>
           </div>
-          <AgentConfigForm config={config} onChange={props.onConfig} available={props.available} />
+          <AgentConfigForm config={config} onChange={props.onConfig} available={props.available} customScenarios={props.customScenarios} />
         </div>
         <div className="space-y-2 self-end">
           <div className="flex items-center justify-between font-mono text-[11px] text-muted-foreground">

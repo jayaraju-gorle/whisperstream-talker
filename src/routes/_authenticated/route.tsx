@@ -1,7 +1,7 @@
 import { CurrencySelect } from "@/components/CurrencySelect";
 import { createFileRoute, Link, Outlet, redirect, useNavigate } from "@tanstack/react-router";
 import { supabase } from "@/integrations/supabase/client";
-import { History, LogOut } from "lucide-react";
+import { BookOpen, History, LogOut } from "lucide-react";
 import { Logo } from "@/components/Logo";
 
 export const Route = createFileRoute("/_authenticated")({
@@ -39,6 +39,13 @@ function Layout() {
             activeProps={{ className: "flex items-center gap-1.5 rounded px-2.5 py-1 bg-secondary text-foreground" }}
           >
             <History className="h-3.5 w-3.5" /> History
+          </Link>
+          <Link
+            to="/library"
+            className="flex items-center gap-1.5 rounded px-2.5 py-1 text-muted-foreground hover:text-foreground"
+            activeProps={{ className: "flex items-center gap-1.5 rounded px-2.5 py-1 bg-secondary text-foreground" }}
+          >
+            <BookOpen className="h-3.5 w-3.5" /> Library
           </Link>
         </nav>
         <div className="ml-auto flex items-center gap-3 text-xs text-muted-foreground">

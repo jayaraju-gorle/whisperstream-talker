@@ -15,3 +15,4 @@
 - Account profiles are initialized idempotently after confirmed sign-in instead of using a trigger on the managed auth schema.
 - Live speech-to-speech calls use a persistent WebSocket relay (src/lib/live-relay.server.ts, dispatched in src/server.ts and a Vite dev plugin); the browser sends its auth token in app.start and the relay verifies it before opening a paid session.
 - Costs are stored in USD; display currency is converted client-side from /api/public/rates (daily rates + edge-country suggestion) and the user's choice is saved in profiles.preferences.currency.
+- Custom scenarios and knowledge bases are per-user rows; the system prompt (scenario + knowledge, capped) is built client-side in src/lib/library.ts and sent to /api/llm or the live relay, so all modes share one prompt builder.

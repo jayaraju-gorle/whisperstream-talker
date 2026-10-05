@@ -7,3 +7,6 @@
 - [x] Built-in Live S2S calls
 - [ ] Gemini Live S2S — blocked: needs a Google AI key
 - [ ] OpenAI Realtime S2S — blocked: needs an OpenAI key
+
+- [x] Custom scenarios with caller lines, runnable in the simulator
+- [x] Knowledge bases attachable to scenarios or any session

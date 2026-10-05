@@ -13,7 +13,7 @@ import {
 
 const Body = z.object({
   llmId: z.string(),
-  system: z.string().max(8000),
+  system: z.string().max(50000),
   messages: z
     .array(z.object({ role: z.enum(["user", "assistant"]), content: z.string().max(20000) }))
     .max(80),
