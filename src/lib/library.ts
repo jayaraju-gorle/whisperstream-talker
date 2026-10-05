@@ -57,7 +57,7 @@ export function chunkText(text: string, max = CHUNK_CHARS): string[] {
       cur = cur ? `${cur}\n${p}` : p;
       while (cur.length > max) { out.push(cur.slice(0, max)); cur = cur.slice(max); }
     }
-    if (cur.length > max / 2) push();
+    if (cur.length >= 150) push(); // keep paragraphs as their own passages unless tiny
   }
   push();
   return out;
