@@ -1,4 +1,4 @@
 - [x] Hide the published-site Lovable badge.
 - [x] Add a no-cost guest demo and a close action on sign-in.
 - [x] Create account profiles and initialize them when users sign in.
-- [ ] Verify guest navigation and protected live AI access.
+- [x] Verify guest navigation and protected live AI access.

@@ -62,7 +62,7 @@ function Demo() {
           const metrics = sampleMetrics(cfg, i, mode === "voice");
           return <section key={i} className="flex min-h-[55vh] flex-col bg-background p-4">
             <div className="mb-3 flex items-center gap-2"><span className={`font-mono text-sm font-bold ${i ? "text-agent-b" : "text-agent-a"}`}>AGENT {i ? "B" : "A"}</span><span className="text-xs text-muted-foreground">Sample setup</span></div>
-            <div className="grid gap-5 lg:grid-cols-[minmax(0,420px)_1fr]">
+            <div className="grid gap-5">
               <AgentConfigForm config={cfg} onChange={(c) => setConfigs((all) => all.map((old, j) => j === i ? c : old))} available={{}} />
               <div className="self-end"><MetricsStrip m={showTurn ? metrics : undefined} voice={mode === "voice"} /><p className="mt-2 font-mono text-[10px] text-muted-foreground">Illustrative timing and estimated costs, not a live measurement.</p></div>
             </div>
