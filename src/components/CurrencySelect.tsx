@@ -7,7 +7,7 @@ export function CurrencySelect() {
   return (
     <Select value={code} onValueChange={(v) => void setCode(v as CurrencyCode)}>
       <SelectTrigger className="h-8 w-[92px] font-mono text-xs" aria-label="Currency">
-        <SelectValue />
+        <SelectValue>{code}</SelectValue>
       </SelectTrigger>
       <SelectContent>
         {CURRENCIES.map((c) => (

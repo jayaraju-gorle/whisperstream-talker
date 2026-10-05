@@ -13,3 +13,5 @@
 - Provider/model catalog and pricing live in src/lib/catalog.ts; adding a provider means a catalog entry plus a branch in each relevant /api route.
 - Guest access is a public, static demo route; paid AI endpoints remain authenticated to prevent anonymous credit abuse.
 - Account profiles are initialized idempotently after confirmed sign-in instead of using a trigger on the managed auth schema.
+- Live speech-to-speech calls use a persistent WebSocket relay (src/lib/live-relay.server.ts, dispatched in src/server.ts and a Vite dev plugin); the browser sends its auth token in app.start and the relay verifies it before opening a paid session.
+- Costs are stored in USD; display currency is converted client-side from /api/public/rates (daily rates + edge-country suggestion) and the user's choice is saved in profiles.preferences.currency.
