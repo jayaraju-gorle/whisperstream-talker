@@ -4,9 +4,11 @@ import { supabase } from "@/integrations/supabase/client";
 import { useLiveVoice, type LiveEvent } from "@/hooks/use-live-voice";
 import { useCurrency } from "@/hooks/use-currency";
 import { LANGUAGES, PROVIDERS, S2S_MODELS, SCENARIOS, type ProviderId } from "@/lib/catalog";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { KnowledgePicker } from "./KnowledgePicker";
+import { buildSystemPrompt, type CustomScenario, type KnowledgeBase } from "@/lib/library";
 
 type Line = { role: "user" | "assistant"; text: string };
 
@@ -19,7 +21,14 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
   );
 }
 
-export function LivePanel({ available }: { available: Partial<Record<ProviderId, boolean>> }) {
+export function LivePanel({
+  available,
+  library,
+}: {
+  available: Partial<Record<ProviderId, boolean>>;
+  library: { scenarios: CustomScenario[]; kbs: KnowledgeBase[] };
+}) {
+  const [sessionKbs, setSessionKbs] = useState<string[]>([]);
   const { fmt } = useCurrency();
   const [modelId, setModelId] = useState(S2S_MODELS[0]!.id);
   const model = S2S_MODELS.find((m) => m.id === modelId)!;
@@ -35,7 +44,8 @@ export function LivePanel({ available }: { available: Partial<Record<ProviderId,
   const call = useLiveVoice({
     startPayload: async () => {
       const { data } = await supabase.auth.getSession();
-      return { token: data.session?.access_token ?? "", scenario, voice, language };
+      const persona = buildSystemPrompt(scenario, library.scenarios, library.kbs, sessionKbs);
+      return { token: data.session?.access_token ?? "", scenario, voice, language, persona };
     },
     onEvent: (e: LiveEvent) => {
       if (e.type === "gateway.session.created") setSeconds(15);
@@ -109,9 +119,21 @@ export function LivePanel({ available }: { available: Partial<Record<ProviderId,
               <Select value={scenario} disabled={active} onValueChange={setScenario}>
                 <SelectTrigger className="h-8 text-xs"><SelectValue /></SelectTrigger>
                 <SelectContent>
-                  {SCENARIOS.map((s) => <SelectItem key={s.id} value={s.id} className="text-xs">{s.label}</SelectItem>)}
+                  <SelectGroup>
+                    <SelectLabel className="text-[10px] uppercase tracking-wider">Built-in</SelectLabel>
+                    {SCENARIOS.map((s) => <SelectItem key={s.id} value={s.id} className="text-xs">{s.label}</SelectItem>)}
+                  </SelectGroup>
+                  {library.scenarios.length > 0 && (
+                    <SelectGroup>
+                      <SelectLabel className="text-[10px] uppercase tracking-wider">My scenarios</SelectLabel>
+                      {library.scenarios.map((s) => <SelectItem key={s.id} value={`custom:${s.id}`} className="text-xs">{s.label}</SelectItem>)}
+                    </SelectGroup>
+                  )}
                 </SelectContent>
               </Select>
+            </Field>
+            <Field label="Knowledge">
+              <div><KnowledgePicker kbs={library.kbs} value={sessionKbs} onChange={setSessionKbs} disabled={active} /></div>
             </Field>
             <Field label="Language">
               <Select value={language} disabled={active} onValueChange={setLanguage}>

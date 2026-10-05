@@ -373,6 +373,7 @@ function AgentPanel(props: {
   config: AgentConfig;
   onConfig: (c: AgentConfig) => void;
   available: Partial<Record<ProviderId, boolean>>;
+  customScenarios: { id: string; label: string }[];
   turns: Turn[];
   status: Status;
   voice: boolean;
