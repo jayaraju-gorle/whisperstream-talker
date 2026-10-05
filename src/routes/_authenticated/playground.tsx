@@ -5,7 +5,7 @@ import { Mic, MicOff, Play, RotateCcw, Send, Square, Volume2, VolumeX } from "lu
 import { LivePanel } from "@/components/playground/LivePanel";
 import { KnowledgePicker } from "@/components/playground/KnowledgePicker";
 import { useLibrary } from "@/hooks/use-library";
-import { buildSystemPrompt, scenarioSample } from "@/lib/library";
+import { buildSystemPrompt, retrievalQuery, scenarioSample } from "@/lib/library";
 import { useCurrency } from "@/hooks/use-currency";
 import { supabase } from "@/integrations/supabase/client";
 import { DEFAULT_AGENT_A, DEFAULT_AGENT_B, findLlm, findStt, findTts, type AgentConfig, type ProviderId } from "@/lib/catalog";
@@ -80,9 +80,9 @@ function Playground() {
 
   useEffect(() => {
     runners.current.forEach((r) => {
-      r.systemFor = (cfg) => {
+      r.systemFor = (cfg, history) => {
         const { library: l, sessionKbs: s } = libRef.current;
-        return buildSystemPrompt(cfg.scenario, l.scenarios, l.kbs, s);
+        return buildSystemPrompt(cfg.scenario, l.scenarios, l.kbs, s, retrievalQuery(history));
       };
     });
   }, []);

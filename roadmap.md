@@ -10,3 +10,4 @@
 
 - [x] Custom scenarios with caller lines, runnable in the simulator
 - [x] Knowledge bases attachable to scenarios or any session
+- [x] Per-reply passage retrieval from knowledge bases
