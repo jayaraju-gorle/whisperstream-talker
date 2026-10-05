@@ -8,6 +8,7 @@ import { lovable } from "@/integrations/lovable/index";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { X } from "lucide-react";
 
 export const Route = createFileRoute("/auth")({
   staticData: { sitemap: false },
@@ -36,13 +37,22 @@ function AuthPage() {
   const [busy, setBusy] = useState(false);
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data }) => {
-      if (data.session) navigate({ to: safeNext(next) });
+    let active = true;
+    let navigating = false;
+    async function onSignedIn() {
+      if (navigating) return;
+      const { data } = await supabase.auth.getUser();
+      if (!active || !data.user) return;
+      navigating = true;
+      // Profile creation is idempotent, including for accounts created before profiles existed.
+      await supabase.from("profiles").upsert({ user_id: data.user.id }, { onConflict: "user_id", ignoreDuplicates: true });
+      if (active) navigate({ to: safeNext(next) });
+    }
+    void onSignedIn();
+    const { data } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === "SIGNED_IN" && session) void onSignedIn();
     });
-    const { data } = supabase.auth.onAuthStateChange((_e, s) => {
-      if (s) navigate({ to: safeNext(next) });
-    });
-    return () => data.subscription.unsubscribe();
+    return () => { active = false; data.subscription.unsubscribe(); };
   }, [next, navigate]);
 
   async function submit(e: React.FormEvent) {
@@ -75,7 +85,10 @@ function AuthPage() {
 
   return (
     <div className="flex min-h-screen items-center justify-center px-4">
-      <div className="w-full max-w-sm rounded-lg border border-border bg-card p-6 shadow-2xl">
+      <div className="relative w-full max-w-sm rounded-lg border border-border bg-card p-6 shadow-2xl">
+        <Button asChild variant="ghost" size="icon" className="absolute right-3 top-3" aria-label="Close sign in and return home">
+          <Link to="/"><X /></Link>
+        </Button>
         <Link to="/" className="mb-6 flex items-center gap-2 font-semibold">
           <Logo className="h-7 w-7" /> Conversational AI Flows Studio
         </Link>
@@ -100,12 +113,16 @@ function AuthPage() {
             {mode === "in" ? "Sign in" : "Create account"}
           </Button>
         </form>
-        <button
-          className="mt-4 w-full text-center text-sm text-muted-foreground hover:text-foreground"
+        <Button
+          variant="link" type="button" className="mt-4 w-full text-muted-foreground hover:text-foreground"
           onClick={() => setMode(mode === "in" ? "up" : "in")}
         >
           {mode === "in" ? "No account? Create one" : "Already have an account? Sign in"}
-        </button>
+        </Button>
+        <div className="mt-4 border-t border-border pt-4">
+          <Button asChild variant="outline" className="w-full"><Link to="/demo">Continue as guest</Link></Button>
+          <p className="mt-2 text-center text-xs text-muted-foreground">Explore a sample. Sign in for live tests and saved sessions.</p>
+        </div>
       </div>
     </div>
   );

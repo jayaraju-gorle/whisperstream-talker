@@ -32,4 +32,10 @@ describe("App routing", () => {
 
     expect(failedMatches(matches)).toEqual([]);
   });
+
+  it("loads the public guest demo without sign-in", async () => {
+    const matches = await loadAt("/demo");
+    expect(failedMatches(matches)).toEqual([]);
+    expect(matches.some((match) => match.pathname === "/demo")).toBe(true);
+  });
 });
