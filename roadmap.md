@@ -11,3 +11,4 @@
 - [x] Custom scenarios with caller lines, runnable in the simulator
 - [x] Knowledge bases attachable to scenarios or any session
 - [x] Per-reply passage retrieval from knowledge bases
+- [x] Prefill built-in scenarios and sample knowledge from the original playground

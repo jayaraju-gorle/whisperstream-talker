@@ -268,7 +268,7 @@ function Playground() {
             <Switch checked={speakReplies} onCheckedChange={setSpeakReplies} /> Speak replies
           </label>
         )}
-        {mode !== "live" && <KnowledgePicker kbs={library.kbs} value={sessionKbs} onChange={setSessionKbs} />}
+        {mode !== "live" && <KnowledgePicker kbs={library.kbs} value={sessionKbs} onChange={setSessionKbs} scenarioId={configs[0]?.scenario ?? "general"} scenarios={library.scenarios} />}
         {mode !== "live" && (
           <Button variant={simulating ? "outline" : "secondary"} size="sm" className="ml-auto" onClick={simulate}
             title="Auto-play the selected scenario's sample conversation">
