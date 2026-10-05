@@ -17,6 +17,7 @@ export const Route = createFileRoute("/_authenticated/history")({
 });
 
 function HistoryPage() {
+  const { fmt: formatUsd } = useCurrency();
   const child = useMatch({ from: "/_authenticated/history/$id", shouldThrow: false });
   const { data, isLoading } = useQuery({
     queryKey: ["conversations"],

@@ -1,3 +1,4 @@
+import { CurrencySelect } from "@/components/CurrencySelect";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
 import { ArrowLeft, ArrowRight, RotateCcw, Send } from "lucide-react";
@@ -47,7 +48,8 @@ function Demo() {
       <header className="flex flex-wrap items-center gap-3 border-b border-border px-4 py-3">
         <Link to="/" className="flex items-center gap-2 font-semibold"><Logo className="h-6 w-6" /> Conversational AI Flows Studio</Link>
         <span className="font-mono text-xs text-primary">GUEST DEMO</span>
-        <Button asChild variant="outline" size="sm" className="ml-auto"><Link to="/auth">Sign in to test live <ArrowRight /></Link></Button>
+        <div className="ml-auto"><CurrencySelect /></div>
+        <Button asChild variant="outline" size="sm"><Link to="/auth">Sign in to test live <ArrowRight /></Link></Button>
       </header>
       <div className="flex flex-wrap items-center gap-4 border-b border-border px-4 py-3 text-sm">
         <div className="flex rounded border border-border p-0.5" role="group" aria-label="Demo mode">
