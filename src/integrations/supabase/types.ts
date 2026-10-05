@@ -44,6 +44,66 @@ export type Database = {
         }
         Relationships: []
       }
+      custom_scenarios: {
+        Row: {
+          created_at: string
+          id: string
+          kb_ids: string[]
+          label: string
+          prompt: string
+          sample: string[]
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          kb_ids?: string[]
+          label: string
+          prompt?: string
+          sample?: string[]
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          kb_ids?: string[]
+          label?: string
+          prompt?: string
+          sample?: string[]
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      knowledge_bases: {
+        Row: {
+          content: string
+          created_at: string
+          id: string
+          name: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          content?: string
+          created_at?: string
+          id?: string
+          name: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          id?: string
+          name?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           avatar_url: string | null
