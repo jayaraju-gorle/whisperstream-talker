@@ -8,9 +8,7 @@ export type CustomScenario = { id: string; label: string; prompt: string; sample
 export const CUSTOM_PREFIX = "custom:";
 export const KB_CHAR_BUDGET = 40000;
 export const builtInKnowledge: KnowledgeBase[] = BUILT_IN_KNOWLEDGE.map(({ id, name, content }) => ({ id, name, content }));
-
-const VOICE_RULES =
-  "You are speaking out loud. Reply in one to three short, natural sentences. No markdown, lists, emoji or URLs. Reply in the user's language.";
+const VOICE_RULES = " Your responses will be spoken aloud, so avoid emojis, bullet points, or other formatting that can't be spoken. Keep spoken replies to 1–3 short sentences whenever possible — confirm details in one compact sentence rather than long restatements.";
 
 export function findCustom(scenarioId: string, custom: CustomScenario[]) {
   if (!scenarioId.startsWith(CUSTOM_PREFIX)) return undefined;
@@ -112,18 +110,19 @@ export function buildSystemPrompt(
 ): string {
   const c = findCustom(scenarioId, custom);
   const base = c
-    ? `${c.prompt.trim() || "You are a helpful assistant."} ${VOICE_RULES}`
+    ? c.prompt.trim() || "You are a helpful assistant."
     : (SCENARIOS.find((s) => s.id === scenarioId) ?? SCENARIOS[0]!).prompt;
+  const instruction = base + VOICE_RULES;
   const ids = activeKbIds(scenarioId, custom, sessionKbIds);
   const picked = ids.map((id) => [...builtInKnowledge, ...kbs].find((k) => k.id === id)).filter((k): k is KnowledgeBase => !!k && !!k.content.trim());
-  if (!picked.length) return base;
+  if (!picked.length) return instruction;
 
   if (query !== undefined) {
     const passages = retrievePassages(picked, query);
     const names = picked.map((k) => k.name).join(", ");
     if (!passages.length)
-      return `${base}\n\nYou have reference knowledge (${names}), but nothing in it matches this question. If you need specific facts, say you don't know rather than inventing them.`;
-    return `${base}\n\nRelevant excerpts from the reference knowledge (${names}). For factual questions about the reference knowledge's business, use the excerpts rather than conflicting details in the scenario persona. Answer from these; if the answer isn't here, say you don't know rather than inventing facts.\n\n${passages
+      return `${instruction}\n\nYou have reference knowledge (${names}), but nothing in it matches this question. If you need specific facts, say you don't know rather than inventing them.`;
+    return `${instruction}\n\nRelevant excerpts from the reference knowledge (${names}). For factual questions about the reference knowledge's business, use the excerpts rather than conflicting details in the scenario persona. Answer from these; if the answer isn't here, say you don't know rather than inventing facts.\n\n${passages
       .map((p, i) => `[${i + 1}] (${p.kb})\n${p.text}`)
       .join("\n\n")}`;
   }
@@ -136,7 +135,7 @@ export function buildSystemPrompt(
     budget -= text.length;
     parts.push(`### ${k.name}\n${text}`);
   }
-  return `${base}\n\nUse the reference knowledge below to answer. For factual questions about the reference knowledge's business, use it rather than conflicting details in the scenario persona. If the answer is not in it, say you don't know rather than inventing facts.\n\n${parts.join("\n\n")}`;
+  return `${instruction}\n\nUse the reference knowledge below to answer. For factual questions about the reference knowledge's business, use it rather than conflicting details in the scenario persona. If the answer is not in it, say you don't know rather than inventing facts.\n\n${parts.join("\n\n")}`;
 }
 
 /** Retrieval query: the latest caller message plus the previous one for follow-ups like "how much is it?". */
