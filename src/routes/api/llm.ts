@@ -63,12 +63,16 @@ export const Route = createFileRoute("/api/llm")({
               url = `${GATEWAY}/chat/completions`;
               headers = gatewayHeaders({ "Content-Type": "application/json" });
             } else {
-              const key = providerKey(m.provider === "openai" ? "OPENAI_API_KEY" : "GROQ_API_KEY");
+              const key = providerKey(
+                m.provider === "openai" ? "OPENAI_API_KEY" : m.provider === "sarvam" ? "SARVAM_API_KEY" : "GROQ_API_KEY",
+              );
               if (!key) return json({ error: `${m.label} needs an API key` }, 400);
               url =
                 m.provider === "openai"
                   ? "https://api.openai.com/v1/chat/completions"
-                  : "https://api.groq.com/openai/v1/chat/completions";
+                  : m.provider === "sarvam"
+                    ? "https://api.sarvam.ai/v1/chat/completions"
+                    : "https://api.groq.com/openai/v1/chat/completions";
               headers = { Authorization: `Bearer ${key}`, "Content-Type": "application/json" };
             }
             upstream = await fetch(url, {

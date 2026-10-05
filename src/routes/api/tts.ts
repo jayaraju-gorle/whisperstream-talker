@@ -11,7 +11,25 @@ import {
   verifyRequest,
 } from "@/lib/server/auth.server";
 
-const Body = z.object({ ttsId: z.string(), voice: z.string(), text: z.string().min(1).max(4000) });
+const Body = z.object({
+  ttsId: z.string(),
+  voice: z.string(),
+  text: z.string().min(1).max(4000),
+  language: z.string().max(8).optional(),
+});
+
+/** Returns the PCM payload of a WAV file (skips the RIFF header chunks). */
+function wavData(bytes: Uint8Array) {
+  const view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
+  let o = 12;
+  while (o + 8 <= bytes.length) {
+    const id = String.fromCharCode(...bytes.subarray(o, o + 4));
+    const size = view.getUint32(o + 4, true);
+    if (id === "data") return bytes.subarray(o + 8, Math.min(bytes.length, o + 8 + size));
+    o += 8 + size + (size % 2);
+  }
+  return bytes.subarray(44);
+}
 
 function b64ToBytes(b64: string) {
   const bin = atob(b64);
@@ -30,7 +48,7 @@ export const Route = createFileRoute("/api/tts")({
         if (auth instanceof Response) return auth;
         const parsed = Body.safeParse(await request.json().catch(() => null));
         if (!parsed.success) return json({ error: "Invalid request" }, 400);
-        const { ttsId, voice, text } = parsed.data;
+        const { ttsId, voice, text, language } = parsed.data;
         const m = findTts(ttsId);
         if (!m) return json({ error: "Unknown voice model" }, 400);
         const pcmHeaders = { "Content-Type": "audio/L16; rate=24000; channels=1", "Cache-Control": "no-cache" };
@@ -124,6 +142,33 @@ export const Route = createFileRoute("/api/tts")({
             );
             if (!res.ok || !res.body) return upstreamError(res, "Speech");
             return new Response(res.body, { headers: pcmHeaders });
+          }
+          if (m.provider === "sarvam") {
+            const key = providerKey("SARVAM_API_KEY");
+            if (!key) return json({ error: `${m.label} needs an API key` }, 400);
+            const res = await fetch("https://api.sarvam.ai/text-to-speech", {
+              method: "POST",
+              signal: request.signal,
+              headers: { "api-subscription-key": key, "Content-Type": "application/json" },
+              body: JSON.stringify({
+                text,
+                model: m.model,
+                speaker: voice,
+                target_language_code: language && language !== "auto" ? `${language}-IN` : "en-IN",
+                speech_sample_rate: 24000,
+              }),
+            });
+            if (!res.ok) return upstreamError(res, "Speech");
+            const j = (await res.json()) as { audios?: string[] };
+            const parts = (j.audios ?? []).map((a) => wavData(b64ToBytes(a)));
+            const total = parts.reduce((n, p) => n + p.length, 0);
+            const out = new Uint8Array(total);
+            let off = 0;
+            for (const p of parts) {
+              out.set(p, off);
+              off += p.length;
+            }
+            return new Response(out, { headers: pcmHeaders });
           }
           return json({ error: "Unsupported provider" }, 400);
         } catch (e) {

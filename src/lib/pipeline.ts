@@ -127,7 +127,7 @@ export class AgentRunner {
           fetch("/api/tts", {
             method: "POST",
             headers: { ...headers, "Content-Type": "application/json" },
-            body: JSON.stringify({ ttsId: cfg.ttsId, voice: cfg.voice, text: sentence }),
+            body: JSON.stringify({ ttsId: cfg.ttsId, voice: cfg.voice, text: sentence, language: cfg.language }),
             signal,
           }),
         );
