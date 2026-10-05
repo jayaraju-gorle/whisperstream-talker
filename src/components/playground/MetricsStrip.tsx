@@ -1,4 +1,4 @@
-import { formatUsd } from "@/lib/catalog";
+import { useCurrency } from "@/hooks/use-currency";
 import type { TurnMetrics } from "@/lib/pipeline";
 import { cn } from "@/lib/utils";
 
@@ -14,6 +14,7 @@ function Cell({ k, v, strong }: { k: string; v: string; strong?: boolean }) {
 }
 
 export function MetricsStrip({ m, voice }: { m?: TurnMetrics | undefined; voice: boolean }) {
+  const { fmt: formatUsd } = useCurrency();
   return (
     <div className="grid grid-cols-3 gap-px overflow-hidden rounded border border-border bg-border sm:grid-cols-6">
       <Cell k="STT" v={voice ? ms(m?.sttMs) : "—"} />
@@ -27,6 +28,7 @@ export function MetricsStrip({ m, voice }: { m?: TurnMetrics | undefined; voice:
 }
 
 export function TurnMetricLine({ m }: { m: TurnMetrics }) {
+  const { fmt: formatUsd } = useCurrency();
   return (
     <div className="mt-1.5 flex flex-wrap gap-x-3 gap-y-0.5 font-mono text-[10px] text-muted-foreground">
       {m.sttMs != null && <span>stt {ms(m.sttMs)}</span>}
