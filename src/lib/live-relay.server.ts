@@ -2,6 +2,8 @@ import { createOpenAI } from "@ai-sdk/openai";
 import { stepCountIs, streamText, tool, type ModelMessage } from "ai";
 import process from "node:process";
 import { z } from "zod";
+import { createClient } from "@supabase/supabase-js";
+import { SCENARIOS } from "./catalog";
 
 export type LiveConfig = {
   baseURL: string;
@@ -9,10 +11,27 @@ export type LiveConfig = {
   liveModel: string;
   backendModel: string;
   openingInstructions?: string;
+  persona?: string;
 };
 
 // Fill from co-loaded knowledge: the gateway URL, the Live model and the resolved chat model.
-const liveSettings = { baseURL: "", liveModel: "", backendModel: "" };
+const liveSettings = {
+  baseURL: "https://ai.gateway.lovable.dev/v1",
+  liveModel: "openai/gpt-live-1",
+  backendModel: "openai/gpt-6-astra",
+};
+
+export const LIVE_VOICES = ["marin", "cedar", "gleam", "meridian", "willow", "vesper"];
+
+async function verifyToken(token: string): Promise<boolean> {
+  if (!token || token.split(".").length !== 3) return false;
+  const url = process.env["SUPABASE_URL"];
+  const key = process.env["SUPABASE_PUBLISHABLE_KEY"];
+  if (!url || !key) return false;
+  const supabase = createClient(url, key, { auth: { persistSession: false, autoRefreshToken: false } });
+  const { data, error } = await supabase.auth.getClaims(token);
+  return !error && !!data?.claims?.sub;
+}
 
 export type LiveSocket = {
   readonly readyState: number;
@@ -111,16 +130,20 @@ export function handleLiveRequest(request: Request): Response {
   return new Response(null, response);
 }
 
-const conversationInstructions = `You are Mira, a calm learning companion.
+function conversationInstructions(persona: string, language: string) {
+  const lang = language && language !== "auto" ? `Speak in the language with ISO code "${language}".` : "Reply in the caller's language.";
+  return `${persona}
+${lang}
 Speak naturally in brief replies. Ask a focused question when details are unclear.
 Backchannel policy: Use moderate listening sounds without taking over.
 Interruption policy: Stop your answer and listen when the user interrupts.
 Delegation policy:
-Backend tools: Reason through questions and plan study sessions across days.
-Delegate to the backend when: The user wants a study schedule or careful reasoning,
+Backend tools: Careful reasoning about the caller's request.
+Delegate to the backend when: The caller needs careful reasoning or multi-step details,
 or a correction changes a question already being worked on.
 Do not delegate to the backend when: Greeting, clarifying a question, or repeating
 a still-current answer. Wait for the backend result before presenting its answer.`;
+}
 
 const studyScheduleInput = z
   .object({
@@ -200,26 +223,12 @@ async function answerQuestion(
       },
     },
     system:
-      "Help a spoken learning companion answer the latest user question. " +
+      `Help a spoken voice agent answer the latest caller request. Agent persona: ${config.persona ?? ""} ` +
       "Transcripts may be incomplete or corrected. Use the latest correction. " +
       "Continue from completed tool results; do not repeat completed actions. " +
       "Return verified facts and useful next steps in at most 150 words. " +
-      "To display a study schedule for the current request, call plan_study_schedule with its total minutes and days. " +
-      "Ask for missing details instead of guessing. The tool only calculates a draft plan; " +
-      "it does not save calendar events. You have no other tools.",
+      "Ask for missing details instead of guessing. You have no tools.",
     messages,
-    tools: {
-      plan_study_schedule: tool({
-        description: "Distribute a total study time evenly across days and return a draft schedule.",
-        inputSchema: studyScheduleInput,
-        execute: async (args) => {
-          signal.throwIfAborted();
-          const plan = planStudySchedule(args);
-          onPlan(plan);
-          return plan;
-        },
-      }),
-    },
   });
   let completed = false;
   let stepCompleted = false;
@@ -273,7 +282,8 @@ export function bindLiveConnection(
   execution: LiveExecutionContext,
   connect: LiveConnector,
 ): void {
-  const config = { ...configuration };
+  let config: LiveConfig = { ...configuration };
+  let startOptions = { token: "", voice: "marin", language: "auto" };
   const runID = crypto.randomUUID();
   const setupAbort = new AbortController();
   let gateway: LiveSocket | undefined;
@@ -565,6 +575,8 @@ export function bindLiveConnection(
 
   async function startSession(sdp: string) {
     if (closing || browser.readyState !== 1) return;
+    if (!(await verifyToken(startOptions.token))) throw new Error("Please sign in to start a live call.");
+    if (closing || browser.readyState !== 1) return;
     clearTimeout(startTimer);
     startupTimer = setTimeout(() => {
       emit({ type: "app.error", error: { message: "Voice startup timed out" } });
@@ -595,8 +607,8 @@ export function bindLiveConnection(
         type: "session.start",
         session: {
           model: config.liveModel,
-          instructions: conversationInstructions,
-          audio: { output: { voice: "marin" } },
+          instructions: conversationInstructions(config.persona ?? "", startOptions.language),
+          audio: { output: { voice: startOptions.voice } },
           delegation: { type: "client" },
         },
         transport: { type: "webrtc", sdp },
@@ -615,6 +627,13 @@ export function bindLiveConnection(
           throw new Error("Voice startup message required");
         }
         starting = true;
+        const scenario = SCENARIOS.find((x) => x.id === event.scenario) ?? SCENARIOS[0]!;
+        config = { ...config, persona: scenario.prompt.replace(/Reply in the user's language\./, "") };
+        startOptions = {
+          token: typeof event.token === "string" ? event.token : "",
+          voice: LIVE_VOICES.includes(event.voice) ? event.voice : "marin",
+          language: typeof event.language === "string" ? event.language.slice(0, 8) : "auto",
+        };
         execution.waitUntil(
           startSession(event.sdp).catch((error) => {
             if (!closing)
