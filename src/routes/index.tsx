@@ -1,5 +1,15 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { ArrowRight, Columns2, Gauge, Mic, Shuffle } from "lucide-react";
+import {
+  ArrowRight,
+  BookOpen,
+  Columns2,
+  Gauge,
+  History,
+  Mic,
+  PlayCircle,
+  Radio,
+  Shuffle,
+} from "lucide-react";
 import { Logo } from "@/components/Logo";
 
 export const Route = createFileRoute("/")({
@@ -10,12 +20,13 @@ export const Route = createFileRoute("/")({
       {
         name: "description",
         content:
-          "Talk or type to AI agents, swap speech-to-text, AI model and voice providers, and compare latency and cost live — in voice and text modes.",
+          "Talk or type to AI agents, swap speech-to-text, AI model and voice providers, and compare latency and cost live — in voice and text modes. Try a free demo before signing in.",
       },
       { property: "og:title", content: "Conversational AI Flows Studio — Test voice and text AI stacks side by side" },
       {
         property: "og:description",
-        content: "Swap speech, model and voice providers and compare latency and cost in real time — with both voice and text conversations.",
+        content:
+          "Swap speech, model and voice providers and compare latency and cost in real time — with voice and text conversations, in a free demo or the full playground.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
@@ -41,19 +52,22 @@ export const Route = createFileRoute("/")({
               name: "Conversational AI Flows Studio",
               url: "https://conversationalaistudio.online/",
               description:
-                "Browser-based voice and text AI test bench: swap speech-to-text, LLM and text-to-speech providers and compare latency and cost per turn, side by side, in live voice or plain text conversations.",
+                "Browser-based voice and text AI test bench: swap speech-to-text, LLM and text-to-speech providers and compare latency and cost per turn, side by side, in live voice or plain text conversations. Includes a free demo that runs without an account.",
               applicationCategory: "DeveloperApplication",
               operatingSystem: "Any (web browser)",
               browserRequirements: "Requires a modern browser with microphone access",
               isPartOf: { "@id": "https://conversationalaistudio.online/#website" },
               featureList: [
+                "Free guest demo with sample scenarios — no sign-in required",
                 "Live voice and text conversations with AI agents",
+                "Live speech-to-speech calls with streaming voice models (GPT Live, Gemini Live, OpenAI Realtime)",
                 "Text-only mode for testing LLM stacks without speech providers",
                 "Swappable STT, LLM and TTS providers (Lovable AI, OpenAI, Groq, Deepgram, ElevenLabs, Sarvam AI, Google Gemini)",
-                "Real-time latency metrics: time to first token, time to first audio, voice-to-voice",
-                "Estimated cost per turn and per session",
+                "Real-time latency metrics: time to first token, time to first audio, end-to-end voice response time",
+                "Estimated token usage and cost per turn, with multi-currency display",
                 "Side-by-side comparison of two agent stacks in voice or text",
-                "Saved session history",
+                "Prebuilt industry scenarios plus custom personas and knowledge bases with per-reply passage retrieval",
+                "Saved session history with per-turn metrics",
               ],
               offers: { "@type": "Offer", price: "0", priceCurrency: "USD" },
             },
@@ -71,6 +85,49 @@ const STAGES = [
   { k: "TTS", stage: "Synthesis", value: "210", label: "First spoken audio" },
 ];
 
+const FEATURES = [
+  {
+    icon: PlayCircle,
+    t: "Try before you sign in",
+    d: "A free demo of the full studio — voice, text and comparisons with sample conversations — right in your browser. Real AI credits start with an account.",
+  },
+  {
+    icon: Mic,
+    t: "Live voice & text",
+    d: "Talk through your mic or just type — the agent replies as it thinks, sentence by sentence, spoken or written.",
+  },
+  {
+    icon: Shuffle,
+    t: "Swap providers",
+    d: "Lovable AI, OpenAI, Groq, Deepgram, ElevenLabs, Sarvam AI and Google Gemini for each step — or skip speech entirely in text mode.",
+  },
+  {
+    icon: Gauge,
+    t: "Real metrics",
+    d: "Time to first token, time to first audio, end-to-end voice response time, token usage and cost for every turn.",
+  },
+  {
+    icon: Columns2,
+    t: "Compare side by side",
+    d: "One message, two differently configured agents answering at the same time — in voice or text — so you can judge quality, latency and cost together.",
+  },
+  {
+    icon: Radio,
+    t: "Speech-to-speech calls",
+    d: "Live voice models like GPT Live, Gemini Live and OpenAI Realtime answer with a single streaming model — no separate transcription or voice steps.",
+  },
+  {
+    icon: BookOpen,
+    t: "Scenarios & knowledge",
+    d: "Run prebuilt industry scenarios — clinic, bank, online store — or write your own persona and attach knowledge bases the agent answers from.",
+  },
+  {
+    icon: History,
+    t: "History & cost",
+    d: "Every session is saved with per-turn timing, token usage and estimated cost, so you can compare stacks over time — in your currency.",
+  },
+];
+
 function Index() {
   return (
     <div className="min-h-screen">
@@ -78,7 +135,10 @@ function Index() {
         <div className="flex min-w-0 items-center gap-2 font-semibold">
           <Logo className="h-6 w-6 shrink-0" /> Conversational AI Flows Studio
         </div>
-        <Link to="/auth" className="flex min-h-11 shrink-0 items-center whitespace-nowrap text-sm text-muted-foreground hover:text-foreground">
+        <Link
+          to="/auth"
+          className="flex min-h-11 shrink-0 items-center whitespace-nowrap text-sm text-muted-foreground hover:text-foreground"
+        >
           Sign in
         </Link>
       </header>
@@ -89,14 +149,21 @@ function Index() {
         </h1>
         <p className="mt-6 max-w-xl text-lg text-muted-foreground">
           Speak or type to an agent, swap the transcription, model and voice provider, and watch latency and cost tick
-          up on every turn. Test in full voice or text-only mode, and run two stacks side by side.
+          up on every turn. Test in full voice or text-only mode, run two stacks side by side, and try it all free in
+          the demo before you sign in.
         </p>
-        <div className="mt-8 flex gap-3">
+        <div className="mt-8 flex flex-wrap gap-3">
           <Link
             to="/playground"
             className="inline-flex items-center gap-2 rounded-md bg-primary px-5 py-2.5 font-medium text-primary-foreground hover:bg-primary/90"
           >
             Open the playground <ArrowRight className="h-4 w-4" />
+          </Link>
+          <Link
+            to="/demo"
+            className="inline-flex items-center gap-2 rounded-md border border-border px-5 py-2.5 font-medium text-foreground hover:bg-accent"
+          >
+            Try the free demo
           </Link>
         </div>
 
@@ -142,13 +209,8 @@ function Index() {
           </div>
         </div>
 
-        <div className="mt-16 grid gap-6 md:grid-cols-4">
-          {[
-            { icon: Mic, t: "Live voice & text", d: "Talk through your mic or just type — the agent replies as it thinks, sentence by sentence, spoken or written." },
-            { icon: Shuffle, t: "Swap providers", d: "Lovable AI, OpenAI, Groq, Deepgram, ElevenLabs, Sarvam AI and Google Gemini for each step — or skip speech entirely in text mode." },
-            { icon: Gauge, t: "Real metrics", d: "Time to first token, time to first audio, voice-to-voice latency and cost per step." },
-            { icon: Columns2, t: "Compare", d: "One message, two differently configured agents answering side by side — in voice or text." },
-          ].map(({ icon: Icon, t, d }) => (
+        <div className="mt-16 grid gap-6 sm:grid-cols-2 md:grid-cols-4">
+          {FEATURES.map(({ icon: Icon, t, d }) => (
             <div key={t} className="border-t border-border pt-4">
               <Icon className="h-5 w-5 text-primary" />
               <h3 className="mt-3 font-medium">{t}</h3>
