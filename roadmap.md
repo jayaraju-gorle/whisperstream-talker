@@ -22,4 +22,4 @@
 - [ ] WhatsApp integration (Meta Cloud API, /api/public/whatsapp webhook, on-site QR modal)
 - [ ] Telephony / SIP inbound voice (future)
 
-- [ ] Verify and optimize studio layouts for mobile, including demo, library and history.
+- [x] Verify and optimize studio layouts for mobile, including demo, library and history.
