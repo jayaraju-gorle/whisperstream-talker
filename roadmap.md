@@ -24,4 +24,5 @@
 - [ ] Telephony / SIP inbound voice (future)
 
 - [x] Verify and optimize studio layouts for mobile, including demo, library and history.
-- [ ] Update public provider attribution; add Anthropic and xAI model options, accurate pricing and availability; verify tests and preview.
+- [x] Update public provider attribution; add Anthropic Claude 3.5 sample-only options and xAI Grok with pricing; verify tests and preview.
+- [ ] Enable live Grok calls — blocked: needs an xAI API key; routing verified with mocked streaming responses.
