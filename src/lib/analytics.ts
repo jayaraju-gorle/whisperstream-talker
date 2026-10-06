@@ -1,6 +1,6 @@
 // Google Analytics 4 (gtag.js) — browser-only, initialized from the root layout's useEffect.
 
-const measurementId = import.meta.env.VITE_LOVABLE_CONNECTOR_GOOGLE_ANALYTICS_API_KEY as
+const measurementId = import.meta.env["VITE_LOVABLE_CONNECTOR_GOOGLE_ANALYTICS_API_KEY"] as
   | string
   | undefined;
 
