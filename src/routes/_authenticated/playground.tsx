@@ -1,18 +1,16 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
-import { Mic, MicOff, Play, RotateCcw, Send, Square, Volume2, VolumeX } from "lucide-react";
+import { Mic, MicOff, Play, RotateCcw, Send, Square } from "lucide-react";
 import { LivePanel } from "@/components/playground/LivePanel";
 import { KnowledgePicker } from "@/components/playground/KnowledgePicker";
 import { useLibrary } from "@/hooks/use-library";
 import { buildSystemPrompt, retrievalQuery, scenarioSample } from "@/lib/library";
-import { useCurrency } from "@/hooks/use-currency";
 import { supabase } from "@/integrations/supabase/client";
-import { DEFAULT_AGENT_A, DEFAULT_AGENT_B, findLlm, findStt, findTts, type AgentConfig, type ProviderId } from "@/lib/catalog";
+import { DEFAULT_AGENT_A, DEFAULT_AGENT_B, type AgentConfig, type ProviderId } from "@/lib/catalog";
 import { AgentRunner, type TurnMetrics } from "@/lib/pipeline";
 import { MicCapture } from "@/lib/audio/engine";
-import { AgentConfigForm } from "@/components/playground/AgentConfigForm";
-import { MetricsStrip, TurnMetricLine, ms } from "@/components/playground/MetricsStrip";
+import { AgentPanel } from "@/components/playground/AgentPanel";
 import { Switch } from "@/components/ui/switch";
 import { Slider } from "@/components/ui/slider";
 import { Textarea } from "@/components/ui/textarea";
@@ -368,81 +366,3 @@ function Playground() {
   );
 }
 
-function AgentPanel(props: {
-  label: string;
-  config: AgentConfig;
-  onConfig: (c: AgentConfig) => void;
-  available: Partial<Record<ProviderId, boolean>>;
-  customScenarios: { id: string; label: string }[];
-  turns: Turn[];
-  status: Status;
-  voice: boolean;
-  muted: boolean;
-  onMute: () => void;
-  wide: boolean;
-}) {
-  const { label, config, turns, status, voice } = props;
-  const { fmt: formatUsd } = useCurrency();
-  const last = [...turns].reverse().find((t) => t.metrics)?.metrics;
-  const done = turns.filter((t) => t.metrics && !t.pending);
-  const total = done.reduce((s, t) => s + (t.metrics?.cost.total ?? 0), 0);
-  const v2vs = done.map((t) => t.metrics?.v2vMs).filter((v): v is number => v != null);
-  const avg = v2vs.length ? v2vs.reduce((a, b) => a + b, 0) / v2vs.length : undefined;
-  const color = label === "A" ? "text-agent-a" : "text-agent-b";
-  const scroller = useRef<HTMLDivElement>(null);
-  useEffect(() => {
-    scroller.current?.scrollTo({ top: scroller.current.scrollHeight, behavior: "smooth" });
-  }, [turns]);
-
-  return (
-    <section className="flex min-h-[60vh] flex-col bg-background">
-      <div className={cn("grid gap-4 border-b border-border p-4", props.wide && "lg:grid-cols-[minmax(0,420px)_1fr]")}>
-        <div>
-          <div className="mb-3 flex items-center gap-2">
-            <span className={cn("font-mono text-sm font-bold", color)}>AGENT {label}</span>
-            <span className="truncate text-xs text-muted-foreground">
-              {findStt(config.sttId)?.label} → {findLlm(config.llmId)?.label} → {findTts(config.ttsId)?.label}
-            </span>
-            <button onClick={props.onMute} className="ml-auto text-muted-foreground hover:text-foreground" aria-label={props.muted ? "Unmute agent" : "Mute agent"}>
-              {props.muted ? <VolumeX className="h-4 w-4" /> : <Volume2 className="h-4 w-4" />}
-            </button>
-          </div>
-          <AgentConfigForm config={config} onChange={props.onConfig} available={props.available} customScenarios={props.customScenarios} />
-        </div>
-        <div className="space-y-2 self-end">
-          <div className="flex items-center justify-between font-mono text-[11px] text-muted-foreground">
-            <span className="flex items-center gap-1.5">
-              <span className={cn("h-2 w-2 rounded-full", status === "idle" ? "bg-muted-foreground/40" : status === "speaking" ? "animate-pulse bg-success" : "animate-pulse bg-primary")} />
-              {status === "idle" ? "idle" : status}
-            </span>
-            <span>
-              {done.length} turns · avg {voice ? "v2v" : "reply"} {ms(avg)} · total {formatUsd(total)}
-            </span>
-          </div>
-          <MetricsStrip m={last} voice={voice} />
-          <p className="font-mono text-[10px] text-muted-foreground/70">Costs are estimates based on list prices.</p>
-        </div>
-      </div>
-      <div ref={scroller} className="flex-1 space-y-4 overflow-y-auto p-4" style={{ maxHeight: "55vh" }}>
-        {turns.length === 0 && (
-          <p className="pt-10 text-center text-sm text-muted-foreground">
-            {voice ? "Turn on the mic below and say hello." : "Send a message to start."}
-          </p>
-        )}
-        {turns.map((t) => (
-          <div key={t.id} className="space-y-2">
-            <div className="ml-auto w-fit max-w-[85%] rounded-lg bg-secondary px-3 py-2 text-sm">{t.user}</div>
-            {(t.assistant || t.pending) && (
-              <div className="max-w-[90%]">
-                <p className="text-sm leading-relaxed">
-                  {t.assistant || <span className="font-mono text-xs text-muted-foreground">…</span>}
-                </p>
-                {t.metrics && <TurnMetricLine m={t.metrics} />}
-              </div>
-            )}
-          </div>
-        ))}
-      </div>
-    </section>
-  );
-}

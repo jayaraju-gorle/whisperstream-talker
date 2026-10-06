@@ -1,5 +1,6 @@
 - [x] Hide the published-site Lovable badge.
 - [x] Add a no-cost guest demo and a close action on sign-in.
+- [x] Match the guest demo to the playground: voice/text/live samples, comparison, simulation, local library and history; no paid AI requests.
 - [x] Create account profiles and initialize them when users sign in.
 - [x] Verify guest navigation and protected live AI access.- [x] Scenario simulation (auto-play sample conversations)
 - [x] Multi-currency display with location default and saved preference
