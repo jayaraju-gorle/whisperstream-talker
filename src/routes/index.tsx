@@ -66,9 +66,9 @@ export const Route = createFileRoute("/")({
 });
 
 const STAGES = [
-  { k: "STT", label: "Speech to text", ms: "180 ms" },
-  { k: "LLM", label: "First token", ms: "320 ms" },
-  { k: "TTS", label: "First audio", ms: "210 ms" },
+  { k: "STT", stage: "Recognition", value: "180", label: "Speech-to-text transcription" },
+  { k: "LLM", stage: "Reasoning", value: "320", label: "Model's first token" },
+  { k: "TTS", stage: "Synthesis", value: "210", label: "First spoken audio" },
 ];
 
 function Index() {
@@ -100,19 +100,45 @@ function Index() {
           </Link>
         </div>
 
-        <div className="mt-16 rounded-lg border border-border bg-card/70 p-5 font-mono text-sm">
-          <div className="flex items-center justify-between text-xs text-muted-foreground">
-            <span>turn 04 · voice-to-voice</span>
-            <span className="text-primary">710 ms</span>
-          </div>
-          <div className="mt-4 grid grid-cols-3 gap-px overflow-hidden rounded border border-border bg-border">
-            {STAGES.map((s) => (
-              <div key={s.k} className="min-w-0 bg-background p-2 sm:p-4">
-                <div className="text-xs text-muted-foreground">{s.k}</div>
-                <div className="mt-1 whitespace-nowrap text-lg text-foreground sm:text-2xl">{s.ms}</div>
-                <div className="mt-1 text-xs text-muted-foreground">{s.label}</div>
+        <div className="mt-16 max-w-3xl rounded-lg border border-border bg-card/70 font-mono text-sm">
+          <div className="p-4 sm:p-6">
+            <div className="flex items-end justify-between gap-4">
+              <div className="min-w-0 text-[10px] uppercase tracking-widest text-muted-foreground sm:text-xs">
+                Turn 04 · voice-to-voice sample
               </div>
-            ))}
+              <div className="shrink-0 text-right">
+                <div className="text-2xl font-bold leading-none text-primary sm:text-3xl">
+                  710 <span className="text-lg font-medium sm:text-xl">ms</span>
+                </div>
+                <div className="mt-1 text-[9px] uppercase tracking-wider text-muted-foreground sm:text-[10px]">
+                  Total end-to-end response time
+                </div>
+              </div>
+            </div>
+            <div className="mt-6 grid grid-cols-1 overflow-hidden rounded border border-border sm:grid-cols-3">
+              {STAGES.map((s, i) => (
+                <div
+                  key={s.k}
+                  className={`min-w-0 bg-background/60 p-3 sm:p-4${
+                    i > 0 ? " border-t border-border sm:border-t-0 sm:border-l" : ""
+                  }`}
+                >
+                  <div className="text-[10px] font-medium uppercase tracking-tight text-muted-foreground">
+                    {s.k} · {s.stage}
+                  </div>
+                  <div className="mt-1 whitespace-nowrap text-lg font-medium text-foreground sm:text-xl">
+                    {s.value} <span className="text-xs font-normal text-muted-foreground">ms</span>
+                  </div>
+                  <div className="mt-2 text-[10px] leading-relaxed text-muted-foreground sm:text-xs">{s.label}</div>
+                </div>
+              ))}
+            </div>
+            <div className="mt-4 text-center">
+              <div className="text-[10px] uppercase tracking-widest text-muted-foreground">180 + 320 + 210 = 710 ms</div>
+              <p className="mt-1 text-xs text-muted-foreground">
+                Measured from the moment you stop speaking to the agent's first spoken word.
+              </p>
+            </div>
           </div>
         </div>
 
