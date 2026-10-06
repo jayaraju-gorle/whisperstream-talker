@@ -62,8 +62,7 @@ export const Route = createFileRoute("/")({
                 "Live voice and text conversations with AI agents",
                 "Live speech-to-speech calls with streaming voice models (GPT Live, Gemini Live, OpenAI Realtime)",
                 "Text-only mode for testing LLM stacks without speech providers",
-                "Voice and text provider options: OpenAI, Google Gemini, xAI Grok, Groq, Deepgram, ElevenLabs and Sarvam AI; live availability depends on connected keys",
-                "Anthropic Claude 3.5 Sonnet and Haiku sample comparisons (retired models, not available for live calls)",
+                "Voice and text provider options: OpenAI, Google Gemini, Anthropic Claude, xAI Grok, Groq, Deepgram, ElevenLabs and Sarvam AI; live availability depends on connected keys",
                 "Real-time latency metrics: time to first token, time to first audio, end-to-end voice response time",
                 "Estimated token usage and cost per turn, with multi-currency display",
                 "Side-by-side comparison of two agent stacks in voice or text",
@@ -100,7 +99,7 @@ const FEATURES = [
   {
     icon: Shuffle,
     t: "Swap providers",
-    d: "Choose OpenAI, Google Gemini, xAI (Grok), Groq or Sarvam AI for replies; Deepgram and ElevenLabs for speech. Explore retired Anthropic Claude 3.5 models in the sample demo. Live options depend on connected keys.",
+    d: "Choose OpenAI, Google Gemini, Anthropic Claude, xAI (Grok), Groq or Sarvam AI for replies; Deepgram and ElevenLabs for speech. Compare sample conversations in the demo or connect provider keys for live conversations.",
   },
   {
     icon: Gauge,

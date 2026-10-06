@@ -59,7 +59,7 @@ function ModelSelect<T extends ModelAccess & { id: string; label: string }>({
                 </SelectLabel>
                 {list.map((m) => (
                   <SelectItem key={m.id} value={m.id} disabled={!sample && !modelAvailable(m, available)} className="text-xs">
-                    {m.label}{m.retired ? " · retired, sample only" : m.connection === "lovable" ? " · built-in" : !sample && available[m.provider] === false ? " · needs key" : ""}
+                    {m.label}{m.connection === "lovable" ? " · built-in" : !sample && available[m.provider] === false ? " · needs key" : ""}
                   </SelectItem>
                 ))}
               </SelectGroup>
