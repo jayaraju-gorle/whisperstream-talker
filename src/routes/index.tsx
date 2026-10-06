@@ -104,7 +104,7 @@ function Index() {
           <div className="p-4 sm:p-6">
             <div className="flex items-end justify-between gap-4">
               <div className="min-w-0 text-[10px] uppercase tracking-widest text-muted-foreground sm:text-xs">
-                Turn 04 · voice-to-voice sample
+                Voice latency benchmark
               </div>
               <div className="shrink-0 text-right">
                 <div className="text-2xl font-bold leading-none text-primary sm:text-3xl">
