@@ -26,3 +26,5 @@
 - [x] Verify and optimize studio layouts for mobile, including demo, library and history.
 - [x] Update public provider attribution; add Anthropic Claude 3.5 sample-only options and xAI Grok with pricing; verify tests and preview.
 - [ ] Enable live Grok calls — blocked: needs an xAI API key; routing verified with mocked streaming responses.
+- [x] Replace old Claude sample entries with Sonnet 5 and Haiku 4.5, native streaming, accurate pricing and updated tests (38 passing; preview build clean).
+- [ ] Verify live Anthropic responses — blocked: ANTHROPIC_API_KEY is not configured; native streaming verified with mocked provider responses.

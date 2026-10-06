@@ -11,7 +11,8 @@
 
 - Voice pipeline is browser-orchestrated (src/lib/pipeline.ts): server routes /api/stt, /api/llm, /api/tts only proxy providers so API keys stay server-side; /api/tts always returns raw 24 kHz s16le PCM so the player is provider-agnostic.
 - Provider/model catalog and pricing live in src/lib/catalog.ts; adding a provider means a catalog entry plus a branch in each relevant /api route.
-- Catalog provider identifies the foundation vendor; optional connection identifies built-in transport, preserving saved model IDs and independent key availability. Retired models are sample-only and rejected before paid requests.
+- Catalog provider identifies the foundation vendor; optional connection identifies built-in transport, preserving saved model IDs and independent key availability. Only supported live models are listed to avoid misleading availability.
+- Direct Anthropic models use the native streaming Messages API with server-held ANTHROPIC_API_KEY; normalize text and final token usage to the shared pipeline protocol so comparisons work across providers.
 - Guest access is a public browser-only sample playground with ephemeral scenarios, knowledge and history; it shares AgentPanel with the authenticated playground to preserve visual parity, and never imports paid runners or live connections, preventing anonymous credit abuse.
 - Account profiles are initialized idempotently after confirmed sign-in instead of using a trigger on the managed auth schema.
 - Live speech-to-speech calls use a persistent WebSocket relay (src/lib/live-relay.server.ts, dispatched in src/server.ts and a Vite dev plugin); the browser sends its auth token in app.start and the relay verifies it before opening a paid session.
