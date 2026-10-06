@@ -33,10 +33,9 @@ export const Route = createFileRoute("/api/llm")({
         const { llmId, system, messages } = parsed.data;
         const m = findLlm(llmId);
         if (!m) return json({ error: "Unknown model" }, 400);
-        if (m.retired) return json({ error: `${m.label} has been retired by Anthropic and is available only in the sample demo.` }, 410);
 
         let upstream: Response;
-        let kind: "responses" | "chat";
+        let kind: "responses" | "chat" | "anthropic";
         try {
           if (m.connection === "lovable" && m.model.startsWith("openai/")) {
             kind = "responses";
@@ -55,6 +54,16 @@ export const Route = createFileRoute("/api/llm")({
                   ? { reasoning: { effort: "low", summary: "auto" }, include: ["reasoning.encrypted_content"] }
                   : {}),
               }),
+            });
+          } else if (m.provider === "anthropic") {
+            kind = "anthropic";
+            const key = providerKey("ANTHROPIC_API_KEY");
+            if (!key) return json({ error: "Anthropic needs an API key" }, 400);
+            upstream = await fetch("https://api.anthropic.com/v1/messages", {
+              method: "POST",
+              signal: request.signal,
+              headers: { "x-api-key": key, "anthropic-version": "2023-06-01", "Content-Type": "application/json" },
+              body: JSON.stringify({ model: m.model, system, messages, max_tokens: 1024, stream: true }),
             });
           } else {
             kind = "chat";
@@ -101,6 +110,8 @@ export const Route = createFileRoute("/api/llm")({
         const stream = new ReadableStream<Uint8Array>({
           async start(controller) {
             const send = (o: unknown) => controller.enqueue(enc.encode(JSON.stringify(o) + "\n"));
+            let inputTokens = 0;
+            let outputTokens = 0;
             try {
               for await (const ev of readSse(body)) {
                 if (kind === "responses") {
@@ -110,6 +121,25 @@ export const Route = createFileRoute("/api/llm")({
                     if (u) send({ t: "u", in: u.input_tokens ?? 0, out: u.output_tokens ?? 0 });
                   } else if (ev.type === "response.failed" || ev.type === "error") {
                     send({ t: "e", error: ev.response?.error?.message ?? ev.error?.message ?? ev.message ?? "Model error" });
+                  }
+                } else if (kind === "anthropic") {
+                  if (ev.type === "message_start") {
+                    inputTokens = ev.message?.usage?.input_tokens ?? 0;
+                    outputTokens = ev.message?.usage?.output_tokens ?? 0;
+                  } else if (ev.type === "content_block_delta" && ev.delta?.type === "text_delta") {
+                    if (ev.delta.text) send({ t: "d", v: ev.delta.text });
+                  } else if (ev.type === "message_delta") {
+                    outputTokens = ev.usage?.output_tokens ?? outputTokens;
+                    if (ev.delta?.stop_reason === "refusal") {
+                      send({ t: "e", error: "Anthropic declined this request." });
+                      break;
+                    }
+                  } else if (ev.type === "message_stop") {
+                    send({ t: "u", in: inputTokens, out: outputTokens });
+                    break;
+                  } else if (ev.type === "error") {
+                    send({ t: "e", error: ev.error?.message ?? "Anthropic request failed" });
+                    break;
                   }
                 } else {
                   const d = ev.choices?.[0]?.delta?.content;
