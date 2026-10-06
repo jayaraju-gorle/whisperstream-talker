@@ -121,3 +121,17 @@
     background-size: 32px 32px;
   }
 }
+
+/* Touch controls remain comfortable without changing compact desktop density. */
+@media (pointer: coarse) {
+  button, a[role="button"], [role="combobox"], [role="tab"], [role="menuitem"], [role="option"] {
+    min-height: 44px;
+  }
+  button:has(> svg:only-child) { min-width: 44px; }
+  input:not([type="checkbox"]):not([type="radio"]):not([type="file"]), textarea {
+    font-size: 16px;
+  }
+}
+@media (max-width: 639px) {
+  body { overflow-wrap: break-word; }
+}

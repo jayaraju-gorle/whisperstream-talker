@@ -74,17 +74,17 @@ const STAGES = [
 function Index() {
   return (
     <div className="min-h-screen">
-      <header className="mx-auto flex max-w-6xl items-center justify-between px-6 py-5">
-        <div className="flex items-center gap-2 font-semibold">
-          <Logo className="h-6 w-6" /> Conversational AI Flows Studio
+      <header className="mx-auto grid max-w-6xl grid-cols-[minmax(0,1fr)_auto] items-center gap-4 px-4 py-5 sm:px-6">
+        <div className="flex min-w-0 items-center gap-2 font-semibold">
+          <Logo className="h-6 w-6 shrink-0" /> Conversational AI Flows Studio
         </div>
-        <Link to="/auth" className="text-sm text-muted-foreground hover:text-foreground">
+        <Link to="/auth" className="flex min-h-11 shrink-0 items-center whitespace-nowrap text-sm text-muted-foreground hover:text-foreground">
           Sign in
         </Link>
       </header>
-      <main className="mx-auto max-w-6xl px-6 pb-24 pt-12">
+      <main className="mx-auto max-w-6xl px-4 pb-24 pt-8 sm:px-6 sm:pt-12">
         <p className="font-mono text-xs uppercase tracking-[0.2em] text-primary">Voice &amp; text agent test bench</p>
-        <h1 className="mt-4 max-w-3xl text-5xl font-semibold leading-[1.05] tracking-tight md:text-6xl">
+        <h1 className="mt-4 max-w-3xl text-4xl font-semibold leading-[1.1] sm:text-5xl md:text-6xl">
           Hear — and read — the difference between AI stacks before you commit.
         </h1>
         <p className="mt-6 max-w-xl text-lg text-muted-foreground">
@@ -107,9 +107,9 @@ function Index() {
           </div>
           <div className="mt-4 grid grid-cols-3 gap-px overflow-hidden rounded border border-border bg-border">
             {STAGES.map((s) => (
-              <div key={s.k} className="bg-background p-4">
+              <div key={s.k} className="min-w-0 bg-background p-2 sm:p-4">
                 <div className="text-xs text-muted-foreground">{s.k}</div>
-                <div className="mt-1 text-2xl text-foreground">{s.ms}</div>
+                <div className="mt-1 whitespace-nowrap text-lg text-foreground sm:text-2xl">{s.ms}</div>
                 <div className="mt-1 text-xs text-muted-foreground">{s.label}</div>
               </div>
             ))}

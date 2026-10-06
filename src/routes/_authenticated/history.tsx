@@ -37,8 +37,8 @@ function HistoryPage() {
     <main className="mx-auto w-full max-w-5xl px-4 py-8">
       <h1 className="text-2xl font-semibold">Session history</h1>
       <p className="mt-1 text-sm text-muted-foreground">Every saved turn, with its latency and estimated cost.</p>
-      <div className="mt-6 overflow-hidden rounded-lg border border-border">
-        <table className="w-full text-sm">
+      <div className="mt-6 overflow-x-auto rounded-lg border border-border">
+        <table className="w-full min-w-[640px] text-sm">
           <thead className="bg-card font-mono text-[11px] uppercase tracking-wider text-muted-foreground">
             <tr>
               <th className="px-3 py-2 text-left">Session</th>

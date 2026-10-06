@@ -234,13 +234,13 @@ function Playground() {
       <div className="flex flex-wrap items-center gap-x-6 gap-y-3 border-b border-border px-4 py-3">
         <div className="flex rounded-md border border-border p-0.5 text-sm">
           {(["voice", "text", "live"] as const).map((m) => (
-            <button
+            <Button variant={mode === m ? "default" : "ghost"} size="sm"
               key={m}
               onClick={() => setMode(m)}
               className={cn("rounded px-3 py-1 capitalize", mode === m ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground")}
             >
               {m === "live" ? "Live S2S" : m}
-            </button>
+            </Button>
           ))}
         </div>
         {mode !== "live" && (
@@ -301,7 +301,7 @@ function Playground() {
       </div>
 
       {/* Input dock */}
-      <div className="sticky bottom-0 border-t border-border bg-background/95 px-4 py-3 backdrop-blur">
+      <div className="sm:sticky sm:bottom-0 border-t border-border bg-background/95 px-4 py-3 backdrop-blur">
         {mode === "voice" ? (
           <div className="mx-auto flex max-w-3xl items-center gap-4">
             <button
@@ -320,7 +320,7 @@ function Playground() {
               )}
               {micOn ? <Mic className="h-6 w-6" /> : <MicOff className="h-6 w-6" />}
             </button>
-            <div className="flex-1">
+            <div className="min-w-0 flex-1">
               <div className="flex h-8 items-end gap-[3px]">
                 {Array.from({ length: 48 }).map((_, k) => {
                   const h = micOn ? Math.max(0.08, level * (0.5 + 0.5 * Math.sin(k * 1.7 + level * 10))) : 0.08;

@@ -45,10 +45,10 @@ export function DemoLibrary({ open, onOpenChange, scenarios, kbs, onScenarios, o
   const shownLines = reference && tab === "scenarios" ? built?.sample.join("\n") ?? "" : lines;
   return <Dialog open={open} onOpenChange={onOpenChange}><DialogContent className="max-h-[85vh] max-w-4xl overflow-y-auto"><DialogHeader><DialogTitle>Demo library</DialogTitle></DialogHeader>
     <p className="text-xs text-muted-foreground">Changes stay in this demo until you refresh. Sign in to save your own scenarios and knowledge.</p>
-    <div className="flex gap-2">{(["scenarios", "knowledge"] as const).map((t) => <Button key={t} variant={tab === t ? "default" : "outline"} onClick={() => { setTab(t); select(t === "scenarios" ? "builtin:general" : kbs[0]?.id ?? "", t); }}>{t === "scenarios" ? "Scenarios" : "Knowledge bases"}</Button>)}<Button variant="ghost" onClick={() => select("")}><Plus /> New</Button></div>
-    <div className="grid gap-4 md:grid-cols-[220px_1fr]"><div className="space-y-1">
+    <div className="flex flex-wrap gap-2">{(["scenarios", "knowledge"] as const).map((t) => <Button key={t} variant={tab === t ? "default" : "outline"} onClick={() => { setTab(t); select(t === "scenarios" ? "builtin:general" : kbs[0]?.id ?? "", t); }}>{t === "scenarios" ? "Scenarios" : "Knowledge bases"}</Button>)}<Button variant="ghost" onClick={() => select("")}><Plus /> New</Button></div>
+    <div className="grid gap-4 md:grid-cols-[220px_minmax(0,1fr)]"><div className="space-y-1">
       {(tab === "scenarios" ? [...SCENARIOS.map((s) => ({ id: `builtin:${s.id}`, name: s.label })), ...scenarios.map((s) => ({ id: s.id, name: s.label }))] : kbs).map((item) => <Button key={item.id} variant={id === item.id ? "secondary" : "ghost"} className="h-auto w-full justify-start whitespace-normal text-left" onClick={() => select(item.id)}>{item.name}</Button>)}
-    </div><div className="space-y-3">
+    </div><div className="min-w-0 space-y-3">
       <label className="block space-y-1 text-xs">Name<Input value={shownName} onChange={(e) => setName(e.target.value)} readOnly={reference} maxLength={120} /></label>
       <label className="block space-y-1 text-xs">{tab === "scenarios" ? "Agent instructions" : "Knowledge content"}<Textarea value={shownContent} onChange={(e) => setContent(e.target.value)} readOnly={reference} rows={7} maxLength={tab === "scenarios" ? 6000 : 60000} /></label>
       {tab === "scenarios" && <><label className="block space-y-1 text-xs">Caller lines — one per line<Textarea value={shownLines} onChange={(e) => setLines(e.target.value)} readOnly={reference} rows={5} /></label>

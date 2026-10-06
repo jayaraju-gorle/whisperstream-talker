@@ -38,7 +38,7 @@ function ModelSelect<T extends { provider: ProviderId; id: string; label: string
   onValue: (v: string) => void;
 }) {
   return (
-    <label className="block space-y-1">
+    <label className="block min-w-0 space-y-1">
       <span className="font-mono text-[10px] uppercase tracking-wider text-muted-foreground">{label}</span>
       <Select value={value} onValueChange={onValue}>
         <SelectTrigger className="h-8 text-xs">
@@ -70,7 +70,7 @@ function ModelSelect<T extends { provider: ProviderId; id: string; label: string
 export function AgentConfigForm({ config, onChange, available, customScenarios = [] }: Props) {
   const tts = findTts(config.ttsId);
   return (
-    <div className="grid grid-cols-2 gap-2.5">
+    <div className="grid grid-cols-[repeat(2,minmax(0,1fr))] gap-2.5">
       <ModelSelect label="Speech to text" value={config.sttId} items={STT_MODELS} available={available}
         onValue={(v) => onChange({ ...config, sttId: v })} />
       <ModelSelect label="AI model" value={config.llmId} items={LLM_MODELS} available={available}
@@ -80,7 +80,7 @@ export function AgentConfigForm({ config, onChange, available, customScenarios =
           const t = findTts(v);
           onChange({ ...config, ttsId: v, voice: t?.voices[0]?.id ?? "" });
         }} />
-      <label className="block space-y-1">
+      <label className="block min-w-0 space-y-1">
         <span className="font-mono text-[10px] uppercase tracking-wider text-muted-foreground">Voice</span>
         <Select value={config.voice} onValueChange={(v) => onChange({ ...config, voice: v })}>
           <SelectTrigger className="h-8 text-xs"><SelectValue /></SelectTrigger>
@@ -91,7 +91,7 @@ export function AgentConfigForm({ config, onChange, available, customScenarios =
           </SelectContent>
         </Select>
       </label>
-      <label className="block space-y-1">
+      <label className="block min-w-0 space-y-1">
         <span className="font-mono text-[10px] uppercase tracking-wider text-muted-foreground">Scenario</span>
         <Select value={config.scenario} onValueChange={(v) => onChange({ ...config, scenario: v })}>
           <SelectTrigger className="h-8 text-xs"><SelectValue /></SelectTrigger>
@@ -113,7 +113,7 @@ export function AgentConfigForm({ config, onChange, available, customScenarios =
           </SelectContent>
         </Select>
       </label>
-      <label className="block space-y-1">
+      <label className="block min-w-0 space-y-1">
         <span className="font-mono text-[10px] uppercase tracking-wider text-muted-foreground">Language</span>
         <Select value={config.language} onValueChange={(v) => onChange({ ...config, language: v })}>
           <SelectTrigger className="h-8 text-xs"><SelectValue /></SelectTrigger>

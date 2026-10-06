@@ -21,3 +21,5 @@
 - [ ] Industry PM Playbooks (/playbooks + /playbooks/$slug, Article JSON-LD, "Simulate in Studio" links) — drafts approved in chat
 - [ ] WhatsApp integration (Meta Cloud API, /api/public/whatsapp webhook, on-site QR modal)
 - [ ] Telephony / SIP inbound voice (future)
+
+- [ ] Verify and optimize studio layouts for mobile, including demo, library and history.

@@ -67,13 +67,13 @@ function ListPane<T extends { id: string }>({
       </Button>
       {items.length === 0 && <p className="px-1 text-xs text-muted-foreground">{empty}</p>}
       {items.map((t) => (
-        <button
+        <Button variant="ghost"
           key={t.id}
           onClick={() => onSelect(t.id)}
-          className={cn("block w-full truncate rounded px-2.5 py-1.5 text-left text-sm", selected === t.id ? "bg-secondary text-foreground" : "text-muted-foreground hover:bg-secondary/50 hover:text-foreground")}
+          className={cn("block h-auto min-h-11 w-full truncate rounded px-2.5 py-1.5 text-left text-sm", selected === t.id ? "bg-secondary text-foreground" : "text-muted-foreground hover:bg-secondary/50 hover:text-foreground")}
         >
           {name(t)}
-        </button>
+        </Button>
       ))}
     </div>
   );
@@ -127,9 +127,9 @@ function ScenarioEditor({ userId, items, kbs, refresh }: { userId: string; items
   }
 
   return (
-    <div className="mt-3 grid gap-5 md:grid-cols-[220px_1fr]">
+    <div className="mt-3 grid gap-5 md:grid-cols-[220px_minmax(0,1fr)]">
       <ListPane items={[...SCENARIOS.map((s) => ({ id: `builtin:${s.id}`, label: s.label })), ...items]} selected={sel} onSelect={setSel} onNew={() => setSel(null)} name={(s) => s.label} empty="No scenarios yet." />
-      <div className="space-y-4 rounded-md border border-border p-4">
+      <div className="min-w-0 space-y-4 rounded-md border border-border p-4">
         <label className="block space-y-1">
           <Label>Name</Label>
           <Input value={label} readOnly={!!builtin} onChange={(e) => setLabel(e.target.value)} placeholder="e.g. Dental clinic reception" maxLength={120} />
@@ -218,9 +218,9 @@ function KbEditor({ userId, items, refresh }: { userId: string; items: Knowledge
   }
 
   return (
-    <div className="mt-3 grid gap-5 md:grid-cols-[220px_1fr]">
+    <div className="mt-3 grid gap-5 md:grid-cols-[220px_minmax(0,1fr)]">
       <ListPane items={items} selected={sel} onSelect={setSel} onNew={() => setSel(null)} name={(k) => k.name} empty="No knowledge bases yet." />
-      <div className="space-y-4 rounded-md border border-border p-4">
+      <div className="min-w-0 space-y-4 rounded-md border border-border p-4">
         <label className="block space-y-1">
           <Label>Name</Label>
           <Input value={name} readOnly={builtin} onChange={(e) => setName(e.target.value)} placeholder="e.g. Clinic FAQ & prices" maxLength={120} />

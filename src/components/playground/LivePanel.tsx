@@ -14,7 +14,7 @@ type Line = { role: "user" | "assistant"; text: string };
 
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
-    <label className="block space-y-1">
+    <label className="block min-w-0 space-y-1">
       <span className="font-mono text-[10px] uppercase tracking-wider text-muted-foreground">{label}</span>
       {children}
     </label>
@@ -84,14 +84,14 @@ export function LivePanel({
   }
 
   return (
-    <section className="flex min-h-[60vh] flex-col bg-background">
+    <section className="flex min-h-[60vh] min-w-0 flex-col bg-background">
       <div className="grid gap-4 border-b border-border p-4 lg:grid-cols-[minmax(0,420px)_1fr]">
-        <div>
-          <div className="mb-3 flex items-center gap-2">
+        <div className="min-w-0">
+          <div className="mb-3 grid grid-cols-[auto_minmax(0,1fr)] items-center gap-2">
             <span className="font-mono text-sm font-bold text-agent-a">LIVE S2S</span>
             <span className="text-xs text-muted-foreground">One model listens and speaks — no separate STT or TTS.</span>
           </div>
-          <div className="grid grid-cols-2 gap-2.5">
+          <div className="grid grid-cols-[repeat(2,minmax(0,1fr))] gap-2.5">
             <Field label="Speech-to-speech model">
               <Select value={modelId} disabled={active} onValueChange={(v) => {
                 setModelId(v);
@@ -145,14 +145,14 @@ export function LivePanel({
             </Field>
           </div>
         </div>
-        <div className="space-y-2 self-end">
+        <div className="min-w-0 space-y-2 self-end">
           <div className="grid grid-cols-3 gap-px overflow-hidden rounded border border-border bg-border">
             {[
               ["Status", call.status],
               ["First reply", firstAudioMs != null ? `${Math.round(firstAudioMs)} ms` : "—"],
               ["Billed", seconds ? `${Math.round(seconds)} s · ${fmt((seconds / 60) * model.usdPerMinute)}` : "—"],
             ].map(([k, v]) => (
-              <div key={k} className="bg-background px-2.5 py-2">
+              <div key={k} className="min-w-0 break-words bg-background px-2.5 py-2">
                 <div className="font-mono text-[10px] uppercase tracking-wider text-muted-foreground">{k}</div>
                 <div className={cn("mt-0.5 font-mono text-sm tabular-nums", k === "Billed" && "text-primary")}>{v}</div>
               </div>
@@ -164,7 +164,7 @@ export function LivePanel({
         </div>
       </div>
 
-      <div ref={scroller} className="flex-1 space-y-3 overflow-y-auto p-4" style={{ maxHeight: "55vh" }}>
+      <div ref={scroller} className="min-w-0 flex-1 space-y-3 overflow-y-auto break-words p-4" style={{ maxHeight: "55vh" }}>
         {lines.length === 0 && (
           <p className="pt-10 text-center text-sm text-muted-foreground">
             {active ? "Connecting… the agent will greet you." : "Start a call and talk naturally — you can interrupt any time."}
@@ -179,7 +179,7 @@ export function LivePanel({
         )}
       </div>
 
-      <div className="sticky bottom-0 border-t border-border bg-background/95 px-4 py-3 backdrop-blur">
+      <div className="sm:sticky sm:bottom-0 border-t border-border bg-background/95 px-4 py-3 backdrop-blur">
         <div className="mx-auto flex max-w-3xl flex-wrap items-center gap-3">
           {!active ? (
             <Button onClick={start} disabled={!ok}>

@@ -13,9 +13,9 @@ function Cell({ k, v, hint, strong }: { k: string; v: string; hint: string; stro
         <button
           type="button"
           aria-label={`${k}: ${v}. What does this mean?`}
-          className="group bg-background px-2.5 py-2 text-left transition-colors hover:bg-secondary/40 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+          className="group min-w-0 break-words bg-background px-2.5 py-2 text-left transition-colors hover:bg-secondary/40 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
         >
-          <div className="flex items-center gap-1 font-mono text-[10px] uppercase tracking-wider text-muted-foreground">
+          <div className="flex flex-wrap items-center gap-1 font-mono text-[10px] uppercase tracking-wider text-muted-foreground">
             {k}
             <Info className="h-2.5 w-2.5 opacity-50 group-hover:opacity-100" aria-hidden />
           </div>
@@ -61,7 +61,7 @@ export function TurnMetricLine({ m }: { m: TurnMetrics }) {
       {m.llmTtfbMs != null && <span>llm {ms(m.llmTtfbMs)}</span>}
       {m.ttsTtfbMs != null && <span>tts {ms(m.ttsTtfbMs)}</span>}
       {m.v2vMs != null && <span className="text-primary">v2v {ms(m.v2vMs)}</span>}
-      <span>
+      <span className="min-w-0 break-words">
         {formatUsd(m.cost.total)} (stt {formatUsd(m.cost.stt)} · llm {formatUsd(m.cost.llm)} · tts {formatUsd(m.cost.tts)})
       </span>
     </div>
