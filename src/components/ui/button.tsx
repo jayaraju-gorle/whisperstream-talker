@@ -45,7 +45,10 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
     return (
       <Comp className={cn(buttonVariants({ variant, size, className }), loading && "relative")} ref={ref} disabled={disabled || loading} aria-busy={loading || undefined} {...props}>
         {asChild ? children : loading ? <>
-          <span className="invisible inline-flex items-center gap-2" aria-hidden="true">{children}</span>
+          <span className="invisible grid" aria-hidden="true">
+            <span className="col-start-1 row-start-1 inline-flex items-center justify-center gap-2">{children}</span>
+            {loadingLabel && <span className="col-start-1 row-start-1 inline-flex items-center gap-2"><LoaderCircle />{loadingLabel}</span>}
+          </span>
           <span className="absolute inset-0 flex items-center justify-center gap-2"><LoaderCircle aria-hidden="true" className="motion-safe:animate-spin" /><span className={loadingLabel ? undefined : "sr-only"}>{loadingLabel ?? "Loading…"}</span></span>
         </> : children}
       </Comp>

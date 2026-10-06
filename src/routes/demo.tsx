@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
-import { BookOpen, History, Mic, MicOff, PhoneOff, Play, Radio, RotateCcw, Send, Square } from "lucide-react";
+import { BookOpen, History, LoaderCircle, Mic, MicOff, PhoneOff, Play, Radio, RotateCcw, Send, Square } from "lucide-react";
 import { CurrencySelect } from "@/components/CurrencySelect";
 import { Logo } from "@/components/Logo";
 import { AgentPanel, type PlaygroundTurn } from "@/components/playground/AgentPanel";
@@ -16,6 +16,7 @@ import { DEFAULT_AGENT_A, DEFAULT_AGENT_B, LANGUAGES, S2S_MODELS, SCENARIOS, typ
 import { builtInKnowledge, scenarioSample, type CustomScenario, type KnowledgeBase } from "@/lib/library";
 import { demoMetrics, demoReply } from "@/lib/demo";
 import { cn } from "@/lib/utils";
+import { LoadingIndicator } from "@/components/LoadingIndicator";
 
 export const Route = createFileRoute("/demo")({
   staticData: { sitemap: true },
