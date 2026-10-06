@@ -14,6 +14,7 @@ import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 import { initAnalytics, trackPageView } from "../lib/analytics";
 import { Toaster } from "@/components/ui/sonner";
+import { LoadingIndicator, RouteProgress } from "@/components/LoadingIndicator";
 
 function NotFoundComponent() {
   return (
@@ -101,6 +102,9 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
   }),
   shellComponent: RootShell,
   component: RootComponent,
+  pendingMs: 0,
+  pendingMinMs: 0,
+  pendingComponent: () => <div className="flex min-h-screen items-center justify-center"><LoadingIndicator label="Opening studio…" /></div>,
   notFoundComponent: NotFoundComponent,
   errorComponent: ErrorComponent,
 });
@@ -134,6 +138,7 @@ function RootComponent() {
 
   return (
     <QueryClientProvider client={queryClient}>
+      <RouteProgress />
       {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
       <Outlet />
       <Toaster theme="dark" position="top-center" />

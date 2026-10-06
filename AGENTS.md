@@ -21,3 +21,4 @@
 - Legacy built-in scenarios and their sample knowledge are immutable client-side reference content shared across accounts; keeping them outside per-user rows prevents duplicate seeds and preserves the original wording.
 
 - Mobile layouts use shrinkable grid tracks and shared touch-target rules; input docks remain in page flow on phones so configuration and conversations are not obscured.
+- Loading feedback uses a shared root route/query progress indicator and explicit Button loading states; keep cancellation controls available and reserve button dimensions to prevent layout shifts.

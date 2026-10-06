@@ -7,6 +7,7 @@ import { AgentConfigForm } from "./AgentConfigForm";
 import { MetricsStrip, TurnMetricLine, ms } from "./MetricsStrip";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { LoadingIndicator } from "@/components/LoadingIndicator";
 
 export type PlaygroundTurn = { id: string; user: string; assistant: string; metrics?: TurnMetrics; pending: boolean };
 export type PlaygroundStatus = "transcribing" | "thinking" | "speaking" | "idle";
@@ -79,7 +80,7 @@ export function AgentPanel(props: {
             {(t.assistant || t.pending) && (
               <div className="max-w-[90%]">
                 <p className="text-sm leading-relaxed">
-                  {t.assistant || <span className="font-mono text-xs text-muted-foreground">…</span>}
+                  {t.assistant || <LoadingIndicator label={status === "transcribing" ? "Recognizing speech…" : "Preparing reply…"} />}
                 </p>
                 {t.metrics && <TurnMetricLine m={t.metrics} />}
               </div>

@@ -1,11 +1,13 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
+import { toast } from "sonner";
 import { ArrowLeft, Trash2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { findLlm, findStt, findTts } from "@/lib/catalog";
 import { TurnMetricLine } from "@/components/playground/MetricsStrip";
 import { Button } from "@/components/ui/button";
+import { LoadingIndicator } from "@/components/LoadingIndicator";
 
 export const Route = createFileRoute("/_authenticated/history/$id")({
   staticData: { sitemap: false },
@@ -26,7 +28,8 @@ export const Route = createFileRoute("/_authenticated/history/$id")({
 function SessionPage() {
   const { id } = Route.useParams();
   const navigate = useNavigate();
-  const { data } = useQuery({
+  const [deleting, setDeleting] = useState(false);
+  const { data, isError } = useQuery({
     queryKey: ["conversation", id],
     queryFn: async () => {
       const [c, t] = await Promise.all([
@@ -43,7 +46,8 @@ function SessionPage() {
     if (sessionTitle) document.title = `${sessionTitle} — Session — Conversational AI Flows Studio`;
   }, [sessionTitle]);
 
-  if (!data) return <main className="p-8 text-muted-foreground">Loading…</main>;
+  if (isError) return <main className="p-8 text-destructive">Couldn't load this session. <Link to="/history" className="underline">Back to history</Link></main>;
+  if (!data) return <main className="p-8"><LoadingIndicator label="Loading session…" /></main>;
   const agents = data.conv.compare ? ["A", "B"] : ["A"];
 
   return (
@@ -54,10 +58,19 @@ function SessionPage() {
         <Button
           variant="ghost"
           size="sm"
+          loading={deleting} loadingLabel="Deleting…"
           className="ml-auto text-muted-foreground"
           onClick={async () => {
-            await supabase.from("conversations").delete().eq("id", id);
-            navigate({ to: "/history" });
+            setDeleting(true);
+            try {
+              const { error } = await supabase.from("conversations").delete().eq("id", id);
+              if (error) throw error;
+              await navigate({ to: "/history" });
+            } catch {
+              toast.error("Couldn't delete this session. Please try again.");
+            } finally {
+              setDeleting(false);
+            }
           }}
         >
           <Trash2 className="mr-1.5 h-3.5 w-3.5" /> Delete

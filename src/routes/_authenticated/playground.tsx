@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
-import { Mic, MicOff, Play, RotateCcw, Send, Square } from "lucide-react";
+import { LoaderCircle, Mic, MicOff, Play, RotateCcw, Send, Square } from "lucide-react";
 import { LivePanel } from "@/components/playground/LivePanel";
 import { KnowledgePicker } from "@/components/playground/KnowledgePicker";
 import { useLibrary } from "@/hooks/use-library";
@@ -46,6 +46,7 @@ function Playground() {
   const [muted, setMuted] = useState([false, false]);
   const [available, setAvailable] = useState<Partial<Record<ConnectionId, boolean>>>({});
   const [micOn, setMicOn] = useState(false);
+  const [micStarting, setMicStarting] = useState(false);
   const [level, setLevel] = useState(0);
   const [userSpeaking, setUserSpeaking] = useState(false);
   const [bargeIn, setBargeIn] = useState(true);
@@ -158,6 +159,7 @@ function Playground() {
   );
 
   async function toggleMic() {
+    if (micStarting) return;
     if (micOn) {
       mic.current?.stop();
       mic.current = null;
@@ -182,12 +184,15 @@ function Playground() {
       },
       { silenceMs, sensitivity },
     );
+    setMicStarting(true);
     try {
       await cap.start();
       mic.current = cap;
       setMicOn(true);
     } catch (e) {
       toast.error(e instanceof Error && e.name === "NotAllowedError" ? "Microphone access was blocked." : "Couldn't start the microphone.");
+    } finally {
+      setMicStarting(false);
     }
   }
 
@@ -272,6 +277,7 @@ function Playground() {
         {mode !== "live" && (
           <Button variant={simulating ? "outline" : "secondary"} size="sm" className="ml-auto" onClick={simulate}
             title="Auto-play the selected scenario's sample conversation">
+            {simulating && <LoaderCircle className="h-3.5 w-3.5 motion-safe:animate-spin" />}
             {simulating ? <Square className="mr-1.5 h-3.5 w-3.5" /> : <Play className="mr-1.5 h-3.5 w-3.5" />}
             {simulating ? "Stop simulation" : "Simulate scenario"}
           </Button>
@@ -306,9 +312,9 @@ function Playground() {
       <div className="sm:sticky sm:bottom-0 border-t border-border bg-background/95 px-4 py-3 backdrop-blur">
         {mode === "voice" ? (
           <div className="mx-auto flex max-w-3xl items-center gap-4">
-            <button
+            <Button variant="ghost" size="icon" loading={micStarting}
               onClick={toggleMic}
-              aria-label={micOn ? "Turn microphone off" : "Turn microphone on"}
+              aria-label={micStarting ? "Starting microphone" : micOn ? "Turn microphone off" : "Turn microphone on"}
               className={cn(
                 "relative flex h-14 w-14 shrink-0 items-center justify-center rounded-full border-2 transition-colors",
                 micOn ? "border-primary bg-primary text-primary-foreground" : "border-border bg-card text-foreground hover:border-primary",
@@ -321,7 +327,7 @@ function Playground() {
                 />
               )}
               {micOn ? <Mic className="h-6 w-6" /> : <MicOff className="h-6 w-6" />}
-            </button>
+            </Button>
             <div className="min-w-0 flex-1">
               <div className="flex h-8 items-end gap-[3px]">
                 {Array.from({ length: 48 }).map((_, k) => {
@@ -330,7 +336,7 @@ function Playground() {
                 })}
               </div>
               <p className="mt-1 font-mono text-xs text-muted-foreground">
-                {!micOn
+                {micStarting ? "Starting microphone… allow microphone access if prompted." : !micOn
                   ? "Tap the mic and start talking. Headphones stop the agent from hearing itself."
                   : userSpeaking
                     ? "Listening…"
@@ -356,9 +362,9 @@ function Playground() {
               className="min-h-10 resize-none"
             />
             {anyBusy ? (
-              <Button type="button" variant="outline" onClick={stopAll}><Square className="h-4 w-4" /></Button>
+              <Button type="button" variant="outline" onClick={stopAll} aria-label="Stop reply"><LoaderCircle className="h-4 w-4 motion-safe:animate-spin" /><Square className="h-4 w-4" /></Button>
             ) : (
-              <Button type="submit" disabled={!draft.trim()}><Send className="h-4 w-4" /></Button>
+              <Button type="submit" aria-label="Send message" disabled={!draft.trim()}><Send className="h-4 w-4" /></Button>
             )}
           </form>
         )}

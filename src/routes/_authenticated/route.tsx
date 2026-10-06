@@ -4,6 +4,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { BookOpen, History, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Logo } from "@/components/Logo";
+import { useState } from "react";
+import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated")({
   staticData: { sitemap: "exclude-subtree" },
@@ -19,6 +21,7 @@ export const Route = createFileRoute("/_authenticated")({
 function Layout() {
   const { user } = Route.useRouteContext();
   const navigate = useNavigate();
+  const [signingOut, setSigningOut] = useState(false);
   return (
     <div className="flex min-h-screen flex-col">
       <header className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3 border-b border-border bg-background/80 px-4 py-2.5 backdrop-blur">
@@ -53,9 +56,18 @@ function Layout() {
           <CurrencySelect />
           <span className="hidden max-w-52 truncate font-mono lg:inline">{user.email}</span>
           <Button variant="ghost" size="sm"
+            loading={signingOut} loadingLabel="Signing out…"
             onClick={async () => {
-              await supabase.auth.signOut();
-              navigate({ to: "/auth" });
+              setSigningOut(true);
+              try {
+                const { error } = await supabase.auth.signOut();
+                if (error) throw error;
+                await navigate({ to: "/auth" });
+              } catch {
+                toast.error("Couldn't sign out. Please try again.");
+              } finally {
+                setSigningOut(false);
+              }
             }}
             className="flex items-center gap-1 rounded px-2 py-1 hover:bg-secondary hover:text-foreground"
           >

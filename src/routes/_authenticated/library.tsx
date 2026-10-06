@@ -13,6 +13,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { cn } from "@/lib/utils";
+import { LoadingIndicator } from "@/components/LoadingIndicator";
 
 export const Route = createFileRoute("/_authenticated/library")({
   staticData: { sitemap: false },
@@ -43,6 +44,7 @@ function LibraryPage() {
       <p className="mt-1 text-sm text-muted-foreground">
         Write your own scenarios with caller lines for the simulator, and keep reference knowledge your agents can answer from.
       </p>
+      {lib.loading && <div className="mt-4"><LoadingIndicator label="Loading your library…" /></div>}
       <Tabs defaultValue="scenarios" className="mt-5">
         <TabsList>
           <TabsTrigger value="scenarios">Scenarios</TabsTrigger>
@@ -88,6 +90,7 @@ function ScenarioEditor({ userId, items, kbs, refresh }: { userId: string; items
   const [lines, setLines] = useState("");
   const [kbIds, setKbIds] = useState<string[]>([]);
   const [saving, setSaving] = useState(false);
+  const [deleting, setDeleting] = useState(false);
   const builtin = SCENARIOS.find((x) => `builtin:${x.id}` === sel);
 
   useEffect(() => {
@@ -110,22 +113,26 @@ function ScenarioEditor({ userId, items, kbs, refresh }: { userId: string; items
       kb_ids: kbIds,
       updated_at: new Date().toISOString(),
     };
+    try {
     const res = sel
       ? await supabase.from("custom_scenarios").update(row).eq("id", sel).select("id").single()
       : await supabase.from("custom_scenarios").insert(row).select("id").single();
-    setSaving(false);
     if (res.error) return void toast.error("Couldn't save the scenario");
     setSel(res.data.id);
     refresh();
     toast.success("Scenario saved");
+    } catch { toast.error("Couldn't save the scenario"); } finally { setSaving(false); }
   }
 
   async function remove() {
     if (!sel || !confirm("Delete this scenario?")) return;
-    const { error } = await supabase.from("custom_scenarios").delete().eq("id", sel);
-    if (error) return void toast.error("Couldn't delete");
-    setSel(null);
-    refresh();
+    setDeleting(true);
+    try {
+      const { error } = await supabase.from("custom_scenarios").delete().eq("id", sel);
+      if (error) throw error;
+      setSel(null);
+      refresh();
+    } catch { toast.error("Couldn't delete. Please try again."); } finally { setDeleting(false); }
   }
 
   return (
@@ -164,8 +171,8 @@ function ScenarioEditor({ userId, items, kbs, refresh }: { userId: string; items
           )}
         </div>
         <div className="flex flex-wrap items-center gap-2 border-t border-border pt-4">
-          {!builtin && <Button size="sm" onClick={save} disabled={saving}><Save className="mr-1.5 h-3.5 w-3.5" /> {sel ? "Save changes" : "Create scenario"}</Button>}
-          {sel && !builtin && <Button size="sm" variant="ghost" onClick={remove}><Trash2 className="mr-1.5 h-3.5 w-3.5" /> Delete</Button>}
+          {!builtin && <Button size="sm" onClick={save} loading={saving} loadingLabel="Saving…" disabled={deleting}><Save className="mr-1.5 h-3.5 w-3.5" /> {sel ? "Save changes" : "Create scenario"}</Button>}
+          {sel && !builtin && <Button size="sm" variant="ghost" onClick={remove} loading={deleting} loadingLabel="Deleting…" disabled={saving}><Trash2 className="mr-1.5 h-3.5 w-3.5" /> Delete</Button>}
           <Button size="sm" variant="outline" asChild className="ml-auto">
             <Link to="/playground"><Play className="mr-1.5 h-3.5 w-3.5" /> Run in playground</Link>
           </Button>
@@ -181,6 +188,7 @@ function KbEditor({ userId, items, refresh }: { userId: string; items: Knowledge
   const [name, setName] = useState("");
   const [content, setContent] = useState("");
   const [saving, setSaving] = useState(false);
+  const [deleting, setDeleting] = useState(false);
   const builtin = sel?.startsWith("builtin:") ?? false;
 
   useEffect(() => {
@@ -201,22 +209,26 @@ function KbEditor({ userId, items, refresh }: { userId: string; items: Knowledge
     if (!name.trim()) return void toast.error("Give the knowledge base a name.");
     setSaving(true);
     const row = { user_id: userId, name: name.trim().slice(0, 120), content: content.slice(0, 60000), updated_at: new Date().toISOString() };
+    try {
     const res = sel
       ? await supabase.from("knowledge_bases").update(row).eq("id", sel).select("id").single()
       : await supabase.from("knowledge_bases").insert(row).select("id").single();
-    setSaving(false);
     if (res.error) return void toast.error("Couldn't save");
     setSel(res.data.id);
     refresh();
     toast.success("Knowledge saved");
+    } catch { toast.error("Couldn't save the knowledge base"); } finally { setSaving(false); }
   }
 
   async function remove() {
     if (!sel || !confirm("Delete this knowledge base?")) return;
-    const { error } = await supabase.from("knowledge_bases").delete().eq("id", sel);
-    if (error) return void toast.error("Couldn't delete");
-    setSel(null);
-    refresh();
+    setDeleting(true);
+    try {
+      const { error } = await supabase.from("knowledge_bases").delete().eq("id", sel);
+      if (error) throw error;
+      setSel(null);
+      refresh();
+    } catch { toast.error("Couldn't delete. Please try again."); } finally { setDeleting(false); }
   }
 
   return (
@@ -236,14 +248,14 @@ function KbEditor({ userId, items, refresh }: { userId: string; items: Knowledge
             placeholder="Paste FAQs, prices, opening hours, policies…" />
         </label>
         <div className="flex flex-wrap items-center gap-2 border-t border-border pt-4">
-          {!builtin && <Button size="sm" onClick={save} disabled={saving}><Save className="mr-1.5 h-3.5 w-3.5" /> {sel ? "Save changes" : "Create"}</Button>}
+          {!builtin && <Button size="sm" onClick={save} loading={saving} loadingLabel="Saving…" disabled={deleting}><Save className="mr-1.5 h-3.5 w-3.5" /> {sel ? "Save changes" : "Create"}</Button>}
           {!builtin && <Button size="sm" variant="outline" asChild>
             <label className="cursor-pointer">
               <FileUp className="mr-1.5 h-3.5 w-3.5" /> Load text file
               <input type="file" accept=".txt,.md,.csv,.json,text/*" className="hidden" onChange={(e) => onFile(e.target.files?.[0])} />
             </label>
           </Button>}
-          {sel && !builtin && <Button size="sm" variant="ghost" onClick={remove}><Trash2 className="mr-1.5 h-3.5 w-3.5" /> Delete</Button>}
+          {sel && !builtin && <Button size="sm" variant="ghost" onClick={remove} loading={deleting} loadingLabel="Deleting…" disabled={saving}><Trash2 className="mr-1.5 h-3.5 w-3.5" /> Delete</Button>}
         </div>
         <p className="flex items-start gap-1.5 text-[11px] leading-relaxed text-muted-foreground">
           <BookOpen className="mt-0.5 h-3 w-3 shrink-0" />
