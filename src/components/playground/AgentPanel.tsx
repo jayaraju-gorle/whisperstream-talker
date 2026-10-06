@@ -1,7 +1,7 @@
 import { useEffect, useRef } from "react";
 import { Volume2, VolumeX } from "lucide-react";
 import { useCurrency } from "@/hooks/use-currency";
-import { findLlm, findStt, findTts, type AgentConfig, type ProviderId } from "@/lib/catalog";
+import { findLlm, findStt, findTts, type AgentConfig, type ConnectionId } from "@/lib/catalog";
 import type { TurnMetrics } from "@/lib/pipeline";
 import { AgentConfigForm } from "./AgentConfigForm";
 import { MetricsStrip, TurnMetricLine, ms } from "./MetricsStrip";
@@ -15,7 +15,7 @@ export function AgentPanel(props: {
   label: string;
   config: AgentConfig;
   onConfig: (c: AgentConfig) => void;
-  available: Partial<Record<ProviderId, boolean>>;
+  available: Partial<Record<ConnectionId, boolean>>;
   customScenarios: { id: string; label: string }[];
   turns: PlaygroundTurn[];
   status: PlaygroundStatus;
@@ -51,7 +51,7 @@ export function AgentPanel(props: {
               {props.muted ? <VolumeX className="h-4 w-4" /> : <Volume2 className="h-4 w-4" />}
             </Button>
           </div>
-          <AgentConfigForm config={config} onChange={props.onConfig} available={props.available} customScenarios={props.customScenarios} />
+          <AgentConfigForm config={config} onChange={props.onConfig} available={props.available} customScenarios={props.customScenarios} sample={props.sample ?? false} />
         </div>
         <div className="min-w-0 space-y-2 self-end">
           <div className="grid grid-cols-[auto_minmax(0,1fr)] items-center gap-2 font-mono text-[11px] text-muted-foreground">

@@ -3,7 +3,7 @@ import { Mic, MicOff, PhoneOff, Play, Radio } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useLiveVoice, type LiveEvent } from "@/hooks/use-live-voice";
 import { useCurrency } from "@/hooks/use-currency";
-import { LANGUAGES, PROVIDERS, S2S_MODELS, SCENARIOS, type ProviderId } from "@/lib/catalog";
+import { LANGUAGES, PROVIDERS, S2S_MODELS, SCENARIOS, modelAvailable, type ConnectionId } from "@/lib/catalog";
 import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -25,7 +25,7 @@ export function LivePanel({
   available,
   library,
 }: {
-  available: Partial<Record<ProviderId, boolean>>;
+  available: Partial<Record<ConnectionId, boolean>>;
   library: { scenarios: CustomScenario[]; kbs: KnowledgeBase[] };
 }) {
   const [sessionKbs, setSessionKbs] = useState<string[]>([]);
@@ -73,7 +73,7 @@ export function LivePanel({
   }, [lines]);
 
   const active = call.status === "connecting" || call.status === "connected" || call.status === "stopping";
-  const ok = model.ready && available[model.provider] !== false;
+  const ok = model.ready && modelAvailable(model, available);
 
   function start() {
     setLines([]);

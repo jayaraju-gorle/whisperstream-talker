@@ -33,11 +33,12 @@ export const Route = createFileRoute("/api/llm")({
         const { llmId, system, messages } = parsed.data;
         const m = findLlm(llmId);
         if (!m) return json({ error: "Unknown model" }, 400);
+        if (m.retired) return json({ error: `${m.label} has been retired by Anthropic and is available only in the sample demo.` }, 410);
 
         let upstream: Response;
         let kind: "responses" | "chat";
         try {
-          if (m.provider === "lovable" && m.model.startsWith("openai/")) {
+          if (m.connection === "lovable" && m.model.startsWith("openai/")) {
             kind = "responses";
             const reasoning = m.model !== "openai/chat-latest";
             upstream = await fetch(`${GATEWAY}/responses`, {
@@ -59,12 +60,12 @@ export const Route = createFileRoute("/api/llm")({
             kind = "chat";
             let url: string;
             let headers: Record<string, string>;
-            if (m.provider === "lovable") {
+            if (m.connection === "lovable") {
               url = `${GATEWAY}/chat/completions`;
               headers = gatewayHeaders({ "Content-Type": "application/json" });
             } else {
               const key = providerKey(
-                m.provider === "openai" ? "OPENAI_API_KEY" : m.provider === "sarvam" ? "SARVAM_API_KEY" : "GROQ_API_KEY",
+                m.provider === "openai" ? "OPENAI_API_KEY" : m.provider === "sarvam" ? "SARVAM_API_KEY" : m.provider === "xai" ? "XAI_API_KEY" : "GROQ_API_KEY",
               );
               if (!key) return json({ error: `${m.label} needs an API key` }, 400);
               url =
@@ -72,7 +73,9 @@ export const Route = createFileRoute("/api/llm")({
                   ? "https://api.openai.com/v1/chat/completions"
                   : m.provider === "sarvam"
                     ? "https://api.sarvam.ai/v1/chat/completions"
-                    : "https://api.groq.com/openai/v1/chat/completions";
+                    : m.provider === "xai"
+                      ? "https://api.x.ai/v1/chat/completions"
+                      : "https://api.groq.com/openai/v1/chat/completions";
               headers = { Authorization: `Bearer ${key}`, "Content-Type": "application/json" };
             }
             upstream = await fetch(url, {
