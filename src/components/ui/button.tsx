@@ -1,6 +1,7 @@
 import * as React from "react";
 import { Slot } from "@radix-ui/react-slot";
 import { cva, type VariantProps } from "class-variance-authority";
+import { LoaderCircle } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 
@@ -34,13 +35,20 @@ const buttonVariants = cva(
 export interface ButtonProps
   extends React.ButtonHTMLAttributes<HTMLButtonElement>, VariantProps<typeof buttonVariants> {
   asChild?: boolean;
+  loading?: boolean;
+  loadingLabel?: string;
 }
 
 const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
-  ({ className, variant, size, asChild = false, ...props }, ref) => {
+  ({ className, variant, size, asChild = false, loading = false, loadingLabel, children, disabled, ...props }, ref) => {
     const Comp = asChild ? Slot : "button";
     return (
-      <Comp className={cn(buttonVariants({ variant, size, className }))} ref={ref} {...props} />
+      <Comp className={cn(buttonVariants({ variant, size, className }), loading && "relative")} ref={ref} disabled={disabled || loading} aria-busy={loading || undefined} {...props}>
+        {asChild ? children : loading ? <>
+          <span className="invisible inline-flex items-center gap-2" aria-hidden="true">{children}</span>
+          <span className="absolute inset-0 flex items-center justify-center gap-2"><LoaderCircle aria-hidden="true" className="motion-safe:animate-spin" /><span className={loadingLabel ? undefined : "sr-only"}>{loadingLabel ?? "Loading…"}</span></span>
+        </> : children}
+      </Comp>
     );
   },
 );
