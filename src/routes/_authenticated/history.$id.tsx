@@ -11,6 +11,8 @@ export const Route = createFileRoute("/_authenticated/history/$id")({
   staticData: { sitemap: false },
   head: () => ({
     meta: [
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
       { title: "Session — Conversational AI Flows Studio" },
       { name: "description", content: "Transcript and per-turn metrics for a saved session." },
       { property: "og:title", content: "Session — Conversational AI Flows Studio" },

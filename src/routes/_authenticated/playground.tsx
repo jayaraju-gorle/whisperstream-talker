@@ -21,6 +21,8 @@ export const Route = createFileRoute("/_authenticated/playground")({
   staticData: { sitemap: false },
   head: () => ({
     meta: [
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
       { title: "Playground — Conversational AI Flows Studio" },
       { name: "description", content: "Talk to voice agents and compare provider stacks with live latency and cost." },
       { property: "og:title", content: "Playground — Conversational AI Flows Studio" },
@@ -237,7 +239,7 @@ function Playground() {
             <Button variant={mode === m ? "default" : "ghost"} size="sm"
               key={m}
               onClick={() => setMode(m)}
-              className={cn("rounded px-3 py-1 capitalize", mode === m ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground")}
+              className="capitalize"
             >
               {m === "live" ? "Live S2S" : m}
             </Button>

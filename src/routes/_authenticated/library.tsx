@@ -18,6 +18,8 @@ export const Route = createFileRoute("/_authenticated/library")({
   staticData: { sitemap: false },
   head: () => ({
     meta: [
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
       { title: "Scenarios & knowledge — Conversational AI Flows Studio" },
       { name: "description", content: "Create custom scenarios with caller lines and manage knowledge bases for your agents." },
       { property: "og:title", content: "Scenarios & knowledge — Conversational AI Flows Studio" },

@@ -93,8 +93,8 @@ function AuthPage() {
         <Button asChild variant="ghost" size="icon" className="absolute right-3 top-3" aria-label="Close sign in and return home">
           <Link to="/"><X /></Link>
         </Button>
-        <Link to="/" className="mb-6 flex items-center gap-2 font-semibold">
-          <Logo className="h-7 w-7" /> Conversational AI Flows Studio
+        <Link to="/" className="mb-6 flex min-w-0 items-center gap-2 pr-7 font-semibold">
+          <Logo className="h-7 w-7 shrink-0" /> Conversational AI Flows Studio
         </Link>
         <h1 className="text-xl font-semibold">{mode === "in" ? "Sign in" : "Create account"}</h1>
         <p className="mt-1 text-sm text-muted-foreground">Your sessions and metrics are saved to your account.</p>
