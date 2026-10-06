@@ -13,6 +13,7 @@ export function KnowledgePicker({
   disabled,
   scenarioId,
   scenarios = [],
+  onManage,
 }: {
   kbs: KnowledgeBase[];
   value: string[];
@@ -20,6 +21,7 @@ export function KnowledgePicker({
   disabled?: boolean;
   scenarioId?: string;
   scenarios?: CustomScenario[];
+  onManage?: () => void;
 }) {
   const attached = scenarioId ? activeKbIds(scenarioId, scenarios, []) : [];
   const count = [...new Set([...attached, ...value])].filter((id) => kbs.some((k) => k.id === id)).length;
@@ -52,7 +54,7 @@ export function KnowledgePicker({
         )}
         <p className="mt-3 border-t border-border pt-2 text-[11px] leading-relaxed text-muted-foreground">
           Added on top of any knowledge attached to the scenario.{" "}
-          <Link to="/library" className="text-primary underline-offset-2 hover:underline">Manage library</Link>
+          {onManage ? <Button variant="link" size="sm" className="h-auto p-0 text-xs" onClick={onManage}>Manage library</Button> : <Link to="/library" className="text-primary underline-offset-2 hover:underline">Manage library</Link>}
         </p>
       </PopoverContent>
     </Popover>
