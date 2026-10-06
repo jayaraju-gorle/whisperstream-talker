@@ -277,6 +277,7 @@ function Playground() {
         {mode !== "live" && (
           <Button variant={simulating ? "outline" : "secondary"} size="sm" className="ml-auto" onClick={simulate}
             title="Auto-play the selected scenario's sample conversation">
+            {simulating && <LoaderCircle className="h-3.5 w-3.5 motion-safe:animate-spin" />}
             {simulating ? <Square className="mr-1.5 h-3.5 w-3.5" /> : <Play className="mr-1.5 h-3.5 w-3.5" />}
             {simulating ? "Stop simulation" : "Simulate scenario"}
           </Button>

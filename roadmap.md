@@ -28,4 +28,4 @@
 - [ ] Enable live Grok calls — blocked: needs an xAI API key; routing verified with mocked streaming responses.
 - [x] Replace old Claude sample entries with Sonnet 5 and Haiku 4.5, native streaming, accurate pricing and updated tests (38 passing; preview build clean).
 - [ ] Verify live Anthropic responses — blocked: ANTHROPIC_API_KEY is not configured; native streaming verified with mocked provider responses.
-- [ ] Visible navigation progress and loading feedback for delayed actions across the studio.
+- [x] Visible navigation progress and loading feedback for delayed actions across the studio; browser checked navigation, demo replies, and sign-in error recovery.
