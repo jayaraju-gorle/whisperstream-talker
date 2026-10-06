@@ -2,6 +2,7 @@ import { createFileRoute, Link, Outlet, useMatch } from "@tanstack/react-router"
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useCurrency } from "@/hooks/use-currency";
+import { LoadingIndicator } from "@/components/LoadingIndicator";
 
 export const Route = createFileRoute("/_authenticated/history")({
   staticData: { sitemap: false },
@@ -53,7 +54,7 @@ function HistoryPage() {
           </thead>
           <tbody>
             {isLoading && (
-              <tr><td colSpan={6} className="px-3 py-6 text-center text-muted-foreground">Loading…</td></tr>
+              <tr><td colSpan={6} className="px-3 py-6 text-center text-muted-foreground"><LoadingIndicator label="Loading sessions…" /></td></tr>
             )}
             {data?.length === 0 && (
               <tr><td colSpan={6} className="px-3 py-6 text-center text-muted-foreground">No sessions yet.</td></tr>

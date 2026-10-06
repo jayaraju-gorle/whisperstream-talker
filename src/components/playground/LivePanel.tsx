@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { KnowledgePicker } from "./KnowledgePicker";
 import { buildSystemPrompt, type CustomScenario, type KnowledgeBase } from "@/lib/library";
+import { LoadingIndicator } from "@/components/LoadingIndicator";
 
 type Line = { role: "user" | "assistant"; text: string };
 
@@ -167,7 +168,7 @@ export function LivePanel({
       <div ref={scroller} className="min-w-0 flex-1 space-y-3 overflow-y-auto break-words p-4" style={{ maxHeight: "55vh" }}>
         {lines.length === 0 && (
           <p className="pt-10 text-center text-sm text-muted-foreground">
-            {active ? "Connecting… the agent will greet you." : "Start a call and talk naturally — you can interrupt any time."}
+            {call.status === "connecting" ? <LoadingIndicator label="Connecting… the agent will greet you." /> : active ? "Listening…" : "Start a call and talk naturally — you can interrupt any time."}
           </p>
         )}
         {lines.map((l, i) =>
@@ -187,7 +188,8 @@ export function LivePanel({
             </Button>
           ) : (
             <>
-              <Button variant="destructive" onClick={call.stop} disabled={call.status === "stopping"}>
+              {call.status === "connecting" && <LoadingIndicator label="Connecting call…" />}
+              <Button variant="destructive" onClick={call.stop} loading={call.status === "stopping"} loadingLabel="Ending…">
                 <PhoneOff className="mr-1.5 h-4 w-4" /> End call
               </Button>
               <Button variant="outline" onClick={() => call.setMuted(!call.muted)} disabled={call.status !== "connected"}>

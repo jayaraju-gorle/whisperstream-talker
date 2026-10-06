@@ -39,6 +39,8 @@ function AuthPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [busy, setBusy] = useState(false);
+  const [googleBusy, setGoogleBusy] = useState(false);
+  const [redirecting, setRedirecting] = useState(false);
 
   useEffect(() => {
     let active = true;
@@ -48,6 +50,7 @@ function AuthPage() {
       const { data } = await supabase.auth.getUser();
       if (!active || !data.user) return;
       navigating = true;
+      setRedirecting(true);
       // Profile creation is idempotent, including for accounts created before profiles existed.
       await supabase.from("profiles").upsert({ user_id: data.user.id }, { onConflict: "user_id", ignoreDuplicates: true });
       if (active) navigate({ to: safeNext(next) });
@@ -83,8 +86,15 @@ function AuthPage() {
   }
 
   async function google() {
-    const result = await lovable.auth.signInWithOAuth("google", { redirect_uri: window.location.origin + "/auth" });
-    if (result.error) toast.error(result.error.message ?? "Google sign-in failed");
+    setGoogleBusy(true);
+    try {
+      const result = await lovable.auth.signInWithOAuth("google", { redirect_uri: window.location.origin + "/auth" });
+      if (result.error) toast.error(result.error.message ?? "Google sign-in failed");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Google sign-in failed");
+    } finally {
+      setGoogleBusy(false);
+    }
   }
 
   return (
@@ -98,7 +108,7 @@ function AuthPage() {
         </Link>
         <h1 className="text-xl font-semibold">{mode === "in" ? "Sign in" : "Create account"}</h1>
         <p className="mt-1 text-sm text-muted-foreground">Your sessions and metrics are saved to your account.</p>
-        <Button variant="outline" className="mt-5 w-full" onClick={google} type="button">
+        <Button variant="outline" className="mt-5 w-full" onClick={google} type="button" loading={googleBusy} loadingLabel="Connecting…" disabled={busy || redirecting}>
           Continue with Google
         </Button>
         <div className="my-4 flex items-center gap-3 text-xs text-muted-foreground">
@@ -113,12 +123,13 @@ function AuthPage() {
             <Label htmlFor="pw">Password</Label>
             <Input id="pw" type="password" required minLength={6} value={password} onChange={(e) => setPassword(e.target.value)} />
           </div>
-          <Button className="w-full" disabled={busy}>
+          <Button className="w-full" loading={busy || redirecting} loadingLabel={redirecting ? "Opening studio…" : mode === "in" ? "Signing in…" : "Creating account…"} disabled={googleBusy}>
             {mode === "in" ? "Sign in" : "Create account"}
           </Button>
         </form>
         <Button
           variant="link" type="button" className="mt-4 w-full text-muted-foreground hover:text-foreground"
+          disabled={busy || googleBusy || redirecting}
           onClick={() => setMode(mode === "in" ? "up" : "in")}
         >
           {mode === "in" ? "No account? Create one" : "Already have an account? Sign in"}
