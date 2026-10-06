@@ -144,10 +144,10 @@ function Index() {
       </header>
       <main className="mx-auto max-w-6xl px-4 pb-24 pt-8 sm:px-6 sm:pt-12">
         <p className="font-mono text-xs uppercase tracking-[0.2em] text-primary">Voice &amp; text agent test bench</p>
-        <h1 className="mt-4 max-w-3xl text-4xl font-semibold leading-[1.1] sm:text-5xl md:text-6xl">
+        <h1 className="mt-4 w-full text-4xl font-semibold leading-[1.1] sm:text-5xl md:text-6xl">
           Hear — and read — the difference between AI stacks before you commit.
         </h1>
-        <p className="mt-6 max-w-xl text-lg text-muted-foreground">
+        <p className="mt-6 w-full text-lg text-muted-foreground">
           Speak or type to an agent, swap the transcription, model and voice provider, and watch latency and cost tick
           up on every turn. Test in full voice or text-only mode, run two stacks side by side, and try it all free in
           the demo before you sign in.
@@ -167,7 +167,7 @@ function Index() {
           </Link>
         </div>
 
-        <div className="mt-16 max-w-3xl rounded-lg border border-border bg-card/70 font-mono text-sm">
+        <div className="mt-16 w-full rounded-lg border border-border bg-card/70 font-mono text-sm">
           <div className="p-4 sm:p-6">
             <div className="flex items-end justify-between gap-4">
               <div className="min-w-0 text-[10px] uppercase tracking-widest text-muted-foreground sm:text-xs">
