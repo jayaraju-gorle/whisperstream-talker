@@ -22,9 +22,9 @@ export const Route = createFileRoute("/demo")({
   head: () => ({
     meta: [
       { title: "Guest demo — Conversational AI Flows Studio" },
-      { name: "description", content: "Explore voice, text and live conversation samples, compare agents and try scenarios without AI credits." },
+      { name: "description", content: "Compare sample conversations with OpenAI, Google Gemini, Anthropic Claude and xAI Grok model options without using AI credits." },
       { property: "og:title", content: "Guest demo — Conversational AI Flows Studio" },
-      { property: "og:description", content: "Explore voice, text and live conversation samples, compare agents and try scenarios without AI credits." },
+      { property: "og:description", content: "Compare sample conversations with OpenAI, Google Gemini, Anthropic Claude and xAI Grok model options without using AI credits." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
       { property: "og:url", content: "https://conversationalaistudio.online/demo" },
