@@ -6,6 +6,9 @@ import {
   STT_MODELS,
   TTS_MODELS,
   findTts,
+  modelAvailable,
+  type ModelAccess,
+  type ConnectionId,
   type AgentConfig,
   type ProviderId,
 } from "@/lib/catalog";
@@ -14,7 +17,8 @@ import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrig
 type Props = {
   config: AgentConfig;
   onChange: (c: AgentConfig) => void;
-  available: Partial<Record<ProviderId, boolean>>;
+  available: Partial<Record<ConnectionId, boolean>>;
+  sample?: boolean;
   customScenarios?: { id: string; label: string }[];
 };
 
@@ -24,18 +28,20 @@ function grouped<T extends { provider: ProviderId; id: string; label: string }>(
   return [...groups.entries()];
 }
 
-function ModelSelect<T extends { provider: ProviderId; id: string; label: string }>({
+function ModelSelect<T extends ModelAccess & { id: string; label: string }>({
   label,
   value,
   items,
   available,
   onValue,
+  sample = false,
 }: {
   label: string;
   value: string;
   items: T[];
   available: Props["available"];
   onValue: (v: string) => void;
+  sample?: boolean;
 }) {
   return (
     <label className="block min-w-0 space-y-1">
@@ -46,16 +52,14 @@ function ModelSelect<T extends { provider: ProviderId; id: string; label: string
         </SelectTrigger>
         <SelectContent>
           {grouped(items).map(([prov, list]) => {
-            const ok = available[prov] !== false;
             return (
               <SelectGroup key={prov}>
                 <SelectLabel className="text-[10px] uppercase tracking-wider">
                   {PROVIDERS[prov].label}
-                  {!ok && " · needs key"}
                 </SelectLabel>
                 {list.map((m) => (
-                  <SelectItem key={m.id} value={m.id} disabled={!ok} className="text-xs">
-                    {m.label}
+                  <SelectItem key={m.id} value={m.id} disabled={!sample && !modelAvailable(m, available)} className="text-xs">
+                    {m.label}{m.retired ? " · retired, sample only" : m.connection === "lovable" ? " · built-in" : !sample && available[m.provider] === false ? " · needs key" : ""}
                   </SelectItem>
                 ))}
               </SelectGroup>
@@ -67,15 +71,15 @@ function ModelSelect<T extends { provider: ProviderId; id: string; label: string
   );
 }
 
-export function AgentConfigForm({ config, onChange, available, customScenarios = [] }: Props) {
+export function AgentConfigForm({ config, onChange, available, sample = false, customScenarios = [] }: Props) {
   const tts = findTts(config.ttsId);
   return (
     <div className="grid grid-cols-[repeat(2,minmax(0,1fr))] gap-2.5">
-      <ModelSelect label="Speech to text" value={config.sttId} items={STT_MODELS} available={available}
+      <ModelSelect label="Speech to text" value={config.sttId} items={STT_MODELS} available={available} sample={sample}
         onValue={(v) => onChange({ ...config, sttId: v })} />
-      <ModelSelect label="AI model" value={config.llmId} items={LLM_MODELS} available={available}
+      <ModelSelect label="AI model" value={config.llmId} items={LLM_MODELS} available={available} sample={sample}
         onValue={(v) => onChange({ ...config, llmId: v })} />
-      <ModelSelect label="Voice model" value={config.ttsId} items={TTS_MODELS} available={available}
+      <ModelSelect label="Voice model" value={config.ttsId} items={TTS_MODELS} available={available} sample={sample}
         onValue={(v) => {
           const t = findTts(v);
           onChange({ ...config, ttsId: v, voice: t?.voices[0]?.id ?? "" });

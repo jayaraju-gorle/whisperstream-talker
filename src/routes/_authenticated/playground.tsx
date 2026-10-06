@@ -7,7 +7,7 @@ import { KnowledgePicker } from "@/components/playground/KnowledgePicker";
 import { useLibrary } from "@/hooks/use-library";
 import { buildSystemPrompt, retrievalQuery, scenarioSample } from "@/lib/library";
 import { supabase } from "@/integrations/supabase/client";
-import { DEFAULT_AGENT_A, DEFAULT_AGENT_B, type AgentConfig, type ProviderId } from "@/lib/catalog";
+import { DEFAULT_AGENT_A, DEFAULT_AGENT_B, type AgentConfig, type ConnectionId } from "@/lib/catalog";
 import { AgentRunner, type TurnMetrics } from "@/lib/pipeline";
 import { MicCapture } from "@/lib/audio/engine";
 import { AgentPanel } from "@/components/playground/AgentPanel";
@@ -44,7 +44,7 @@ function Playground() {
   const [turns, setTurns] = useState<Turn[][]>([[], []]);
   const [status, setStatus] = useState<Status[]>(["idle", "idle"]);
   const [muted, setMuted] = useState([false, false]);
-  const [available, setAvailable] = useState<Partial<Record<ProviderId, boolean>>>({});
+  const [available, setAvailable] = useState<Partial<Record<ConnectionId, boolean>>>({});
   const [micOn, setMicOn] = useState(false);
   const [level, setLevel] = useState(0);
   const [userSpeaking, setUserSpeaking] = useState(false);

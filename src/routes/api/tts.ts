@@ -54,7 +54,7 @@ export const Route = createFileRoute("/api/tts")({
         const pcmHeaders = { "Content-Type": "audio/L16; rate=24000; channels=1", "Cache-Control": "no-cache" };
 
         try {
-          if (m.provider === "lovable") {
+          if (m.connection === "lovable") {
             const isGemini = m.model.startsWith("google/");
             const res = await fetch(`${GATEWAY}/audio/speech`, {
               method: "POST",

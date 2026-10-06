@@ -29,7 +29,7 @@ export const Route = createFileRoute("/api/stt")({
         const lang = language !== "auto" ? language : undefined;
 
         try {
-          if (m.provider === "lovable") {
+          if (m.connection === "lovable") {
             const fd = new FormData();
             fd.append("file", new Blob([await file.arrayBuffer()], { type: "audio/wav" }), "speech.wav");
             fd.append("model", m.model);

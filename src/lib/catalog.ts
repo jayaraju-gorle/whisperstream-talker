@@ -1,20 +1,28 @@
 // Client-safe provider catalog, scenarios, and pricing. Prices are estimates
 // (USD) and should be checked against each vendor's pricing page.
 
-export type ProviderId = "lovable" | "openai" | "groq" | "deepgram" | "elevenlabs" | "sarvam" | "google";
+export type ProviderId = "openai" | "groq" | "deepgram" | "elevenlabs" | "sarvam" | "google" | "anthropic" | "xai";
+export type ConnectionId = ProviderId | "lovable";
+export type ModelAccess = { provider: ProviderId; connection?: ConnectionId; retired?: boolean };
+
+export function modelAvailable(model: ModelAccess, available: Partial<Record<ConnectionId, boolean>>) {
+  return !model.retired && available[model.connection ?? model.provider] !== false;
+}
+
 export type Layer = "stt" | "llm" | "tts";
 
 export const PROVIDERS: Record<ProviderId, { label: string; secret: string | null }> = {
-  lovable: { label: "Lovable AI", secret: null },
   openai: { label: "OpenAI", secret: "OPENAI_API_KEY" },
   groq: { label: "Groq", secret: "GROQ_API_KEY" },
   deepgram: { label: "Deepgram", secret: "DEEPGRAM_API_KEY" },
   elevenlabs: { label: "ElevenLabs", secret: "ELEVENLABS_API_KEY" },
   sarvam: { label: "Sarvam AI", secret: "SARVAM_API_KEY" },
-  google: { label: "Google AI", secret: "GEMINI_API_KEY" },
+  google: { label: "Google Gemini", secret: "GEMINI_API_KEY" },
+  anthropic: { label: "Anthropic", secret: "ANTHROPIC_API_KEY" },
+  xai: { label: "xAI", secret: "XAI_API_KEY" },
 };
 
-export type SttModel = {
+export type SttModel = ModelAccess & {
   id: string; // catalog key
   provider: ProviderId;
   model: string; // provider model id
@@ -22,16 +30,17 @@ export type SttModel = {
   usdPerMinute: number;
 };
 
-export type LlmModel = {
+export type LlmModel = ModelAccess & {
   id: string;
   provider: ProviderId;
   model: string;
   label: string;
   usdPerMInput: number;
   usdPerMOutput: number;
+  longContext?: { threshold: number; usdPerMInput: number; usdPerMOutput: number };
 };
 
-export type TtsModel = {
+export type TtsModel = ModelAccess & {
   id: string;
   provider: ProviderId;
   model: string;
@@ -41,9 +50,9 @@ export type TtsModel = {
 };
 
 export const STT_MODELS: SttModel[] = [
-  { id: "lv-4o-mini-transcribe", provider: "lovable", model: "openai/gpt-4o-mini-transcribe", label: "GPT-4o mini Transcribe", usdPerMinute: 0.003 },
-  { id: "lv-4o-transcribe", provider: "lovable", model: "openai/gpt-4o-transcribe", label: "GPT-4o Transcribe", usdPerMinute: 0.006 },
-  { id: "lv-gemini-transcribe", provider: "lovable", model: "google/gemini-3.5-transcribe", label: "Gemini 3.5 Transcribe", usdPerMinute: 0.004 },
+  { id: "lv-4o-mini-transcribe", provider: "openai", connection: "lovable", model: "openai/gpt-4o-mini-transcribe", label: "GPT-4o mini Transcribe", usdPerMinute: 0.003 },
+  { id: "lv-4o-transcribe", provider: "openai", connection: "lovable", model: "openai/gpt-4o-transcribe", label: "GPT-4o Transcribe", usdPerMinute: 0.006 },
+  { id: "lv-gemini-transcribe", provider: "google", connection: "lovable", model: "google/gemini-3.5-transcribe", label: "Gemini 3.5 Transcribe", usdPerMinute: 0.004 },
   { id: "dg-nova-3", provider: "deepgram", model: "nova-3", label: "Deepgram Nova-3", usdPerMinute: 0.0043 },
   { id: "groq-whisper-v3", provider: "groq", model: "whisper-large-v3", label: "Whisper v3 (Groq)", usdPerMinute: 0.00185 },
   { id: "groq-whisper-v3-turbo", provider: "groq", model: "whisper-large-v3-turbo", label: "Whisper v3 Turbo (Groq)", usdPerMinute: 0.000667 },
@@ -53,13 +62,19 @@ export const STT_MODELS: SttModel[] = [
   { id: "oa-4o-mini-transcribe", provider: "openai", model: "gpt-4o-mini-transcribe", label: "GPT-4o mini Transcribe (OpenAI)", usdPerMinute: 0.003 },
 ];
 
+// Claude 3.5 models are retired on the first-party API; retained for sample comparisons only.
+// Sources: platform.claude.com/docs/en/about-claude/model-deprecations,
+// anthropic.com/news/3-5-models-and-computer-use, docs.x.ai/developers/models.
 export const LLM_MODELS: LlmModel[] = [
-  { id: "lv-gpt-6-astra", provider: "lovable", model: "openai/gpt-6-astra", label: "GPT-6 Astra", usdPerMInput: 5, usdPerMOutput: 20 },
-  { id: "lv-gpt-6-sol", provider: "lovable", model: "openai/gpt-6-sol", label: "GPT-6 Sol", usdPerMInput: 1.5, usdPerMOutput: 6 },
-  { id: "lv-gpt-6-luna", provider: "lovable", model: "openai/gpt-6-luna", label: "GPT-6 Luna", usdPerMInput: 0.2, usdPerMOutput: 0.8 },
-  { id: "lv-chat-latest", provider: "lovable", model: "openai/chat-latest", label: "ChatGPT Instant", usdPerMInput: 1.25, usdPerMOutput: 10 },
-  { id: "lv-gemini-3.5-flash", provider: "lovable", model: "google/gemini-3.5-flash", label: "Gemini 3.5 Flash", usdPerMInput: 0.3, usdPerMOutput: 2.5 },
-  { id: "lv-gemini-2.5-flash-lite", provider: "lovable", model: "google/gemini-2.5-flash-lite", label: "Gemini 2.5 Flash-Lite", usdPerMInput: 0.1, usdPerMOutput: 0.4 },
+  { id: "an-claude-3.5-sonnet", provider: "anthropic", model: "claude-3-5-sonnet-20241022", label: "Claude 3.5 Sonnet", usdPerMInput: 3, usdPerMOutput: 15, retired: true },
+  { id: "an-claude-3.5-haiku", provider: "anthropic", model: "claude-3-5-haiku-20241022", label: "Claude 3.5 Haiku", usdPerMInput: 0.8, usdPerMOutput: 4, retired: true },
+  { id: "xai-grok-4.7", provider: "xai", model: "grok-4.7", label: "Grok 4.7", usdPerMInput: 2, usdPerMOutput: 6, longContext: { threshold: 200000, usdPerMInput: 4, usdPerMOutput: 12 } },
+  { id: "lv-gpt-6-astra", provider: "openai", connection: "lovable", model: "openai/gpt-6-astra", label: "GPT-6 Astra", usdPerMInput: 5, usdPerMOutput: 20 },
+  { id: "lv-gpt-6-sol", provider: "openai", connection: "lovable", model: "openai/gpt-6-sol", label: "GPT-6 Sol", usdPerMInput: 1.5, usdPerMOutput: 6 },
+  { id: "lv-gpt-6-luna", provider: "openai", connection: "lovable", model: "openai/gpt-6-luna", label: "GPT-6 Luna", usdPerMInput: 0.2, usdPerMOutput: 0.8 },
+  { id: "lv-chat-latest", provider: "openai", connection: "lovable", model: "openai/chat-latest", label: "ChatGPT Instant", usdPerMInput: 1.25, usdPerMOutput: 10 },
+  { id: "lv-gemini-3.5-flash", provider: "google", connection: "lovable", model: "google/gemini-3.5-flash", label: "Gemini 3.5 Flash", usdPerMInput: 0.3, usdPerMOutput: 2.5 },
+  { id: "lv-gemini-2.5-flash-lite", provider: "google", connection: "lovable", model: "google/gemini-2.5-flash-lite", label: "Gemini 2.5 Flash-Lite", usdPerMInput: 0.1, usdPerMOutput: 0.4 },
   { id: "oa-gpt-4.1-mini", provider: "openai", model: "gpt-4.1-mini", label: "GPT-4.1 mini (OpenAI)", usdPerMInput: 0.4, usdPerMOutput: 1.6 },
   { id: "oa-gpt-4.1-nano", provider: "openai", model: "gpt-4.1-nano", label: "GPT-4.1 nano (OpenAI)", usdPerMInput: 0.1, usdPerMOutput: 0.4 },
   { id: "sv-sarvam-30b", provider: "sarvam", model: "sarvam-30b", label: "Sarvam 30B", usdPerMInput: 0.028, usdPerMOutput: 0.114 },
@@ -74,9 +89,9 @@ const OPENAI_VOICES = ["alloy", "ash", "coral", "sage", "verse", "shimmer"].map(
 const GEMINI_VOICES = ["Kore", "Puck", "Charon", "Aoede", "Fenrir", "Leda"].map((v) => ({ id: v, label: v }));
 
 export const TTS_MODELS: TtsModel[] = [
-  { id: "lv-4o-mini-tts", provider: "lovable", model: "openai/gpt-4o-mini-tts", label: "GPT-4o mini TTS", usdPer1kChars: 0.015, voices: OPENAI_VOICES },
-  { id: "lv-gemini-flash-tts", provider: "lovable", model: "google/gemini-2.5-flash-tts", label: "Gemini 2.5 Flash TTS", usdPer1kChars: 0.01, voices: GEMINI_VOICES },
-  { id: "lv-gemini-3.1-tts", provider: "lovable", model: "google/gemini-3.1-flash-tts-preview", label: "Gemini 3.1 Flash TTS", usdPer1kChars: 0.01, voices: GEMINI_VOICES },
+  { id: "lv-4o-mini-tts", provider: "openai", connection: "lovable", model: "openai/gpt-4o-mini-tts", label: "GPT-4o mini TTS", usdPer1kChars: 0.015, voices: OPENAI_VOICES },
+  { id: "lv-gemini-flash-tts", provider: "google", connection: "lovable", model: "google/gemini-2.5-flash-tts", label: "Gemini 2.5 Flash TTS", usdPer1kChars: 0.01, voices: GEMINI_VOICES },
+  { id: "lv-gemini-3.1-tts", provider: "google", connection: "lovable", model: "google/gemini-3.1-flash-tts-preview", label: "Gemini 3.1 Flash TTS", usdPer1kChars: 0.01, voices: GEMINI_VOICES },
   {
     id: "dg-aura-2", provider: "deepgram", model: "aura-2", label: "Deepgram Aura-2", usdPer1kChars: 0.03,
     voices: ["thalia", "andromeda", "helena", "apollo", "orion", "arcas"].map((v) => ({ id: `aura-2-${v}-en`, label: v })),
@@ -100,7 +115,7 @@ export const TTS_MODELS: TtsModel[] = [
 ];
 
 // Speech-to-speech (realtime) models: one model hears and speaks directly.
-export type S2sModel = {
+export type S2sModel = ModelAccess & {
   id: string;
   provider: ProviderId;
   label: string;
@@ -111,7 +126,7 @@ export type S2sModel = {
 
 export const S2S_MODELS: S2sModel[] = [
   {
-    id: "lv-gpt-live-1", provider: "lovable", label: "GPT Live (built-in)", usdPerMinute: 0.05, ready: true,
+    id: "lv-gpt-live-1", provider: "openai", connection: "lovable", label: "GPT Live (OpenAI)", usdPerMinute: 0.05, ready: true,
     voices: ["marin", "cedar", "gleam", "meridian", "willow", "vesper"].map((v) => ({ id: v, label: v })),
   },
   {
@@ -236,9 +251,10 @@ export type CostBreakdown = { stt: number; llm: number; tts: number; total: numb
 export function computeCost(cfg: Pick<AgentConfig, "sttId" | "llmId" | "ttsId">, u: Usage): CostBreakdown {
   const stt = ((u.audioSeconds ?? 0) / 60) * (findStt(cfg.sttId)?.usdPerMinute ?? 0);
   const llmModel = findLlm(cfg.llmId);
+  const rates = llmModel?.longContext && (u.inputTokens ?? 0) >= llmModel.longContext.threshold ? llmModel.longContext : llmModel;
   const llm =
-    ((u.inputTokens ?? 0) / 1_000_000) * (llmModel?.usdPerMInput ?? 0) +
-    ((u.outputTokens ?? 0) / 1_000_000) * (llmModel?.usdPerMOutput ?? 0);
+    ((u.inputTokens ?? 0) / 1_000_000) * (rates?.usdPerMInput ?? 0) +
+    ((u.outputTokens ?? 0) / 1_000_000) * (rates?.usdPerMOutput ?? 0);
   const tts = ((u.ttsChars ?? 0) / 1000) * (findTts(cfg.ttsId)?.usdPer1kChars ?? 0);
   return { stt, llm, tts, total: stt + llm + tts };
 }
