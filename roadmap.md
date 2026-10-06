@@ -24,3 +24,4 @@
 - [ ] Telephony / SIP inbound voice (future)
 
 - [x] Verify and optimize studio layouts for mobile, including demo, library and history.
+- [ ] Update public provider attribution; add Anthropic and xAI model options, accurate pricing and availability; verify tests and preview.
