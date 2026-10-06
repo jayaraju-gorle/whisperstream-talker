@@ -83,7 +83,7 @@ function Demo() {
       return { index: i, turn: { id: crypto.randomUUID(), user: text, assistant: reply, pending: true, metrics: demoMetrics(cfg, i, s.mode !== "text", text, reply, s.mode !== "text" || s.speakReplies) } };
     });
     setBusy(true);
-    setTurns((all) => all.map((list, i) => { const item = additions.find((a) => a.index === i); return item ? [...list, { ...item.turn, assistant: "", metrics: undefined }] : list; }));
+    setTurns((all) => all.map((list, i) => { const item = additions.find((a) => a.index === i); return item ? [...list, { id: item.turn.id, user: text, assistant: "", pending: true }] : list; }));
     const count = Math.max(...additions.map((a) => a.turn.assistant.length));
     for (let end = 32; end < count + 32; end += 32) {
       await new Promise((r) => setTimeout(r, 35));

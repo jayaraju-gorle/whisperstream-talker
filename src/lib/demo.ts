@@ -16,7 +16,7 @@ export function demoReply(config: AgentConfig, text: string, turn: number, scena
   };
   const sample = scenarioSample(config.scenario, scenarios);
   const position = sample.indexOf(text);
-  const replies = scripts[config.scenario] ?? scripts.general ?? [];
+  const replies = scripts[config.scenario] ?? scripts["general"] ?? [];
   return replies[(position >= 0 ? position : turn) % replies.length] ?? "Sign in to get a real AI response.";
 }
 
