@@ -49,7 +49,7 @@ export const Route = createFileRoute("/")({
               featureList: [
                 "Live voice and text conversations with AI agents",
                 "Text-only mode for testing LLM stacks without speech providers",
-                "Swappable STT, LLM and TTS providers (OpenAI, Groq, Deepgram, ElevenLabs, Lovable AI)",
+                "Swappable STT, LLM and TTS providers (Lovable AI, OpenAI, Groq, Deepgram, ElevenLabs, Sarvam AI, Google Gemini)",
                 "Real-time latency metrics: time to first token, time to first audio, voice-to-voice",
                 "Estimated cost per turn and per session",
                 "Side-by-side comparison of two agent stacks in voice or text",
@@ -145,7 +145,7 @@ function Index() {
         <div className="mt-16 grid gap-6 md:grid-cols-4">
           {[
             { icon: Mic, t: "Live voice & text", d: "Talk through your mic or just type — the agent replies as it thinks, sentence by sentence, spoken or written." },
-            { icon: Shuffle, t: "Swap providers", d: "Lovable AI, OpenAI, Groq, Deepgram and ElevenLabs for each step — or skip speech entirely in text mode." },
+            { icon: Shuffle, t: "Swap providers", d: "Lovable AI, OpenAI, Groq, Deepgram, ElevenLabs, Sarvam AI and Google Gemini for each step — or skip speech entirely in text mode." },
             { icon: Gauge, t: "Real metrics", d: "Time to first token, time to first audio, voice-to-voice latency and cost per step." },
             { icon: Columns2, t: "Compare", d: "One message, two differently configured agents answering side by side — in voice or text." },
           ].map(({ icon: Icon, t, d }) => (
