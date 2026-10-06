@@ -18,6 +18,7 @@
 - [x] Google Search Console: verification meta tag live, sitemap submitted (0 errors)
 - [ ] Google Search Console: Request Indexing on the homepage
 - [x] GA4 analytics: gtag.js in root layout, page views on client-side route changes (measurement ID via connector)
+- [x] Homepage copy refresh: all providers listed, demo mode and comparison described, feature cards polished
 - [ ] Industry PM Playbooks (/playbooks + /playbooks/$slug, Article JSON-LD, "Simulate in Studio" links) — drafts approved in chat
 - [ ] WhatsApp integration (Meta Cloud API, /api/public/whatsapp webhook, on-site QR modal)
 - [ ] Telephony / SIP inbound voice (future)
