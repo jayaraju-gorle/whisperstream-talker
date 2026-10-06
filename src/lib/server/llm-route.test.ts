@@ -7,7 +7,7 @@ vi.mock("@/lib/server/auth.server", async (original) => ({
   providerKey: vi.fn((name: string) => name === "XAI_API_KEY" ? "test-xai-key" : undefined),
 }));
 
-import { Route } from "./llm";
+import { Route } from "../../routes/api/llm";
 
 const handler = (Route as unknown as { server: { handlers: { POST: (args: { request: Request }) => Promise<Response> } } }).server.handlers.POST;
 function request(llmId: string) {
