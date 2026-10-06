@@ -3,10 +3,10 @@
 
 export type ProviderId = "openai" | "groq" | "deepgram" | "elevenlabs" | "sarvam" | "google" | "anthropic" | "xai";
 export type ConnectionId = ProviderId | "lovable";
-export type ModelAccess = { provider: ProviderId; connection?: ConnectionId; retired?: boolean };
+export type ModelAccess = { provider: ProviderId; connection?: ConnectionId };
 
 export function modelAvailable(model: ModelAccess, available: Partial<Record<ConnectionId, boolean>>) {
-  return !model.retired && available[model.connection ?? model.provider] !== false;
+  return available[model.connection ?? model.provider] !== false;
 }
 
 export type Layer = "stt" | "llm" | "tts";
@@ -62,12 +62,11 @@ export const STT_MODELS: SttModel[] = [
   { id: "oa-4o-mini-transcribe", provider: "openai", model: "gpt-4o-mini-transcribe", label: "GPT-4o mini Transcribe (OpenAI)", usdPerMinute: 0.003 },
 ];
 
-// Claude 3.5 models are retired on the first-party API; retained for sample comparisons only.
-// Sources: platform.claude.com/docs/en/about-claude/model-deprecations,
-// anthropic.com/news/3-5-models-and-computer-use, docs.x.ai/developers/models.
+// First-party model IDs and standard USD/MTok pricing:
+// https://platform.claude.com/docs/en/models/overview
 export const LLM_MODELS: LlmModel[] = [
-  { id: "an-claude-3.5-sonnet", provider: "anthropic", model: "claude-3-5-sonnet-20241022", label: "Claude 3.5 Sonnet", usdPerMInput: 3, usdPerMOutput: 15, retired: true },
-  { id: "an-claude-3.5-haiku", provider: "anthropic", model: "claude-3-5-haiku-20241022", label: "Claude 3.5 Haiku", usdPerMInput: 0.8, usdPerMOutput: 4, retired: true },
+  { id: "an-claude-sonnet-5", provider: "anthropic", model: "claude-sonnet-5", label: "Claude Sonnet 5", usdPerMInput: 2, usdPerMOutput: 10 },
+  { id: "an-claude-haiku-4.5", provider: "anthropic", model: "claude-haiku-4-5-20251001", label: "Claude Haiku 4.5", usdPerMInput: 1, usdPerMOutput: 5 },
   { id: "xai-grok-4.7", provider: "xai", model: "grok-4.7", label: "Grok 4.7", usdPerMInput: 2, usdPerMOutput: 6, longContext: { threshold: 200000, usdPerMInput: 4, usdPerMOutput: 12 } },
   { id: "lv-gpt-6-astra", provider: "openai", connection: "lovable", model: "openai/gpt-6-astra", label: "GPT-6 Astra", usdPerMInput: 5, usdPerMOutput: 20 },
   { id: "lv-gpt-6-sol", provider: "openai", connection: "lovable", model: "openai/gpt-6-sol", label: "GPT-6 Sol", usdPerMInput: 1.5, usdPerMOutput: 6 },

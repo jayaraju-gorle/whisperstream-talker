@@ -49,20 +49,17 @@ describe("provider model access and pricing", () => {
     expect(modelAvailable(model, { lovable: false, openai: true })).toBe(false);
   });
 
-  it("keeps retired Claude 3.5 Sonnet unavailable for live calls and preserves historical pricing", () => {
-    const model = findLlm("an-claude-3.5-sonnet");
-    if (!model) throw new Error("Missing Sonnet");
-    expect(modelAvailable(model, { anthropic: true })).toBe(false);
-    expect(model.usdPerMInput).toBe(3);
-    expect(model.usdPerMOutput).toBe(15);
-  });
-
-  it("keeps retired Claude 3.5 Haiku unavailable for live calls and uses its revised historical pricing", () => {
-    const model = findLlm("an-claude-3.5-haiku");
-    if (!model) throw new Error("Missing Haiku");
-    expect(modelAvailable(model, { anthropic: true })).toBe(false);
-    expect(model.usdPerMInput).toBe(0.8);
-    expect(model.usdPerMOutput).toBe(4);
+  it.each([
+    ["an-claude-sonnet-5", "claude-sonnet-5", 2, 10],
+    ["an-claude-haiku-4.5", "claude-haiku-4-5-20251001", 1, 5],
+  ])("uses live Anthropic access and pricing for %s", (id, apiModel, input, output) => {
+    const model = findLlm(String(id));
+    if (!model) throw new Error("Missing Claude model");
+    expect(model.model).toBe(apiModel);
+    expect(modelAvailable(model, { anthropic: true, groq: false })).toBe(true);
+    expect(modelAvailable(model, { anthropic: false, groq: true })).toBe(false);
+    const cost = computeCost({ sttId: "x", llmId: String(id), ttsId: "x" }, { inputTokens: 1000000, outputTokens: 1000000 });
+    expect(cost.llm).toBe(Number(input) + Number(output));
   });
 
   it("requires the xAI connection for Grok, independently of Groq", () => {
