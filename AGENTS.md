@@ -17,3 +17,5 @@
 - Costs are stored in USD; display currency is converted client-side from /api/public/rates (daily rates + edge-country suggestion) and the user's choice is saved in profiles.preferences.currency.
 - Custom scenarios and knowledge bases are per-user rows; the system prompt is built client-side in src/lib/library.ts; cascade turns include only BM25-retrieved knowledge passages for the recent caller messages (no embeddings, zero added latency), while live calls get capped full knowledge since the relay has no per-turn hook and sent to /api/llm or the live relay, so all modes share one prompt builder.
 - Legacy built-in scenarios and their sample knowledge are immutable client-side reference content shared across accounts; keeping them outside per-user rows prevents duplicate seeds and preserves the original wording.
+
+- Mobile layouts use shrinkable grid tracks and shared touch-target rules; input docks remain in page flow on phones so configuration and conversations are not obscured.

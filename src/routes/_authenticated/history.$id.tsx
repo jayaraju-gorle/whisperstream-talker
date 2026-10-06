@@ -11,6 +11,8 @@ export const Route = createFileRoute("/_authenticated/history/$id")({
   staticData: { sitemap: false },
   head: () => ({
     meta: [
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
       { title: "Session — Conversational AI Flows Studio" },
       { name: "description", content: "Transcript and per-turn metrics for a saved session." },
       { property: "og:title", content: "Session — Conversational AI Flows Studio" },
@@ -46,9 +48,9 @@ function SessionPage() {
 
   return (
     <main className="mx-auto w-full max-w-6xl px-4 py-8">
-      <div className="flex items-center gap-3">
-        <Link to="/history" className="text-muted-foreground hover:text-foreground"><ArrowLeft className="h-4 w-4" /></Link>
-        <h1 className="text-xl font-semibold">{data.conv.title}</h1>
+      <div className="grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-3">
+        <Link to="/history" aria-label="Back to history" className="flex h-11 w-11 shrink-0 items-center justify-center text-muted-foreground hover:text-foreground"><ArrowLeft className="h-4 w-4" /></Link>
+        <h1 className="min-w-0 break-words text-xl font-semibold">{data.conv.title}</h1>
         <Button
           variant="ghost"
           size="sm"
@@ -66,7 +68,7 @@ function SessionPage() {
           const list = data.turns.filter((t) => t.agent === a);
           const cfg = (list[0]?.metrics as any)?.config;
           return (
-            <section key={a} className="rounded-lg border border-border bg-card/50 p-4">
+            <section key={a} className="min-w-0 break-words rounded-lg border border-border bg-card/50 p-4">
               <div className={`font-mono text-sm font-bold ${a === "A" ? "text-agent-a" : "text-agent-b"}`}>AGENT {a}</div>
               {cfg && (
                 <p className="mt-1 text-xs text-muted-foreground">
