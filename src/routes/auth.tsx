@@ -11,7 +11,7 @@ import { Label } from "@/components/ui/label";
 import { X } from "lucide-react";
 
 export const Route = createFileRoute("/auth")({
-  staticData: { sitemap: false },
+  staticData: { sitemap: true },
   validateSearch: z.object({ next: z.string().optional() }),
   head: () => ({
     meta: [
@@ -19,7 +19,11 @@ export const Route = createFileRoute("/auth")({
       { name: "description", content: "Sign in to save voice agent sessions, metrics and comparisons." },
       { property: "og:title", content: "Sign in — Conversational AI Flows Studio" },
       { property: "og:description", content: "Sign in to save voice agent sessions, metrics and comparisons." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
+      { property: "og:url", content: "https://conversationalaistudio.online/auth" },
     ],
+    links: [{ rel: "canonical", href: "https://conversationalaistudio.online/auth" }],
   }),
   component: AuthPage,
 });

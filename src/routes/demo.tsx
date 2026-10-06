@@ -12,7 +12,7 @@ import { computeCost } from "@/lib/catalog";
 import type { TurnMetrics } from "@/lib/pipeline";
 
 export const Route = createFileRoute("/demo")({
-  staticData: { sitemap: false },
+  staticData: { sitemap: true },
   head: () => ({
     meta: [
       { title: "Guest demo — Conversational AI Flows Studio" },
@@ -21,7 +21,9 @@ export const Route = createFileRoute("/demo")({
       { property: "og:description", content: "Explore a sample voice and text AI comparison without signing in." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
+      { property: "og:url", content: "https://conversationalaistudio.online/demo" },
     ],
+    links: [{ rel: "canonical", href: "https://conversationalaistudio.online/demo" }],
   }),
   component: Demo,
 });
