@@ -154,7 +154,7 @@ export const Route = createFileRoute("/api/public/assistant")({
                   phone: input.phone?.trim() || null,
                   company: input.company?.trim() || null,
                   interest: input.interest?.trim() || null,
-                }).catch((e) => console.error("lead alert email failed", e));
+                }).catch((e: unknown) => console.error("lead alert email failed", e));
                 return { saved: true };
               },
             }),
