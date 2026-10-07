@@ -8,7 +8,9 @@ import { Button } from "@/components/ui/button";
 import { Conversation, ConversationContent, ConversationScrollButton } from "@/components/ai-elements/conversation";
 import { Message, MessageContent, MessageResponse } from "@/components/ai-elements/message";
 import { PromptInput, PromptInputFooter, PromptInputSubmit, PromptInputTextarea } from "@/components/ai-elements/prompt-input";
-import { Tool, ToolContent, ToolHeader, ToolInput, ToolOutput } from "@/components/ai-elements/tool";
+import { Tool, ToolContent, ToolHeader } from "@/components/ai-elements/tool";
+import { ContactSummary } from "@/components/ContactSummary";
+import { contactDetails, contactUpdateMessage } from "@/lib/assistant-contact";
 import { Shimmer } from "@/components/ai-elements/shimmer";
 
 const KEY = "flo-visitor-id";
@@ -94,6 +96,10 @@ function ChatBody({ visitorId, initial }: { visitorId: string; initial: UIMessag
   });
   const busy = status === "submitted" || status === "streaming";
   const [text, setText] = useState("");
+  const latestContactCall = messages.flatMap((m) => m.parts)
+    .filter((p) => p.type === "tool-save_lead" && p.state === "output-available"
+      && (p.output as { saved?: boolean } | undefined)?.saved)
+    .at(-1);
 
   const send = (t: string) => {
     const v = t.trim();
@@ -109,8 +115,7 @@ function ChatBody({ visitorId, initial }: { visitorId: string; initial: UIMessag
           {messages.length === 0 && (
             <div className="space-y-3 text-sm">
               <p className="text-muted-foreground">
-                Hi! I'm Flo. I can explain what the studio does, which AI providers it supports, or connect you with
-                the founder.
+                Hi! I'm Flo. I can explain what the studio does, which AI providers it supports, or help you contact us.
               </p>
               <div className="flex flex-wrap gap-2">
                 {SUGGESTIONS.map((s) => (
@@ -138,12 +143,19 @@ function ChatBody({ visitorId, initial }: { visitorId: string; initial: UIMessag
                       <span key={i} className="whitespace-pre-wrap">{p.text}</span>
                     );
                   if (p.type === "tool-save_lead") {
+                    const saved = p.state === "output-available" && (p.output as { saved?: boolean } | undefined)?.saved;
+                    const details = contactDetails(p.input);
                     return (
                       <Tool key={i} defaultOpen={false}>
-                        <ToolHeader type={p.type} state={p.state} title="Details shared with the founder" />
+                        <ToolHeader type={p.type} state={p.state} title={saved ? "Your shared details" : "Sharing your details"} />
                         <ToolContent>
-                          <ToolInput input={p.input} />
-                          <ToolOutput output={p.output} errorText={p.errorText} />
+                          {saved && details ? (
+                            <ContactSummary details={details} editable={p === latestContactCall} busy={busy}
+                              onUpdate={(updated) => send(contactUpdateMessage(updated))} />
+                          ) : (
+                            <p className="text-sm text-muted-foreground">{p.state === "output-error" || p.state === "output-available"
+                              ? "We couldn’t save your details. Please try again." : "Saving your shared details…"}</p>
+                          )}
                         </ToolContent>
                       </Tool>
                     );
