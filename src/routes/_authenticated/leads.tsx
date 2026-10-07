@@ -51,7 +51,10 @@ function Leads() {
     setUpdating(id);
     const { error } = await supabase.from("leads").update({ status }).eq("id", id);
     setUpdating(null);
-    if (error) return toast.error("Couldn't update the lead.");
+    if (error) {
+      toast.error("Couldn't update the lead.");
+      return;
+    }
     qc.invalidateQueries({ queryKey: ["leads"] });
   };
 
@@ -90,7 +93,7 @@ function Leads() {
                     disabled={updating === l.id}
                     onClick={() => setStatus(l.id, s)}
                   >
-                    {s[0].toUpperCase() + s.slice(1)}
+                    {s.charAt(0).toUpperCase() + s.slice(1)}
                   </Button>
                 ))}
                 {l.conversation_id && (

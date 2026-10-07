@@ -55,7 +55,7 @@ export const Route = createFileRoute("/api/public/assistant")({
         const lastText = JSON.stringify(last?.parts ?? "");
         if (lastText.length > 4000) return json({ error: "Message is too long" }, 400);
 
-        const apiKey = process.env.LOVABLE_API_KEY;
+        const apiKey = process.env["LOVABLE_API_KEY"];
         if (!apiKey) return json({ error: "Assistant is not configured" }, 500);
 
         const db = await admin();
