@@ -13,6 +13,7 @@ const MAX_EVENT_ATTEMPTS = 15;
 const MAX_REPLY_ATTEMPTS = 3;
 const STUCK_SENDING_MS = 90_000;
 const HISTORY_LIMIT = 40;
+const REPLY_EXPIRY_MS = 15 * 60_000;
 
 const WHATSAPP_INSTRUCTIONS = `${ASSISTANT_INSTRUCTIONS}
 
@@ -92,7 +93,7 @@ async function handleMessages(db: Db, payload: Json) {
     }, { onConflict: "wa_message_id", ignoreDuplicates: true }).select("id");
     if (error) throw new Error(`inbound save failed: ${error.message}`);
     // Show "typing…" the moment a new message lands, before any model work starts.
-    if (inserted?.length) void sendTypingIndicator(id);
+    if (inserted?.length) await sendTypingIndicator(id);
   }
 }
 
@@ -185,7 +186,8 @@ async function replyTo(db: Db, msgId: string) {
     const userId = `wa-${claimed.wa_message_id}`;
     const history = prior.some((m) => m.id === userId) ? prior
       : [...prior, { id: userId, role: "user" as const, parts: [{ type: "text" as const, text: claimed.body }] }];
-    if (claimed.wa_message_id) await sendTypingIndicator(claimed.wa_message_id);
+    // Retries refresh the indicator; first attempts already showed it when the message was saved.
+    if (claimed.reply_attempts > 0 && claimed.wa_message_id) await sendTypingIndicator(claimed.wa_message_id);
     const text = await generateReply(db, convo.id, history);
     if (!text) return await fail("failed", "Empty reply");
     const sent = await sendWhatsAppText(claimed.phone, text);
@@ -228,8 +230,13 @@ export async function drainWhatsApp(db?: Db) {
       : { reply_state: "pending", reply_error: "Released after an interrupted reply" }).eq("id", m.id).eq("reply_state", "sending");
   }
 
+  // A reply to a message that sat unanswered too long would arrive out of context; mark it expired.
+  await db.from("whatsapp_messages").update({ reply_state: "expired", reply_error: "Too old to answer", updated_at: new Date().toISOString() })
+    .eq("direction", "in").in("reply_state", ["pending", "failed"]).lt("created_at", new Date(Date.now() - REPLY_EXPIRY_MS).toISOString());
+
+  // Newest first, so a fresh message is never queued behind older retries.
   const { data: pending } = await db.from("whatsapp_messages")
     .select("id").eq("direction", "in").in("reply_state", ["pending", "failed"]).lt("reply_attempts", MAX_REPLY_ATTEMPTS)
-    .order("updated_at").limit(3);
+    .order("created_at", { ascending: false }).limit(3);
   for (const m of pending ?? []) await replyTo(db, m.id);
 }

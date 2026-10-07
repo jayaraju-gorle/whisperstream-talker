@@ -236,7 +236,7 @@ type WaMessage = {
   reply_state: string | null; reply_error: string | null; created_at: string; status_times: Record<string, string> | null;
 };
 
-const REPLY_LABEL: Record<string, string> = { pending: "Reply waiting", sending: "Replying…", sent: "Replied", failed: "Reply failed", unknown: "Reply needs review" };
+const REPLY_LABEL: Record<string, string> = { pending: "Reply waiting", sending: "Replying…", sent: "Replied", failed: "Reply failed", unknown: "Reply needs review", expired: "Not answered (too old)" };
 
 function WhatsAppMessages() {
   const [phone, setPhone] = useState<string | null>(null);
