@@ -1,0 +1,199 @@
+import { createOpenAI } from "@ai-sdk/openai";
+import { convertToModelMessages, isStepCount, streamText, type UIMessage } from "ai";
+import { ASSISTANT_INSTRUCTIONS } from "@/lib/assistant-knowledge";
+import { FLO_PROVIDER_OPTIONS, floTools } from "@/lib/server/flo.server";
+import { createLovableAiGatewayRunIdFetch } from "@/lib/server/run-id";
+
+// Flo over WhatsApp: durable inbox processing, reply sending and delivery-status reconciliation.
+type Db = Awaited<typeof import("@/integrations/supabase/client.server")>["supabaseAdmin"];
+type Json = Record<string, unknown>;
+
+const GATEWAY = "https://connector-gateway.lovable.dev/whatsapp";
+const MODEL = "openai/gpt-6-astra";
+const MAX_EVENT_ATTEMPTS = 15;
+const MAX_REPLY_ATTEMPTS = 3;
+const STUCK_SENDING_MS = 3 * 60_000;
+const HISTORY_LIMIT = 40;
+
+const WHATSAPP_INSTRUCTIONS = `${ASSISTANT_INSTRUCTIONS}
+
+CHANNEL: WHATSAPP
+- You are chatting on WhatsApp. Use WhatsApp formatting only (*bold*, _italic_, plain lists); never markdown links or headings.
+- Write full links, e.g. https://conversationalaistudio.online/demo and https://conversationalaistudio.online/auth.
+- The visitor's WhatsApp number is already known to us; don't ask for a phone number. Save it as their phone unless they give another one.`;
+
+export const STATUS_RANK: Record<string, number> = { accepted: 0, sent: 1, delivered: 2, read: 3 };
+
+/** Next stored status given a callback; older callbacks never downgrade delivered/read. */
+export function nextStatus(current: string, incoming: string) {
+  if (incoming === "failed") return (STATUS_RANK[current] ?? 0) >= 2 ? current : "failed";
+  if (current === "failed") return current;
+  return (STATUS_RANK[incoming] ?? -1) > (STATUS_RANK[current] ?? 0) ? incoming : current;
+}
+
+function keys() {
+  const lovable = process.env["LOVABLE_API_KEY"];
+  const wa = process.env["WHATSAPP_API_KEY"];
+  if (!lovable || !wa) throw new Error("WhatsApp is not configured");
+  return { lovable, wa };
+}
+
+export async function sendWhatsAppText(to: string, body: string) {
+  const { lovable, wa } = keys();
+  const res = await fetch(`${GATEWAY}/messages`, {
+    method: "POST",
+    headers: { Authorization: `Bearer ${lovable}`, "X-Connection-Api-Key": wa, "Content-Type": "application/json" },
+    body: JSON.stringify({ messaging_product: "whatsapp", to, type: "text", text: { body: body.slice(0, 4000), preview_url: true } }),
+  });
+  const text = await res.text();
+  if (!res.ok) return { ok: false as const, error: `[${res.status}] ${text.slice(0, 1000)}` };
+  const id = (JSON.parse(text) as { messages?: { id?: string }[] }).messages?.[0]?.id;
+  return id ? { ok: true as const, id } : { ok: false as const, error: `No message id: ${text.slice(0, 500)}` };
+}
+
+function value(payload: Json) {
+  const entry = (payload["entry"] as Json[] | undefined)?.[0];
+  const change = (entry?.["changes"] as Json[] | undefined)?.[0];
+  return (change?.["value"] as Json | undefined) ?? {};
+}
+
+class Deferred extends Error {}
+
+async function handleMessages(db: Db, payload: Json) {
+  const msgs = (value(payload)["messages"] as Json[] | undefined) ?? [];
+  for (const m of msgs) {
+    const id = String(m["id"] ?? "");
+    const from = String(m["from"] ?? "").replace(/\D/g, "");
+    if (!id || !from) continue;
+    const type = String(m["type"] ?? "");
+    const body = type === "text"
+      ? String((m["text"] as Json | undefined)?.["body"] ?? "")
+      : type === "button" ? String((m["button"] as Json | undefined)?.["text"] ?? "")
+      : `[${type || "unsupported"} message]`;
+    const ts = Number(m["timestamp"]);
+    const { error } = await db.from("whatsapp_messages").upsert({
+      wa_message_id: id, direction: "in", phone: from, body: body.slice(0, 4000), status: "received",
+      reply_state: "pending", provider_ts: Number.isFinite(ts) ? new Date(ts * 1000).toISOString() : null,
+    }, { onConflict: "wa_message_id", ignoreDuplicates: true });
+    if (error) throw new Error(`inbound save failed: ${error.message}`);
+  }
+}
+
+async function handleStatuses(db: Db, payload: Json) {
+  const statuses = (value(payload)["statuses"] as Json[] | undefined) ?? [];
+  for (const s of statuses) {
+    const id = String(s["id"] ?? "");
+    const status = String(s["status"] ?? "");
+    if (!id || !status) continue;
+    const { data: row, error } = await db.from("whatsapp_messages")
+      .select("id,status,status_times,errors").eq("wa_message_id", id).eq("direction", "out").maybeSingle();
+    if (error) throw new Error(`status lookup failed: ${error.message}`);
+    if (!row) throw new Deferred("awaiting outbound message record");
+    const times = { ...((row.status_times as Json | null) ?? {}) };
+    const ts = Number(s["timestamp"]);
+    if (!times[status] && Number.isFinite(ts)) times[status] = new Date(ts * 1000).toISOString();
+    const errs = s["errors"] ? [ ...(((row.errors as unknown[]) ?? [])), ...(s["errors"] as unknown[]) ] : row.errors;
+    const { error: upErr } = await db.from("whatsapp_messages").update({
+      status: nextStatus(row.status, status), status_times: times as never, errors: errs as never, updated_at: new Date().toISOString(),
+    }).eq("id", row.id);
+    if (upErr) throw new Error(`status update failed: ${upErr.message}`);
+  }
+}
+
+async function processEvent(db: Db, ev: { id: string; event: string; payload: unknown; attempts: number }) {
+  try {
+    if (ev.event === "whatsapp.message") await handleMessages(db, ev.payload as Json);
+    else if (ev.event === "whatsapp.status") await handleStatuses(db, ev.payload as Json);
+    const { error } = await db.from("whatsapp_webhook_events")
+      .update({ processed_at: new Date().toISOString(), processing_error: null }).eq("id", ev.id);
+    if (error) throw new Error(error.message);
+  } catch (e) {
+    const attempts = ev.attempts + 1;
+    const giveUp = attempts >= MAX_EVENT_ATTEMPTS;
+    await db.from("whatsapp_webhook_events").update({
+      attempts, processing_error: String((e as Error).message ?? e).slice(0, 1000),
+      next_attempt_at: new Date(Date.now() + Math.min(attempts * 30_000, 30 * 60_000)).toISOString(),
+      ...(giveUp ? { processed_at: new Date().toISOString() } : {}),
+    }).eq("id", ev.id);
+    if (!(e instanceof Deferred)) console.error("whatsapp event failed", e);
+  }
+}
+
+async function generateReply(db: Db, conversationId: string, history: UIMessage[]) {
+  const { lovable } = keys();
+  const runIdFetch = createLovableAiGatewayRunIdFetch();
+  const provider = createOpenAI({
+    baseURL: "https://ai.gateway.lovable.dev/v1", apiKey: lovable,
+    headers: { "Lovable-API-Key": lovable, "X-Lovable-AIG-SDK": "vercel-ai-sdk" }, fetch: runIdFetch.fetch,
+  });
+  const result = streamText({
+    model: provider.responses(MODEL),
+    instructions: WHATSAPP_INSTRUCTIONS,
+    messages: await convertToModelMessages(history.slice(-HISTORY_LIMIT)),
+    stopWhen: isStepCount(4),
+    tools: floTools(db, conversationId, "WhatsApp"),
+    providerOptions: FLO_PROVIDER_OPTIONS,
+  });
+  return (await result.text).trim();
+}
+
+async function replyTo(db: Db, msgId: string) {
+  const { data: claimed, error: claimErr } = await db.from("whatsapp_messages")
+    .update({ reply_state: "sending", reply_claimed_at: new Date().toISOString() })
+    .eq("id", msgId).in("reply_state", ["pending", "failed"]).lt("reply_attempts", MAX_REPLY_ATTEMPTS)
+    .select("id,phone,body,wa_message_id,reply_attempts").maybeSingle();
+  if (claimErr) throw new Error(`claim failed: ${claimErr.message}`);
+  if (!claimed) return;
+  const fail = async (state: "failed" | "unknown", err: string) => {
+    await db.from("whatsapp_messages").update({
+      reply_state: state, reply_error: err.slice(0, 1000), reply_attempts: claimed.reply_attempts + 1, updated_at: new Date().toISOString(),
+    }).eq("id", claimed.id);
+  };
+  try {
+    const { data: convo, error: cErr } = await db.from("assistant_conversations")
+      .upsert({ visitor_id: `whatsapp_${claimed.phone}`, updated_at: new Date().toISOString() }, { onConflict: "visitor_id" })
+      .select("id,messages").single();
+    if (cErr || !convo) throw new Error(`conversation failed: ${cErr?.message}`);
+    const prior = (Array.isArray(convo.messages) ? convo.messages : []) as unknown as UIMessage[];
+    const userId = `wa-${claimed.wa_message_id}`;
+    const history = prior.some((m) => m.id === userId) ? prior
+      : [...prior, { id: userId, role: "user" as const, parts: [{ type: "text" as const, text: claimed.body }] }];
+    const text = await generateReply(db, convo.id, history);
+    if (!text) return await fail("failed", "Empty reply");
+    const sent = await sendWhatsAppText(claimed.phone, text);
+    if (!sent.ok) return await fail("failed", sent.error);
+    const { data: out } = await db.from("whatsapp_messages").insert({
+      wa_message_id: sent.id, direction: "out", phone: claimed.phone, body: text, status: "accepted",
+      conversation_id: convo.id, in_reply_to: claimed.id,
+    }).select("id").single();
+    await db.from("whatsapp_messages").update({
+      reply_state: "sent", reply_error: null, conversation_id: convo.id, reply_attempts: claimed.reply_attempts + 1, updated_at: new Date().toISOString(),
+    }).eq("id", claimed.id);
+    const all = [...history, { id: `wa-out-${out?.id ?? sent.id}`, role: "assistant", parts: [{ type: "text", text }] }];
+    await db.from("assistant_conversations").update({ messages: all as never, updated_at: new Date().toISOString() }).eq("id", convo.id);
+    // Status callbacks that arrived before this id was saved become runnable now.
+    await db.from("whatsapp_webhook_events").update({ next_attempt_at: new Date().toISOString() })
+      .is("processed_at", null).eq("event", "whatsapp.status");
+  } catch (e) {
+    console.error("whatsapp reply failed", e);
+    await fail("failed", String((e as Error).message ?? e));
+  }
+}
+
+/** Bounded recovery pass: pending inbox events, then pending replies. Safe to run concurrently. */
+export async function drainWhatsApp(db?: Db) {
+  db ??= (await import("@/integrations/supabase/client.server")).supabaseAdmin;
+  const now = new Date().toISOString();
+  const { data: events } = await db.from("whatsapp_webhook_events")
+    .select("id,event,payload,attempts").is("processed_at", null).lte("next_attempt_at", now)
+    .order("next_attempt_at").limit(10);
+  for (const ev of events ?? []) await processEvent(db, ev);
+
+  await db.from("whatsapp_messages").update({ reply_state: "unknown", reply_error: "Send outcome unknown; needs review" })
+    .eq("direction", "in").eq("reply_state", "sending").lt("reply_claimed_at", new Date(Date.now() - STUCK_SENDING_MS).toISOString());
+
+  const { data: pending } = await db.from("whatsapp_messages")
+    .select("id").eq("direction", "in").in("reply_state", ["pending", "failed"]).lt("reply_attempts", MAX_REPLY_ATTEMPTS)
+    .order("updated_at").limit(3);
+  for (const m of pending ?? []) await replyTo(db, m.id);
+}

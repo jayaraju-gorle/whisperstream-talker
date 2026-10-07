@@ -20,7 +20,8 @@
 - [x] GA4 analytics: gtag.js in root layout, page views on client-side route changes (measurement ID via connector)
 - [x] Homepage copy refresh: all providers listed, demo mode and comparison described, feature cards polished
 - [ ] Industry PM Playbooks (/playbooks + /playbooks/$slug, Article JSON-LD, "Simulate in Studio" links) — drafts approved in chat
-- [ ] WhatsApp integration (Meta Cloud API, /api/public/whatsapp webhook, on-site QR modal)
+- [x] Flo on WhatsApp (webhook inbox, replies, leads, email alerts) — needs publish + Incoming messages destination set to this project
+- [ ] On-site WhatsApp QR / "Chat on WhatsApp" button
 - [ ] Telephony / SIP inbound voice (future)
 
 - [x] Verify and optimize studio layouts for mobile, including demo, library and history.
