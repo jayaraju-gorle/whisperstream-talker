@@ -15,7 +15,7 @@ import { Shimmer } from "@/components/ai-elements/shimmer";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 
 const KEY = "flo-visitor-id";
-const SUGGESTIONS = ["What can I test here?", "How does the pricing work?", "I'd like a custom agent for my business"];
+const SUGGESTIONS = ["What can I test here?", "Can I try voice calls?", "I'd like a custom agent for my business"];
 
 function visitorId() {
   let id = localStorage.getItem(KEY);
