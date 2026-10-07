@@ -21,7 +21,7 @@ async function admin() {
   return (await import("@/integrations/supabase/client.server")).supabaseAdmin;
 }
 
-const LEAD_ALERT_TO = "jayarajuvg1@gmail.com";
+const LEAD_ALERT_TO = "gorlej2015@email.iimcal.ac.in";
 
 function esc(s: string) {
   return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
