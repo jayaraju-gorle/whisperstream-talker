@@ -30,4 +30,4 @@
 - [ ] Verify live Anthropic responses — blocked: ANTHROPIC_API_KEY is not configured; native streaming verified with mocked provider responses.
 - [x] Visible navigation progress and loading feedback for delayed actions across the studio; browser checked navigation, demo replies, and sign-in error recovery.
 - [x] Website assistant Flo with lead capture and Leads page
-- [ ] Email notification for new leads — blocked: needs an email sender domain set up
+- [x] Email notification for new leads (Resend → gorlej2015@email.iimcal.ac.in)
