@@ -12,7 +12,7 @@ function esc(s: string) {
 }
 
 export async function notifyNewLead(lead: {
-  name: string; email: string; phone: string | null; company: string | null; interest: string | null; channel?: string;
+  name: string; email: string; phone: string | null; company: string | null; interest: string | null; channel?: string | undefined;
 }) {
   const apiKey = process.env["LOVABLE_API_KEY"];
   const resendKey = process.env["RESEND_API_KEY"];
