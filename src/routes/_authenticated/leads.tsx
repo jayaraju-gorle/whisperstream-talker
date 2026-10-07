@@ -276,23 +276,7 @@ function WhatsAppMessages() {
               </div>
               <Button size="sm" variant="ghost" onClick={() => setPhone(open ? null : p)}>{open ? "Hide messages" : "View messages"}</Button>
             </div>
-            {open && (
-              <div className="mt-4 space-y-3 border-t border-border pt-3 text-sm">
-                {msgs.map((m) => (
-                  <div key={m.id} className={m.direction === "out" ? "pl-6" : "pr-6"}>
-                    <div className="flex flex-wrap gap-x-2 font-mono text-[11px] uppercase text-muted-foreground">
-                      <span>{m.direction === "in" ? "Visitor" : "Flo"}</span>
-                      <span>{new Date(m.created_at).toLocaleString()}</span>
-                      <span className={m.status === "failed" || m.reply_state === "failed" ? "text-destructive" : ""}>
-                        {m.direction === "out" ? m.status : m.reply_state ? REPLY_LABEL[m.reply_state] ?? m.reply_state : ""}
-                      </span>
-                    </div>
-                    <p className="whitespace-pre-wrap">{m.body}</p>
-                    {m.reply_error && m.reply_state !== "sent" && <p className="text-xs text-destructive">{m.reply_error}</p>}
-                  </div>
-                ))}
-              </div>
-            )}
+            {open && <WaThread msgs={msgs} conversationId={msgs.find((m) => m.conversation_id)?.conversation_id ?? null} />}
           </div>
         );
       })}
