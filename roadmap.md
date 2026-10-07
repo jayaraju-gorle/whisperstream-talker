@@ -31,3 +31,4 @@
 - [x] Visible navigation progress and loading feedback for delayed actions across the studio; browser checked navigation, demo replies, and sign-in error recovery.
 - [x] Website assistant Flo with lead capture and Leads page
 - [x] Email notification for new leads (Resend → gorlej2015@email.iimcal.ac.in)
+- [ ] Friendly contact-us wording, optional phone nudge and editable shared contact summaries in Flo.
