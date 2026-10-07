@@ -27,11 +27,14 @@ export const Route = createFileRoute("/api/public/whatsapp/webhook")({
           console.error("whatsapp inbox write failed", error);
           return new Response("Storage failed", { status: 500 });
         }
-        // Process this and any earlier pending events before answering, so multi-step replies (lead
-        // saving, email alert) finish inside the request. A gateway retry of a slow delivery is safe:
-        // the event is deduplicated and the reply is claimed, so it is never sent twice.
+        // The gateway drops the connection after ~5s, which cancels any work still awaited here.
+        // So acknowledge right away and let Flo reply in the background via the runtime's waitUntil.
+        // Without waitUntil, fall back to awaiting briefly; the next delivery recovers unfinished work.
         const { drainWhatsApp } = await import("@/lib/server/whatsapp.server");
-        await drainWhatsApp().catch((e: unknown) => console.error("whatsapp drain failed", e));
+        const work = drainWhatsApp().catch((e: unknown) => console.error("whatsapp drain failed", e));
+        const waitUntil = (request as Request & { waitUntil?: (p: Promise<unknown>) => void }).waitUntil;
+        if (typeof waitUntil === "function") waitUntil.call(request, work);
+        else await Promise.race([work, new Promise((r) => setTimeout(r, 3500))]);
         return new Response("ok", { status: 200 });
       },
     },
