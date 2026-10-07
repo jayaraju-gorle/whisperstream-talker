@@ -1,16 +1,15 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { z } from "zod";
-import { createOpenAI } from "@ai-sdk/openai";
 import { convertToModelMessages, isStepCount, streamText, type UIMessage } from "ai";
 import { ASSISTANT_INSTRUCTIONS } from "@/lib/assistant-knowledge";
-import { FLO_PROVIDER_OPTIONS, floTools } from "@/lib/server/flo.server";
+import { floTools } from "@/lib/server/flo.server";
+import { floLanguageModel, loadFloModel, logFloTurn } from "@/lib/server/flo-model.server";
 import {
   createLovableAiGatewayRunIdFetch,
   getLovableAiGatewayRunId,
   withLovableAiGatewayRunIdHeader,
 } from "@/lib/server/run-id";
 
-const MODEL = "openai/gpt-6-astra";
 const MAX_USER_TURNS = 40;
 // WhatsApp conversations use a reserved "whatsapp_" prefix; browsers can never address them.
 const VisitorId = z.string().regex(/^[A-Za-z0-9_-]{16,64}$/).refine((v) => !v.startsWith("whatsapp_"));
@@ -69,21 +68,27 @@ export const Route = createFileRoute("/api/public/assistant")({
         if (convoErr || !convo) return json({ error: "Couldn't start the conversation" }, 500);
 
         const runIdFetch = createLovableAiGatewayRunIdFetch(getLovableAiGatewayRunId(request));
-        const provider = createOpenAI({
-          baseURL: "https://ai.gateway.lovable.dev/v1",
-          apiKey,
-          headers: { "Lovable-API-Key": apiKey, "X-Lovable-AIG-SDK": "vercel-ai-sdk" },
-          fetch: runIdFetch.fetch,
-        });
+        const choice = await loadFloModel(db);
+        const { model, providerOptions } = floLanguageModel(choice, apiKey, runIdFetch.fetch);
+        const started = Date.now();
+        let firstToken: number | null = null;
+        const log = { conversation_id: convo.id, channel: "Website", model: choice.id, started };
 
         const result = streamText({
-          model: provider.responses(MODEL),
+          model,
           instructions: ASSISTANT_INSTRUCTIONS,
           messages: await convertToModelMessages(messages),
           abortSignal: request.signal,
           stopWhen: isStepCount(4),
           tools: floTools(db, convo.id),
-          providerOptions: FLO_PROVIDER_OPTIONS,
+          providerOptions,
+          onChunk: ({ chunk }) => { if (firstToken == null && chunk.type === "text-delta") firstToken = Date.now(); },
+          onFinish: async ({ totalUsage, steps }) => {
+            await logFloTurn(db, { ...log, firstToken, input_tokens: totalUsage.inputTokens, output_tokens: totalUsage.outputTokens, steps: steps.length, ok: true });
+          },
+          onError: async ({ error }) => {
+            await logFloTurn(db, { ...log, firstToken, ok: false, error: String((error as Error)?.message ?? error) });
+          },
         });
 
         return withLovableAiGatewayRunIdHeader(
