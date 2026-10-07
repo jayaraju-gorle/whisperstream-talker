@@ -12,7 +12,7 @@ const GATEWAY = "https://connector-gateway.lovable.dev/whatsapp";
 const MODEL = "openai/gpt-6-astra";
 const MAX_EVENT_ATTEMPTS = 15;
 const MAX_REPLY_ATTEMPTS = 3;
-const STUCK_SENDING_MS = 3 * 60_000;
+const STUCK_SENDING_MS = 90_000;
 const HISTORY_LIMIT = 40;
 
 const WHATSAPP_INSTRUCTIONS = `${ASSISTANT_INSTRUCTIONS}
@@ -189,8 +189,16 @@ export async function drainWhatsApp(db?: Db) {
     .order("next_attempt_at").limit(10);
   for (const ev of events ?? []) await processEvent(db, ev);
 
-  await db.from("whatsapp_messages").update({ reply_state: "unknown", reply_error: "Send outcome unknown; needs review" })
+  // Release replies stuck in "sending" (the worker was cut off). Retry when no reply was recorded;
+  // only an unrecorded send whose outcome can't be known would risk a duplicate, which is rare.
+  const { data: stuck } = await db.from("whatsapp_messages").select("id")
     .eq("direction", "in").eq("reply_state", "sending").lt("reply_claimed_at", new Date(Date.now() - STUCK_SENDING_MS).toISOString());
+  for (const m of stuck ?? []) {
+    const { data: out } = await db.from("whatsapp_messages").select("id").eq("in_reply_to", m.id).limit(1);
+    await db.from("whatsapp_messages").update(out?.length
+      ? { reply_state: "sent", reply_error: null }
+      : { reply_state: "pending", reply_error: "Released after an interrupted reply" }).eq("id", m.id).eq("reply_state", "sending");
+  }
 
   const { data: pending } = await db.from("whatsapp_messages")
     .select("id").eq("direction", "in").in("reply_state", ["pending", "failed"]).lt("reply_attempts", MAX_REPLY_ATTEMPTS)
