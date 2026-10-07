@@ -12,10 +12,10 @@ export const Route = createFileRoute("/_authenticated/leads")({
   staticData: { sitemap: false },
   head: () => ({
     meta: [
-      { title: "Leads — Conversational AI Flows Studio" },
-      { name: "description", content: "Visitors who asked to be contacted through the website assistant." },
-      { property: "og:title", content: "Leads — Conversational AI Flows Studio" },
-      { property: "og:description", content: "Visitors who asked to be contacted through the website assistant." },
+      { title: "Assistant — Conversational AI Flows Studio" },
+      { name: "description", content: "Manage Flo's leads, web conversations, WhatsApp messages and AI model." },
+      { property: "og:title", content: "Assistant — Conversational AI Flows Studio" },
+      { property: "og:description", content: "Manage Flo's leads, web conversations, WhatsApp messages and AI model." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
       { name: "robots", content: "noindex" },
@@ -40,7 +40,7 @@ function Leads() {
   const qc = useQueryClient();
   const [openId, setOpenId] = useState<string | null>(null);
   const [updating, setUpdating] = useState<string | null>(null);
-  const [tab, setTab] = useState<"leads" | "whatsapp" | "model">("leads");
+  const [tab, setTab] = useState<"leads" | "web" | "whatsapp" | "model">("leads");
   const { data, isLoading, isError } = useQuery({
     queryKey: ["leads", "list"],
     queryFn: async () => {
@@ -63,16 +63,17 @@ function Leads() {
 
   return (
     <main className="mx-auto w-full max-w-5xl px-4 py-8">
-      <h1 className="text-2xl font-semibold">Leads</h1>
+      <h1 className="text-2xl font-semibold">Assistant</h1>
       <p className="mt-1 text-sm text-muted-foreground">
-        Visitors who shared their details with Flo on the website or WhatsApp.
+        Flo's conversations, leads and model settings.
       </p>
-      <div className="mt-4 flex gap-2" role="tablist">
+      <div className="mt-4 flex flex-wrap gap-2" role="tablist" aria-label="Assistant views">
         <Button size="sm" role="tab" aria-selected={tab === "leads"} variant={tab === "leads" ? "default" : "outline"} onClick={() => setTab("leads")}>Leads</Button>
-        <Button size="sm" role="tab" aria-selected={tab === "whatsapp"} variant={tab === "whatsapp" ? "default" : "outline"} onClick={() => setTab("whatsapp")}>WhatsApp messages</Button>
+        <Button size="sm" role="tab" aria-selected={tab === "web"} variant={tab === "web" ? "default" : "outline"} onClick={() => setTab("web")}>Web conversations</Button>
+        <Button size="sm" role="tab" aria-selected={tab === "whatsapp"} variant={tab === "whatsapp" ? "default" : "outline"} onClick={() => setTab("whatsapp")}>WhatsApp</Button>
         <Button size="sm" role="tab" aria-selected={tab === "model"} variant={tab === "model" ? "default" : "outline"} onClick={() => setTab("model")}>Flo model</Button>
       </div>
-      {tab === "model" ? <FloModelSettings /> : tab === "whatsapp" ? <WhatsAppMessages /> : <>
+      {tab === "model" ? <FloModelSettings /> : tab === "whatsapp" ? <WhatsAppMessages /> : tab === "web" ? <WebConversations leads={data ?? []} /> : <>
       {isLoading && <div className="mt-8"><LoadingIndicator label="Loading leads…" /></div>}
       {isError && <p className="mt-8 text-sm text-destructive">You don't have access to leads, or they couldn't load.</p>}
       {data && data.length === 0 && <p className="mt-8 text-sm text-muted-foreground">No leads yet.</p>}
@@ -121,9 +122,71 @@ function Leads() {
   );
 }
 
+function WebConversations({ leads }: { leads: Lead[] }) {
+  const [openId, setOpenId] = useState<string | null>(null);
+  const [page, setPage] = useState(0);
+  const pageSize = 25;
+  const { data, isLoading, isError, refetch, isFetching } = useQuery({
+    queryKey: ["web-conversations", page],
+    refetchInterval: 15_000,
+    queryFn: async () => {
+      const { data, count, error } = await supabase.from("assistant_conversations")
+        .select("id,created_at,updated_at", { count: "exact" })
+        .not("visitor_id", "like", "whatsapp\\_%")
+        .order("updated_at", { ascending: false }).order("id", { ascending: false })
+        .range(page * pageSize, (page + 1) * pageSize - 1);
+      if (error) throw error;
+      return { conversations: data, total: count ?? 0 };
+    },
+  });
+  return (
+    <div className="mt-6">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <h2 className="font-medium">Web conversations{data ? ` · ${data.total}` : ""}</h2>
+        <Button size="sm" variant="outline" loading={isFetching} loadingLabel="Refreshing…" onClick={() => void refetch()}>Refresh</Button>
+      </div>
+      {isLoading && <div className="mt-4"><LoadingIndicator label="Loading web conversations…" /></div>}
+      {isError && <p className="mt-4 text-sm text-destructive">Web conversations couldn't load. Please try refreshing.</p>}
+      {data?.total === 0 && <p className="mt-4 text-sm text-muted-foreground">No web conversations yet.</p>}
+      <div className="mt-4 space-y-3">
+        {data?.conversations.map((conversation) => {
+          const lead = leads.find((l) => l.conversation_id === conversation.id);
+          const open = openId === conversation.id;
+          return (
+            <div key={conversation.id} className="rounded-lg border border-border bg-card p-4">
+              <div className="flex flex-wrap items-start justify-between gap-3">
+                <div className="min-w-0 flex-1 break-words">
+                  <h3 className="font-medium">{lead?.name ?? `Website visitor · ${conversation.id.slice(0, 8)}`}</h3>
+                  {lead && <div className="mt-1 flex flex-wrap gap-x-4 text-sm">
+                    <a className="text-primary hover:underline" href={`mailto:${lead.email}`}>{lead.email}</a>
+                    {lead.phone && <a className="text-primary hover:underline" href={`tel:${lead.phone}`}>{lead.phone}</a>}
+                    {lead.company && <span className="text-muted-foreground">{lead.company}</span>}
+                  </div>}
+                  <div className="mt-2 space-y-1 font-mono text-[11px] text-muted-foreground">
+                    <p>Started {new Date(conversation.created_at).toLocaleString()}</p>
+                    <p>Last activity {new Date(conversation.updated_at).toLocaleString()}</p>
+                  </div>
+                </div>
+                <Button size="sm" variant="ghost" aria-expanded={open} onClick={() => setOpenId(open ? null : conversation.id)}>{open ? "Hide chat" : "View chat"}</Button>
+              </div>
+              {open && <Transcript id={conversation.id} />}
+            </div>
+          );
+        })}
+      </div>
+      {data && data.total > pageSize && <div className="mt-4 flex items-center justify-between gap-3">
+        <Button size="sm" variant="outline" disabled={page === 0 || isFetching} onClick={() => { setPage((p) => p - 1); setOpenId(null); }}>Previous</Button>
+        <span className="text-sm text-muted-foreground">Page {page + 1} of {Math.ceil(data.total / pageSize)}</span>
+        <Button size="sm" variant="outline" disabled={(page + 1) * pageSize >= data.total || isFetching} onClick={() => { setPage((p) => p + 1); setOpenId(null); }}>Next</Button>
+      </div>}
+    </div>
+  );
+}
+
 function Transcript({ id }: { id: string }) {
-  const { data, isLoading } = useQuery({
+  const { data, isLoading, isError } = useQuery({
     queryKey: ["assistant-conversation", id],
+    refetchInterval: 15_000,
     queryFn: async () => {
       const { data, error } = await supabase.from("assistant_conversations").select("messages").eq("id", id).single();
       if (error) throw error;
@@ -131,8 +194,10 @@ function Transcript({ id }: { id: string }) {
     },
   });
   if (isLoading) return <div className="mt-3"><LoadingIndicator label="Loading chat…" /></div>;
+  if (isError) return <p className="mt-3 text-sm text-destructive">This conversation couldn't load.</p>;
   return (
-    <div className="mt-4 space-y-2 border-t border-border pt-3 text-sm">
+    <div className="mt-4 space-y-2 break-words border-t border-border pt-3 text-sm">
+      {data?.length === 0 && <p className="text-muted-foreground">No messages saved yet.</p>}
       {data?.map((m) => {
         const text = m.parts.filter((p) => p.type === "text").map((p) => p.text).join(" ");
         if (!text) return null;
@@ -176,7 +241,8 @@ function WhatsAppMessages() {
   return (
     <div className="mt-6 space-y-3">
       {list.map(([p, msgs]) => {
-        const last = msgs.at(-1)!;
+        const last = msgs.at(-1);
+        if (!last) return null;
         const open = phone === p;
         return (
           <div key={p} className="rounded-lg border border-border bg-card p-4">

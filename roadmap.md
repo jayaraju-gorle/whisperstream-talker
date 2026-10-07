@@ -15,6 +15,7 @@
 - [x] Prefill built-in scenarios and sample knowledge from the original playground
 
 ## Business roadmap (internal only)
+- [x] Rename admin navigation and header to Assistant; organize Leads, Web conversations, WhatsApp and Flo model tabs; add paginated web conversation transcripts.
 - [x] Google Search Console: verification meta tag live, sitemap submitted (0 errors)
 - [ ] Google Search Console: Request Indexing on the homepage
 - [x] GA4 analytics: gtag.js in root layout, page views on client-side route changes (measurement ID via connector)

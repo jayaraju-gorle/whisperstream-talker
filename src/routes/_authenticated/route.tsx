@@ -74,7 +74,7 @@ function Layout() {
               className="flex items-center gap-1.5 rounded px-2.5 py-2.5 sm:py-1 text-muted-foreground hover:text-foreground"
               activeProps={{ className: "flex items-center gap-1.5 rounded px-2.5 py-2.5 sm:py-1 bg-secondary text-foreground" }}
             >
-              <Inbox className="h-3.5 w-3.5" /> Leads
+               <Inbox className="h-3.5 w-3.5" /> Assistant
               {newLeads > 0 && (
                 <span className="rounded-full bg-primary px-1.5 text-[10px] font-semibold text-primary-foreground">{newLeads}</span>
               )}
