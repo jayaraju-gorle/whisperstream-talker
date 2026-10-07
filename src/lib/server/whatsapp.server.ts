@@ -174,7 +174,7 @@ async function replyTo(db: Db, msgId: string) {
     const userId = `wa-${claimed.wa_message_id}`;
     const history = prior.some((m) => m.id === userId) ? prior
       : [...prior, { id: userId, role: "user" as const, parts: [{ type: "text" as const, text: claimed.body }] }];
-    await sendTypingIndicator(claimed.wa_message_id);
+    if (claimed.wa_message_id) await sendTypingIndicator(claimed.wa_message_id);
     const text = await generateReply(db, convo.id, history);
     if (!text) return await fail("failed", "Empty reply");
     const sent = await sendWhatsAppText(claimed.phone, text);
