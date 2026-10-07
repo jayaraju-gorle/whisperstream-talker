@@ -22,6 +22,13 @@
       "when": 1791186174293,
       "tag": "0002_scenarios_and_knowledge",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1791334735956,
+      "tag": "0003_site_assistant_leads",
+      "breakpoints": true
     }
   ]
 }
