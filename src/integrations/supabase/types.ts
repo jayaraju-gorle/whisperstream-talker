@@ -258,6 +258,117 @@ export type Database = {
         }
         Relationships: []
       }
+      whatsapp_messages: {
+        Row: {
+          body: string
+          conversation_id: string | null
+          created_at: string
+          direction: string
+          errors: Json | null
+          id: string
+          in_reply_to: string | null
+          phone: string
+          provider_ts: string | null
+          reply_attempts: number
+          reply_claimed_at: string | null
+          reply_error: string | null
+          reply_state: string | null
+          status: string
+          status_times: Json
+          updated_at: string
+          wa_message_id: string | null
+        }
+        Insert: {
+          body?: string
+          conversation_id?: string | null
+          created_at?: string
+          direction: string
+          errors?: Json | null
+          id?: string
+          in_reply_to?: string | null
+          phone: string
+          provider_ts?: string | null
+          reply_attempts?: number
+          reply_claimed_at?: string | null
+          reply_error?: string | null
+          reply_state?: string | null
+          status?: string
+          status_times?: Json
+          updated_at?: string
+          wa_message_id?: string | null
+        }
+        Update: {
+          body?: string
+          conversation_id?: string | null
+          created_at?: string
+          direction?: string
+          errors?: Json | null
+          id?: string
+          in_reply_to?: string | null
+          phone?: string
+          provider_ts?: string | null
+          reply_attempts?: number
+          reply_claimed_at?: string | null
+          reply_error?: string | null
+          reply_state?: string | null
+          status?: string
+          status_times?: Json
+          updated_at?: string
+          wa_message_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "whatsapp_messages_conversation_id_fkey"
+            columns: ["conversation_id"]
+            isOneToOne: false
+            referencedRelation: "assistant_conversations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "whatsapp_messages_in_reply_to_fkey"
+            columns: ["in_reply_to"]
+            isOneToOne: false
+            referencedRelation: "whatsapp_messages"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      whatsapp_webhook_events: {
+        Row: {
+          attempts: number
+          delivery_id: string
+          event: string
+          id: string
+          next_attempt_at: string
+          payload: Json
+          processed_at: string | null
+          processing_error: string | null
+          received_at: string
+        }
+        Insert: {
+          attempts?: number
+          delivery_id: string
+          event: string
+          id?: string
+          next_attempt_at?: string
+          payload: Json
+          processed_at?: string | null
+          processing_error?: string | null
+          received_at?: string
+        }
+        Update: {
+          attempts?: number
+          delivery_id?: string
+          event?: string
+          id?: string
+          next_attempt_at?: string
+          payload?: Json
+          processed_at?: string | null
+          processing_error?: string | null
+          received_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
