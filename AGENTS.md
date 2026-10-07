@@ -23,3 +23,5 @@
 - Mobile layouts use shrinkable grid tracks and shared touch-target rules; input docks remain in page flow on phones so configuration and conversations are not obscured.
 - Loading feedback uses a shared root route/query progress indicator and explicit Button loading states; keep cancellation controls available and reserve button dimensions to prevent layout shifts.
 - Website assistant (src/components/SiteAssistant.tsx, /api/public/assistant) keeps one server-stored conversation per random browser visitor id and saves leads via a model tool with the admin client; leads/conversations are readable only by user_roles admins, so visitor data never reaches other accounts.
+- Assistant contact edits use the existing chat tool and update the lead scoped to the server-resolved conversation, avoiding duplicate leads or a separate public edit endpoint; the latest successful tool summary exposes the editor.
+- Restarting Flo rotates the browser's random visitor identifier and remounts the chat after confirmation, preserving prior server records while isolating the new conversation.

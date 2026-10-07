@@ -1,15 +1,18 @@
 import { useEffect, useMemo, useState } from "react";
 import { useChat } from "@ai-sdk/react";
 import { DefaultChatTransport, type UIMessage } from "ai";
-import { MessageCircle, UserCheck, X } from "lucide-react";
+import { MessageCircle, RotateCcw, UserCheck, X } from "lucide-react";
 import { toast } from "sonner";
 import { Logo } from "@/components/Logo";
 import { Button } from "@/components/ui/button";
 import { Conversation, ConversationContent, ConversationScrollButton } from "@/components/ai-elements/conversation";
 import { Message, MessageContent, MessageResponse } from "@/components/ai-elements/message";
 import { PromptInput, PromptInputFooter, PromptInputSubmit, PromptInputTextarea } from "@/components/ai-elements/prompt-input";
-import { Tool, ToolContent, ToolHeader, ToolInput, ToolOutput } from "@/components/ai-elements/tool";
+import { Tool, ToolContent, ToolHeader } from "@/components/ai-elements/tool";
+import { ContactSummary } from "@/components/ContactSummary";
+import { contactDetails, contactUpdateMessage } from "@/lib/assistant-contact";
 import { Shimmer } from "@/components/ai-elements/shimmer";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 
 const KEY = "flo-visitor-id";
 const SUGGESTIONS = ["What can I test here?", "Which providers are supported?", "I'd like a custom agent for my business"];
@@ -27,6 +30,14 @@ export function SiteAssistant() {
   const [open, setOpen] = useState(false);
   const [id, setId] = useState<string | null>(null);
   const [initial, setInitial] = useState<UIMessage[] | null>(null);
+  const [busy, setBusy] = useState(false);
+
+  const restart = () => {
+    const next = crypto.randomUUID().replace(/-/g, "");
+    localStorage.setItem(KEY, next);
+    setId(next);
+    setInitial([]);
+  };
 
   useEffect(() => {
     if (!open || id) return;
@@ -48,12 +59,29 @@ export function SiteAssistant() {
               <div className="text-sm font-semibold">Flo · Studio guide</div>
               <div className="text-xs text-muted-foreground">Ask about the studio or get in touch</div>
             </div>
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button variant="ghost" size="icon" aria-label="Restart conversation" title="Restart conversation" disabled={busy || !initial}>
+                  <RotateCcw />
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Start a new conversation?</AlertDialogTitle>
+                  <AlertDialogDescription>This clears the chat from this window. Previously shared contact details remain saved with us.</AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Keep chatting</AlertDialogCancel>
+                  <AlertDialogAction onClick={restart}>Restart conversation</AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
             <Button variant="ghost" size="icon" aria-label="Close chat" onClick={() => setOpen(false)}>
               <X />
             </Button>
           </div>
           {id && initial ? (
-            <ChatBody visitorId={id} initial={initial} />
+            <ChatBody key={id} visitorId={id} initial={initial} onBusyChange={setBusy} />
           ) : (
             <div className="flex flex-1 items-center justify-center">
               <Shimmer>Opening chat…</Shimmer>
@@ -73,7 +101,7 @@ export function SiteAssistant() {
   );
 }
 
-function ChatBody({ visitorId, initial }: { visitorId: string; initial: UIMessage[] }) {
+function ChatBody({ visitorId, initial, onBusyChange }: { visitorId: string; initial: UIMessage[]; onBusyChange: (busy: boolean) => void }) {
   const transport = useMemo(
     () => new DefaultChatTransport({ api: "/api/public/assistant", body: { visitorId } }),
     [visitorId],
@@ -93,7 +121,12 @@ function ChatBody({ visitorId, initial }: { visitorId: string; initial: UIMessag
     },
   });
   const busy = status === "submitted" || status === "streaming";
+  useEffect(() => { onBusyChange(busy); }, [busy, onBusyChange]);
   const [text, setText] = useState("");
+  const latestContactCall = messages.flatMap((m) => m.parts)
+    .filter((p) => p.type === "tool-save_lead" && p.state === "output-available"
+      && (p.output as { saved?: boolean } | undefined)?.saved)
+    .at(-1);
 
   const send = (t: string) => {
     const v = t.trim();
@@ -109,8 +142,7 @@ function ChatBody({ visitorId, initial }: { visitorId: string; initial: UIMessag
           {messages.length === 0 && (
             <div className="space-y-3 text-sm">
               <p className="text-muted-foreground">
-                Hi! I'm Flo. I can explain what the studio does, which AI providers it supports, or connect you with
-                the founder.
+                Hi! I'm Flo. I can explain what the studio does, which AI providers it supports, or help you contact us.
               </p>
               <div className="flex flex-wrap gap-2">
                 {SUGGESTIONS.map((s) => (
@@ -138,12 +170,19 @@ function ChatBody({ visitorId, initial }: { visitorId: string; initial: UIMessag
                       <span key={i} className="whitespace-pre-wrap">{p.text}</span>
                     );
                   if (p.type === "tool-save_lead") {
+                    const saved = p.state === "output-available" && (p.output as { saved?: boolean } | undefined)?.saved;
+                    const details = contactDetails(p.input);
                     return (
                       <Tool key={i} defaultOpen={false}>
-                        <ToolHeader type={p.type} state={p.state} title="Details shared with the founder" />
+                        <ToolHeader type={p.type} state={p.state} title={saved ? "Your shared details" : "Sharing your details"} />
                         <ToolContent>
-                          <ToolInput input={p.input} />
-                          <ToolOutput output={p.output} errorText={p.errorText} />
+                          {saved && details ? (
+                            <ContactSummary details={details} editable={p === latestContactCall} busy={busy}
+                              onUpdate={(updated) => send(contactUpdateMessage(updated))} />
+                          ) : (
+                            <p className="text-sm text-muted-foreground">{p.state === "output-error" || p.state === "output-available"
+                              ? "We couldn’t save your details. Please try again." : "Saving your shared details…"}</p>
+                          )}
                         </ToolContent>
                       </Tool>
                     );

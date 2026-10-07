@@ -3,6 +3,7 @@ import { z } from "zod";
 import { createOpenAI } from "@ai-sdk/openai";
 import { convertToModelMessages, isStepCount, streamText, tool, type UIMessage } from "ai";
 import { ASSISTANT_INSTRUCTIONS } from "@/lib/assistant-knowledge";
+import { contactDetails } from "@/lib/assistant-contact";
 import {
   createLovableAiGatewayRunIdFetch,
   getLovableAiGatewayRunId,
@@ -125,7 +126,7 @@ export const Route = createFileRoute("/api/public/assistant")({
           stopWhen: isStepCount(4),
           tools: {
             save_lead: tool({
-              description: "Save a visitor's contact details so the founder can get in touch.",
+              description: "Save or update the visitor's shared contact details so we can get back to them. Preserve unchanged fields; phone is optional.",
               inputSchema: z.object({
                 name: z.string().min(1).max(120),
                 email: z.string().max(254),
@@ -134,28 +135,20 @@ export const Route = createFileRoute("/api/public/assistant")({
                 interest: z.string().max(2000).nullable().describe("What they need, in one or two sentences"),
               }),
               execute: async (input) => {
-                if (!z.string().email().safeParse(input.email.trim()).success)
-                  return { saved: false, reason: "The email address looks invalid; ask the visitor to check it." };
-                const { error } = await db.from("leads").insert({
-                  conversation_id: convo.id,
-                  name: input.name.trim(),
-                  email: input.email.trim(),
-                  phone: input.phone?.trim() || null,
-                  company: input.company?.trim() || null,
-                  interest: input.interest?.trim() || null,
-                });
+                const details = contactDetails(input);
+                if (!details) return { saved: false, reason: "Ask the visitor to check their name and email address." };
+                const { data: existing, error: lookupError } = await db.from("leads")
+                  .select("id").eq("conversation_id", convo.id).order("created_at", { ascending: false }).limit(1).maybeSingle();
+                if (lookupError) return { saved: false, reason: "Couldn't load the shared details. Please try again." };
+                const { error } = existing
+                  ? await db.from("leads").update(details).eq("id", existing.id).eq("conversation_id", convo.id)
+                  : await db.from("leads").insert({ conversation_id: convo.id, ...details });
                 if (error) {
                   console.error("lead insert failed", error);
                   return { saved: false, reason: "Saving failed; apologise and suggest trying again shortly." };
                 }
-                notifyNewLead({
-                  name: input.name.trim(),
-                  email: input.email.trim(),
-                  phone: input.phone?.trim() || null,
-                  company: input.company?.trim() || null,
-                  interest: input.interest?.trim() || null,
-                }).catch((e: unknown) => console.error("lead alert email failed", e));
-                return { saved: true };
+                if (!existing) await notifyNewLead(details).catch((e: unknown) => console.error("lead alert email failed", e));
+                return { saved: true, updated: Boolean(existing) };
               },
             }),
           },
