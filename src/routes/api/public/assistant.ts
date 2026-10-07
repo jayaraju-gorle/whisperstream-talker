@@ -21,6 +21,49 @@ async function admin() {
   return (await import("@/integrations/supabase/client.server")).supabaseAdmin;
 }
 
+const LEAD_ALERT_TO = "jayarajuvg1@gmail.com";
+
+function esc(s: string) {
+  return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+}
+
+async function notifyNewLead(lead: {
+  name: string;
+  email: string;
+  phone: string | null;
+  company: string | null;
+  interest: string | null;
+}) {
+  const apiKey = process.env["LOVABLE_API_KEY"];
+  const resendKey = process.env["RESEND_API_KEY"];
+  if (!apiKey || !resendKey) return;
+  const row = (label: string, value: string | null) =>
+    value ? `<tr><td style="padding:4px 12px 4px 0;color:#666;vertical-align:top">${label}</td><td>${esc(value)}</td></tr>` : "";
+  const html = `<div style="font-family:Arial,sans-serif;max-width:520px">
+    <h2 style="margin:0 0 12px">New lead from Flo</h2>
+    <table style="border-collapse:collapse;font-size:14px">
+      ${row("Name", lead.name)}${row("Email", lead.email)}${row("Phone", lead.phone)}${row("Company", lead.company)}
+    </table>
+    ${lead.interest ? `<p style="font-size:14px"><strong>What they need:</strong><br>${esc(lead.interest)}</p>` : ""}
+    <p style="font-size:12px;color:#888">View all leads in your studio's Leads page.</p>
+  </div>`;
+  const res = await fetch("https://connector-gateway.lovable.dev/resend/emails", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${apiKey}`,
+      "X-Connection-Api-Key": resendKey,
+    },
+    body: JSON.stringify({
+      from: "Conversational AI Flows Studio <onboarding@resend.dev>",
+      to: [LEAD_ALERT_TO],
+      subject: `New lead: ${lead.name} (${lead.email})`,
+      html,
+    }),
+  });
+  if (!res.ok) console.error(`lead alert email failed [${res.status}]: ${await res.text()}`);
+}
+
 const Body = z.object({
   visitorId: VisitorId,
   messages: z.array(z.any()).min(1).max(200),
