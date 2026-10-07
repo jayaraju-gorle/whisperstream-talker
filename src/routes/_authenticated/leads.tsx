@@ -38,6 +38,7 @@ function Leads() {
   const qc = useQueryClient();
   const [openId, setOpenId] = useState<string | null>(null);
   const [updating, setUpdating] = useState<string | null>(null);
+  const [tab, setTab] = useState<"leads" | "whatsapp">("leads");
   const { data, isLoading, isError } = useQuery({
     queryKey: ["leads", "list"],
     queryFn: async () => {
@@ -62,8 +63,13 @@ function Leads() {
     <main className="mx-auto w-full max-w-5xl px-4 py-8">
       <h1 className="text-2xl font-semibold">Leads</h1>
       <p className="mt-1 text-sm text-muted-foreground">
-        Visitors who shared their details with Flo, the website assistant.
+        Visitors who shared their details with Flo on the website or WhatsApp.
       </p>
+      <div className="mt-4 flex gap-2" role="tablist">
+        <Button size="sm" role="tab" aria-selected={tab === "leads"} variant={tab === "leads" ? "default" : "outline"} onClick={() => setTab("leads")}>Leads</Button>
+        <Button size="sm" role="tab" aria-selected={tab === "whatsapp"} variant={tab === "whatsapp" ? "default" : "outline"} onClick={() => setTab("whatsapp")}>WhatsApp messages</Button>
+      </div>
+      {tab === "whatsapp" ? <WhatsAppMessages /> : <>
       {isLoading && <div className="mt-8"><LoadingIndicator label="Loading leads…" /></div>}
       {isError && <p className="mt-8 text-sm text-destructive">You don't have access to leads, or they couldn't load.</p>}
       {data && data.length === 0 && <p className="mt-8 text-sm text-muted-foreground">No leads yet.</p>}
@@ -107,6 +113,7 @@ function Leads() {
           </div>
         ))}
       </div>
+      </>}
     </main>
   );
 }
@@ -130,6 +137,73 @@ function Transcript({ id }: { id: string }) {
           <div key={m.id}>
             <span className="font-mono text-[11px] uppercase text-muted-foreground">{m.role === "user" ? "Visitor" : "Flo"}</span>
             <p className="whitespace-pre-wrap">{text}</p>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+type WaMessage = {
+  id: string; direction: string; phone: string; body: string; status: string;
+  reply_state: string | null; reply_error: string | null; created_at: string; status_times: Record<string, string> | null;
+};
+
+const REPLY_LABEL: Record<string, string> = { pending: "Reply waiting", sending: "Replying…", sent: "Replied", failed: "Reply failed", unknown: "Reply needs review" };
+
+function WhatsAppMessages() {
+  const [phone, setPhone] = useState<string | null>(null);
+  const { data, isLoading, isError } = useQuery({
+    queryKey: ["whatsapp-messages"],
+    refetchInterval: 15_000,
+    queryFn: async () => {
+      const { data, error } = await supabase.from("whatsapp_messages")
+        .select("id,direction,phone,body,status,reply_state,reply_error,created_at,status_times")
+        .order("created_at", { ascending: true }).limit(2000);
+      if (error) throw error;
+      return data as WaMessage[];
+    },
+  });
+  if (isLoading) return <div className="mt-8"><LoadingIndicator label="Loading WhatsApp messages…" /></div>;
+  if (isError) return <p className="mt-8 text-sm text-destructive">WhatsApp messages couldn't load.</p>;
+  const threads = new Map<string, WaMessage[]>();
+  for (const m of data ?? []) threads.set(m.phone, [...(threads.get(m.phone) ?? []), m]);
+  const list = [...threads.entries()].sort((a, b) => (b[1].at(-1)?.created_at ?? "").localeCompare(a[1].at(-1)?.created_at ?? ""));
+  if (list.length === 0) return <p className="mt-8 text-sm text-muted-foreground">No WhatsApp messages yet.</p>;
+  return (
+    <div className="mt-6 space-y-3">
+      {list.map(([p, msgs]) => {
+        const last = msgs.at(-1)!;
+        const open = phone === p;
+        return (
+          <div key={p} className="rounded-lg border border-border bg-card p-4">
+            <div className="flex flex-wrap items-start justify-between gap-3">
+              <div className="min-w-0">
+                <a className="font-medium text-primary hover:underline" href={`https://wa.me/${p}`} target="_blank" rel="noreferrer">+{p}</a>
+                <p className="mt-1 truncate text-sm text-muted-foreground">{last.body}</p>
+                <div className="mt-1 font-mono text-[11px] text-muted-foreground">
+                  {msgs.length} messages · last {new Date(last.created_at).toLocaleString()}
+                </div>
+              </div>
+              <Button size="sm" variant="ghost" onClick={() => setPhone(open ? null : p)}>{open ? "Hide messages" : "View messages"}</Button>
+            </div>
+            {open && (
+              <div className="mt-4 space-y-3 border-t border-border pt-3 text-sm">
+                {msgs.map((m) => (
+                  <div key={m.id} className={m.direction === "out" ? "pl-6" : "pr-6"}>
+                    <div className="flex flex-wrap gap-x-2 font-mono text-[11px] uppercase text-muted-foreground">
+                      <span>{m.direction === "in" ? "Visitor" : "Flo"}</span>
+                      <span>{new Date(m.created_at).toLocaleString()}</span>
+                      <span className={m.status === "failed" || m.reply_state === "failed" ? "text-destructive" : ""}>
+                        {m.direction === "out" ? m.status : m.reply_state ? REPLY_LABEL[m.reply_state] ?? m.reply_state : ""}
+                      </span>
+                    </div>
+                    <p className="whitespace-pre-wrap">{m.body}</p>
+                    {m.reply_error && m.reply_state !== "sent" && <p className="text-xs text-destructive">{m.reply_error}</p>}
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         );
       })}
