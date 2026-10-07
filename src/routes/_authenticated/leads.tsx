@@ -234,9 +234,55 @@ function Transcript({ id }: { id: string }) {
 type WaMessage = {
   id: string; direction: string; phone: string; body: string; status: string;
   reply_state: string | null; reply_error: string | null; created_at: string; status_times: Record<string, string> | null;
+  conversation_id: string | null;
 };
 
 const REPLY_LABEL: Record<string, string> = { pending: "Reply waiting", sending: "Replying…", sent: "Replied", failed: "Reply failed", unknown: "Reply needs review", expired: "Not answered (too old)" };
+
+function WaThread({ msgs, conversationId }: { msgs: WaMessage[]; conversationId: string | null }) {
+  // Flo's WhatsApp replies are timed in assistant_turn_logs, one row per reply, in order.
+  const { data: logs } = useQuery({
+    queryKey: ["whatsapp-turn-logs", conversationId],
+    enabled: !!conversationId,
+    refetchInterval: 15_000,
+    queryFn: async () => {
+      const { data, error } = await supabase.from("assistant_turn_logs")
+        .select("model,first_token_ms,total_ms,ok,created_at")
+        .eq("conversation_id", conversationId!).order("created_at");
+      if (error) throw error;
+      return data;
+    },
+  });
+  const secs = (ms: number | null) => (ms == null ? "–" : `${(ms / 1000).toFixed(1)} s`);
+  let replyIndex = -1;
+  return (
+    <div className="mt-4 space-y-3 border-t border-border pt-3 text-sm">
+      {msgs.map((m) => {
+        const isFlo = m.direction === "out";
+        if (isFlo) replyIndex++;
+        const log = isFlo ? logs?.[replyIndex] : undefined;
+        return (
+          <div key={m.id} className={isFlo ? "pl-6" : "pr-6"}>
+            <div className="flex flex-wrap gap-x-2 font-mono text-[11px] uppercase text-muted-foreground">
+              <span>{isFlo ? "Flo" : "Visitor"}</span>
+              <span>{new Date(m.created_at).toLocaleString()}</span>
+              <span className={m.status === "failed" || m.reply_state === "failed" ? "text-destructive" : ""}>
+                {isFlo ? m.status : m.reply_state ? REPLY_LABEL[m.reply_state] ?? m.reply_state : ""}
+              </span>
+            </div>
+            <p className="whitespace-pre-wrap">{m.body}</p>
+            {log && (
+              <p className="mt-1 font-mono text-[11px] text-muted-foreground">
+                {new Date(log.created_at).toLocaleString()} · {log.model.split("/").pop()} · first words {secs(log.first_token_ms)} · full reply {secs(log.total_ms)}
+              </p>
+            )}
+            {m.reply_error && m.reply_state !== "sent" && <p className="text-xs text-destructive">{m.reply_error}</p>}
+          </div>
+        );
+      })}
+    </div>
+  );
+}
 
 function WhatsAppMessages() {
   const [phone, setPhone] = useState<string | null>(null);
@@ -245,7 +291,7 @@ function WhatsAppMessages() {
     refetchInterval: 15_000,
     queryFn: async () => {
       const { data, error } = await supabase.from("whatsapp_messages")
-        .select("id,direction,phone,body,status,reply_state,reply_error,created_at,status_times")
+        .select("id,direction,phone,body,status,reply_state,reply_error,created_at,status_times,conversation_id")
         .order("created_at", { ascending: true }).limit(2000);
       if (error) throw error;
       return data as WaMessage[];
@@ -275,23 +321,7 @@ function WhatsAppMessages() {
               </div>
               <Button size="sm" variant="ghost" onClick={() => setPhone(open ? null : p)}>{open ? "Hide messages" : "View messages"}</Button>
             </div>
-            {open && (
-              <div className="mt-4 space-y-3 border-t border-border pt-3 text-sm">
-                {msgs.map((m) => (
-                  <div key={m.id} className={m.direction === "out" ? "pl-6" : "pr-6"}>
-                    <div className="flex flex-wrap gap-x-2 font-mono text-[11px] uppercase text-muted-foreground">
-                      <span>{m.direction === "in" ? "Visitor" : "Flo"}</span>
-                      <span>{new Date(m.created_at).toLocaleString()}</span>
-                      <span className={m.status === "failed" || m.reply_state === "failed" ? "text-destructive" : ""}>
-                        {m.direction === "out" ? m.status : m.reply_state ? REPLY_LABEL[m.reply_state] ?? m.reply_state : ""}
-                      </span>
-                    </div>
-                    <p className="whitespace-pre-wrap">{m.body}</p>
-                    {m.reply_error && m.reply_state !== "sent" && <p className="text-xs text-destructive">{m.reply_error}</p>}
-                  </div>
-                ))}
-              </div>
-            )}
+            {open && <WaThread msgs={msgs} conversationId={msgs.find((m) => m.conversation_id)?.conversation_id ?? null} />}
           </div>
         );
       })}
