@@ -7,6 +7,7 @@ import { LoadingIndicator } from "@/components/LoadingIndicator";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { FLO_MODELS, FLO_MODEL_SETTING_KEY, resolveFloModel } from "@/lib/flo-models";
+import { matchWhatsAppMetrics } from "@/lib/whatsapp-metrics";
 
 export const Route = createFileRoute("/_authenticated/leads")({
   staticData: { sitemap: false },
@@ -239,28 +240,29 @@ type WaMessage = {
 
 const REPLY_LABEL: Record<string, string> = { pending: "Reply waiting", sending: "Replying…", sent: "Replied", failed: "Reply failed", unknown: "Reply needs review", expired: "Not answered (too old)" };
 
-function WaThread({ msgs, conversationId }: { msgs: WaMessage[]; conversationId: string | null }) {
-  // Flo's WhatsApp replies are timed in assistant_turn_logs, one row per reply, in order.
-  const { data: logs } = useQuery({
-    queryKey: ["whatsapp-turn-logs", conversationId],
-    enabled: !!conversationId,
+function WaThread({ msgs }: { msgs: WaMessage[] }) {
+  const conversationIds = [...new Set(msgs.flatMap((m) => m.conversation_id ? [m.conversation_id] : []))].sort();
+  const { data: logs, isError: metricsError } = useQuery({
+    queryKey: ["whatsapp-turn-logs", conversationIds],
+    enabled: conversationIds.length > 0,
     refetchInterval: 15_000,
     queryFn: async () => {
+      if (!conversationIds.length) return [];
       const { data, error } = await supabase.from("assistant_turn_logs")
-        .select("model,first_token_ms,total_ms,ok,created_at")
-        .eq("conversation_id", conversationId!).order("created_at");
+        .select("id,conversation_id,channel,model,first_token_ms,total_ms,ok,created_at")
+        .in("conversation_id", conversationIds).eq("channel", "WhatsApp").order("created_at");
       if (error) throw error;
       return data;
     },
   });
   const secs = (ms: number | null) => (ms == null ? "–" : `${(ms / 1000).toFixed(1)} s`);
-  let replyIndex = -1;
+  const metrics = matchWhatsAppMetrics(msgs, logs ?? []);
   return (
     <div className="mt-4 space-y-3 border-t border-border pt-3 text-sm">
+      {metricsError && <p className="text-destructive">Reply timings couldn't load. Please try again.</p>}
       {msgs.map((m) => {
         const isFlo = m.direction === "out";
-        if (isFlo) replyIndex++;
-        const log = isFlo ? logs?.[replyIndex] : undefined;
+        const log = metrics.get(m.id);
         return (
           <div key={m.id} className={isFlo ? "pl-6" : "pr-6"}>
             <div className="flex flex-wrap gap-x-2 font-mono text-[11px] uppercase text-muted-foreground">
@@ -321,7 +323,7 @@ function WhatsAppMessages() {
               </div>
               <Button size="sm" variant="ghost" onClick={() => setPhone(open ? null : p)}>{open ? "Hide messages" : "View messages"}</Button>
             </div>
-            {open && <WaThread msgs={msgs} conversationId={msgs.find((m) => m.conversation_id)?.conversation_id ?? null} />}
+            {open && <WaThread msgs={msgs} />}
           </div>
         );
       })}
