@@ -86,11 +86,13 @@ async function handleMessages(db: Db, payload: Json) {
       : type === "button" ? String((m["button"] as Json | undefined)?.["text"] ?? "")
       : `[${type || "unsupported"} message]`;
     const ts = Number(m["timestamp"]);
-    const { error } = await db.from("whatsapp_messages").upsert({
+    const { data: inserted, error } = await db.from("whatsapp_messages").upsert({
       wa_message_id: id, direction: "in", phone: from, body: body.slice(0, 4000), status: "received",
       reply_state: "pending", provider_ts: Number.isFinite(ts) ? new Date(ts * 1000).toISOString() : null,
-    }, { onConflict: "wa_message_id", ignoreDuplicates: true });
+    }, { onConflict: "wa_message_id", ignoreDuplicates: true }).select("id");
     if (error) throw new Error(`inbound save failed: ${error.message}`);
+    // Show "typing…" the moment a new message lands, before any model work starts.
+    if (inserted?.length) void sendTypingIndicator(id);
   }
 }
 
