@@ -51,6 +51,22 @@ export async function sendWhatsAppText(to: string, body: string) {
   return id ? { ok: true as const, id } : { ok: false as const, error: `No message id: ${text.slice(0, 500)}` };
 }
 
+/** Marks the inbound message read and shows "typing…" while the reply is generated.
+ *  Dismissed when the reply is sent or after 25s. Best-effort: never throws. */
+async function sendTypingIndicator(messageId: string) {
+  try {
+    const { lovable, wa } = keys();
+    const res = await fetch(`${GATEWAY}/messages`, {
+      method: "POST",
+      headers: { Authorization: `Bearer ${lovable}`, "X-Connection-Api-Key": wa, "Content-Type": "application/json" },
+      body: JSON.stringify({ messaging_product: "whatsapp", status: "read", message_id: messageId, typing_indicator: { type: "text" } }),
+    });
+    if (!res.ok) console.error("whatsapp typing indicator failed", res.status, (await res.text()).slice(0, 500));
+  } catch (e) {
+    console.error("whatsapp typing indicator failed", e);
+  }
+}
+
 function value(payload: Json) {
   const entry = (payload["entry"] as Json[] | undefined)?.[0];
   const change = (entry?.["changes"] as Json[] | undefined)?.[0];
