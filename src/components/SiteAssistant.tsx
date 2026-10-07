@@ -15,7 +15,7 @@ import { Shimmer } from "@/components/ai-elements/shimmer";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 
 const KEY = "flo-visitor-id";
-const SUGGESTIONS = ["What can I test here?", "Which providers are supported?", "I'd like a custom agent for my business"];
+const SUGGESTIONS = ["What can I test here?", "How does the pricing work?", "I'd like a custom agent for my business"];
 
 function visitorId() {
   let id = localStorage.getItem(KEY);
@@ -142,7 +142,7 @@ function ChatBody({ visitorId, initial, onBusyChange }: { visitorId: string; ini
           {messages.length === 0 && (
             <div className="space-y-3 text-sm">
               <p className="text-muted-foreground">
-                Hi! I'm Flo. I can explain what the studio does, which AI providers it supports, or help you contact us.
+                Hi! I'm Flo. I can explain what the studio does or help you contact us.
               </p>
               <div className="flex flex-wrap gap-2">
                 {SUGGESTIONS.map((s) => (
