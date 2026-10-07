@@ -234,6 +234,7 @@ function Transcript({ id }: { id: string }) {
 type WaMessage = {
   id: string; direction: string; phone: string; body: string; status: string;
   reply_state: string | null; reply_error: string | null; created_at: string; status_times: Record<string, string> | null;
+  conversation_id: string | null;
 };
 
 const REPLY_LABEL: Record<string, string> = { pending: "Reply waiting", sending: "Replying…", sent: "Replied", failed: "Reply failed", unknown: "Reply needs review", expired: "Not answered (too old)" };
@@ -245,7 +246,7 @@ function WhatsAppMessages() {
     refetchInterval: 15_000,
     queryFn: async () => {
       const { data, error } = await supabase.from("whatsapp_messages")
-        .select("id,direction,phone,body,status,reply_state,reply_error,created_at,status_times")
+        .select("id,direction,phone,body,status,reply_state,reply_error,created_at,status_times,conversation_id")
         .order("created_at", { ascending: true }).limit(2000);
       if (error) throw error;
       return data as WaMessage[];
