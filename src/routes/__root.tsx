@@ -15,6 +15,7 @@ import { reportLovableError } from "../lib/lovable-error-reporting";
 import { initAnalytics, trackPageView } from "../lib/analytics";
 import { Toaster } from "@/components/ui/sonner";
 import { LoadingIndicator, RouteProgress } from "@/components/LoadingIndicator";
+import { SiteAssistant } from "@/components/SiteAssistant";
 
 function NotFoundComponent() {
   return (
@@ -141,6 +142,7 @@ function RootComponent() {
       <RouteProgress />
       {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
       <Outlet />
+      <SiteAssistant />
       <Toaster theme="dark" position="top-center" />
     </QueryClientProvider>
   );
