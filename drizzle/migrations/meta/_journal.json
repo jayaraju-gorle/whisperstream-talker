@@ -36,6 +36,13 @@
       "when": 1791341869974,
       "tag": "0004_whatsapp_flo",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1791358507184,
+      "tag": "0005_flo_model_settings_and_turn_logs",
+      "breakpoints": true
     }
   ]
 }
