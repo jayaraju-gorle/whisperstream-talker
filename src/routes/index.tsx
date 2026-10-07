@@ -60,7 +60,7 @@ export const Route = createFileRoute("/")({
               featureList: [
                 "Free guest demo with sample scenarios — no sign-in required",
                 "Live voice and text conversations with AI agents",
-                "Live speech-to-speech calls with streaming voice models (GPT Live, Gemini Live, OpenAI Realtime)",
+                "Live speech-to-speech calls with streaming voice models (OpenAI Realtime, Gemini Live)",
                 "Text-only mode for testing LLM stacks without speech providers",
                 "Voice and text provider options: OpenAI, Google Gemini, Anthropic Claude, xAI Grok, Groq, Deepgram, ElevenLabs and Sarvam AI; live availability depends on connected keys",
                 "Real-time latency metrics: time to first token, time to first audio, end-to-end voice response time",
@@ -114,7 +114,7 @@ const FEATURES = [
   {
     icon: Radio,
     t: "Speech-to-speech calls",
-    d: "Live voice models like GPT Live, Gemini Live and OpenAI Realtime answer with a single streaming model — no separate transcription or voice steps.",
+    d: "Live voice models like OpenAI Realtime and Gemini Live answer with a single streaming model — no separate transcription or voice steps.",
   },
   {
     icon: BookOpen,
