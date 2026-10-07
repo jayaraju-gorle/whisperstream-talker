@@ -5,6 +5,7 @@ vi.mock("@tanstack/react-router", () => ({ createFileRoute: () => (options: unkn
 vi.mock("@/integrations/supabase/client.server", () => ({ supabaseAdmin: { from: mocks.from } }));
 vi.mock("@ai-sdk/openai", () => ({ createOpenAI: () => ({ responses: () => "test-model" }) }));
 vi.mock("ai", () => ({ convertToModelMessages: async () => [], isStepCount: () => 4, tool: (options: unknown) => options, streamText: mocks.stream }));
+vi.mock("@/lib/server/run-id", () => ({ createLovableAiGatewayRunIdFetch: () => ({}), getLovableAiGatewayRunId: () => undefined, withLovableAiGatewayRunIdHeader: (response: Response) => response }));
 import { Route } from "@/routes/api/public/assistant";
 const handler = (Route as unknown as { server: { handlers: { POST: (args: { request: Request }) => Promise<Response> } } }).server.handlers.POST;
 afterEach(() => { vi.unstubAllEnvs(); vi.clearAllMocks(); });
@@ -27,7 +28,9 @@ describe("visitor contact updates", () => {
     await handler({ request: new Request("http://localhost/api/public/assistant", {
       method: "POST", body: JSON.stringify({ visitorId: "visitor_secret_123456", messages: [{ id: "m1", role: "user", parts: [{ type: "text", text: "Update my phone" }] }] }),
     }) });
-    const execute = mocks.stream.mock.calls[0][0].tools.save_lead.execute;
+    const call = mocks.stream.mock.calls[0];
+    if (!call) throw new Error("Assistant stream was not started");
+    const execute = call[0].tools.save_lead.execute;
     const result = await execute({ name: "Ram", email: "ram@example.com", phone: "+91 9876543210", company: null, interest: null });
     expect(result).toEqual({ saved: true, updated: true });
     expect(update).toHaveBeenCalledWith(expect.objectContaining({ phone: "+91 9876543210" }));
