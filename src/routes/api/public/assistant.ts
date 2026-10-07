@@ -105,6 +105,13 @@ export const Route = createFileRoute("/api/public/assistant")({
                   console.error("lead insert failed", error);
                   return { saved: false, reason: "Saving failed; apologise and suggest trying again shortly." };
                 }
+                notifyNewLead({
+                  name: input.name.trim(),
+                  email: input.email.trim(),
+                  phone: input.phone?.trim() || null,
+                  company: input.company?.trim() || null,
+                  interest: input.interest?.trim() || null,
+                }).catch((e) => console.error("lead alert email failed", e));
                 return { saved: true };
               },
             }),
