@@ -15,6 +15,7 @@ import { Route as AuthRouteImport } from './routes/auth'
 import { Route as DemoRouteImport } from './routes/demo'
 import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as AuthenticatedHistoryRouteImport } from './routes/_authenticated/history'
+import { Route as AuthenticatedLeadsRouteImport } from './routes/_authenticated/leads'
 import { Route as AuthenticatedLibraryRouteImport } from './routes/_authenticated/library'
 import { Route as AuthenticatedPlaygroundRouteImport } from './routes/_authenticated/playground'
 import { Route as ApiLlmRouteImport } from './routes/api/llm'
@@ -52,6 +53,11 @@ const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
 const AuthenticatedHistoryRoute = AuthenticatedHistoryRouteImport.update({
   id: '/history',
   path: '/history',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedLeadsRoute = AuthenticatedLeadsRouteImport.update({
+  id: '/leads',
+  path: '/leads',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedLibraryRoute = AuthenticatedLibraryRouteImport.update({
@@ -106,6 +112,7 @@ export interface FileRoutesByFullPath {
   '/demo': typeof DemoRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/history': typeof AuthenticatedHistoryRouteWithChildren
+  '/leads': typeof AuthenticatedLeadsRoute
   '/library': typeof AuthenticatedLibraryRoute
   '/playground': typeof AuthenticatedPlaygroundRoute
   '/api/llm': typeof ApiLlmRoute
@@ -122,6 +129,7 @@ export interface FileRoutesByTo {
   '/demo': typeof DemoRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/history': typeof AuthenticatedHistoryRouteWithChildren
+  '/leads': typeof AuthenticatedLeadsRoute
   '/library': typeof AuthenticatedLibraryRoute
   '/playground': typeof AuthenticatedPlaygroundRoute
   '/api/llm': typeof ApiLlmRoute
@@ -140,6 +148,7 @@ export interface FileRoutesById {
   '/demo': typeof DemoRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/_authenticated/history': typeof AuthenticatedHistoryRouteWithChildren
+  '/_authenticated/leads': typeof AuthenticatedLeadsRoute
   '/_authenticated/library': typeof AuthenticatedLibraryRoute
   '/_authenticated/playground': typeof AuthenticatedPlaygroundRoute
   '/api/llm': typeof ApiLlmRoute
@@ -158,6 +167,7 @@ export interface FileRouteTypes {
     | '/demo'
     | '/sitemap.xml'
     | '/history'
+    | '/leads'
     | '/library'
     | '/playground'
     | '/api/llm'
@@ -174,6 +184,7 @@ export interface FileRouteTypes {
     | '/demo'
     | '/sitemap.xml'
     | '/history'
+    | '/leads'
     | '/library'
     | '/playground'
     | '/api/llm'
@@ -191,6 +202,7 @@ export interface FileRouteTypes {
     | '/demo'
     | '/sitemap.xml'
     | '/_authenticated/history'
+    | '/_authenticated/leads'
     | '/_authenticated/library'
     | '/_authenticated/playground'
     | '/api/llm'
@@ -258,6 +270,13 @@ declare module '@tanstack/react-router' {
       path: '/history'
       fullPath: '/history'
       preLoaderRoute: typeof AuthenticatedHistoryRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/leads': {
+      id: '/_authenticated/leads'
+      path: '/leads'
+      fullPath: '/leads'
+      preLoaderRoute: typeof AuthenticatedLeadsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/library': {
@@ -339,12 +358,14 @@ const AuthenticatedHistoryRouteWithChildren =
 
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedHistoryRoute: typeof AuthenticatedHistoryRouteWithChildren
+  AuthenticatedLeadsRoute: typeof AuthenticatedLeadsRoute
   AuthenticatedLibraryRoute: typeof AuthenticatedLibraryRoute
   AuthenticatedPlaygroundRoute: typeof AuthenticatedPlaygroundRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedHistoryRoute: AuthenticatedHistoryRouteWithChildren,
+  AuthenticatedLeadsRoute: AuthenticatedLeadsRoute,
   AuthenticatedLibraryRoute: AuthenticatedLibraryRoute,
   AuthenticatedPlaygroundRoute: AuthenticatedPlaygroundRoute,
 }
