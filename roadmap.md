@@ -29,3 +29,5 @@
 - [x] Replace old Claude sample entries with Sonnet 5 and Haiku 4.5, native streaming, accurate pricing and updated tests (38 passing; preview build clean).
 - [ ] Verify live Anthropic responses — blocked: ANTHROPIC_API_KEY is not configured; native streaming verified with mocked provider responses.
 - [x] Visible navigation progress and loading feedback for delayed actions across the studio; browser checked navigation, demo replies, and sign-in error recovery.
+- [x] Website assistant Flo with lead capture and Leads page
+- [ ] Email notification for new leads — blocked: needs an email sender domain set up

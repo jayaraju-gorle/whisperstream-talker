@@ -15,6 +15,7 @@ import { Route as AuthRouteImport } from './routes/auth'
 import { Route as DemoRouteImport } from './routes/demo'
 import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as AuthenticatedHistoryRouteImport } from './routes/_authenticated/history'
+import { Route as AuthenticatedLeadsRouteImport } from './routes/_authenticated/leads'
 import { Route as AuthenticatedLibraryRouteImport } from './routes/_authenticated/library'
 import { Route as AuthenticatedPlaygroundRouteImport } from './routes/_authenticated/playground'
 import { Route as ApiLlmRouteImport } from './routes/api/llm'
@@ -22,6 +23,7 @@ import { Route as ApiProvidersRouteImport } from './routes/api/providers'
 import { Route as ApiSttRouteImport } from './routes/api/stt'
 import { Route as ApiTtsRouteImport } from './routes/api/tts'
 import { Route as AuthenticatedHistoryIdRouteImport } from './routes/_authenticated/history.$id'
+import { Route as ApiPublicAssistantRouteImport } from './routes/api/public/assistant'
 import { Route as ApiPublicRatesRouteImport } from './routes/api/public/rates'
 
 const IndexRoute = IndexRouteImport.update({
@@ -51,6 +53,11 @@ const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
 const AuthenticatedHistoryRoute = AuthenticatedHistoryRouteImport.update({
   id: '/history',
   path: '/history',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedLeadsRoute = AuthenticatedLeadsRouteImport.update({
+  id: '/leads',
+  path: '/leads',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedLibraryRoute = AuthenticatedLibraryRouteImport.update({
@@ -88,6 +95,11 @@ const AuthenticatedHistoryIdRoute = AuthenticatedHistoryIdRouteImport.update({
   path: '/$id',
   getParentRoute: () => AuthenticatedHistoryRoute,
 } as any)
+const ApiPublicAssistantRoute = ApiPublicAssistantRouteImport.update({
+  id: '/api/public/assistant',
+  path: '/api/public/assistant',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPublicRatesRoute = ApiPublicRatesRouteImport.update({
   id: '/api/public/rates',
   path: '/api/public/rates',
@@ -100,6 +112,7 @@ export interface FileRoutesByFullPath {
   '/demo': typeof DemoRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/history': typeof AuthenticatedHistoryRouteWithChildren
+  '/leads': typeof AuthenticatedLeadsRoute
   '/library': typeof AuthenticatedLibraryRoute
   '/playground': typeof AuthenticatedPlaygroundRoute
   '/api/llm': typeof ApiLlmRoute
@@ -107,6 +120,7 @@ export interface FileRoutesByFullPath {
   '/api/stt': typeof ApiSttRoute
   '/api/tts': typeof ApiTtsRoute
   '/history/$id': typeof AuthenticatedHistoryIdRoute
+  '/api/public/assistant': typeof ApiPublicAssistantRoute
   '/api/public/rates': typeof ApiPublicRatesRoute
 }
 export interface FileRoutesByTo {
@@ -115,6 +129,7 @@ export interface FileRoutesByTo {
   '/demo': typeof DemoRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/history': typeof AuthenticatedHistoryRouteWithChildren
+  '/leads': typeof AuthenticatedLeadsRoute
   '/library': typeof AuthenticatedLibraryRoute
   '/playground': typeof AuthenticatedPlaygroundRoute
   '/api/llm': typeof ApiLlmRoute
@@ -122,6 +137,7 @@ export interface FileRoutesByTo {
   '/api/stt': typeof ApiSttRoute
   '/api/tts': typeof ApiTtsRoute
   '/history/$id': typeof AuthenticatedHistoryIdRoute
+  '/api/public/assistant': typeof ApiPublicAssistantRoute
   '/api/public/rates': typeof ApiPublicRatesRoute
 }
 export interface FileRoutesById {
@@ -132,6 +148,7 @@ export interface FileRoutesById {
   '/demo': typeof DemoRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/_authenticated/history': typeof AuthenticatedHistoryRouteWithChildren
+  '/_authenticated/leads': typeof AuthenticatedLeadsRoute
   '/_authenticated/library': typeof AuthenticatedLibraryRoute
   '/_authenticated/playground': typeof AuthenticatedPlaygroundRoute
   '/api/llm': typeof ApiLlmRoute
@@ -139,6 +156,7 @@ export interface FileRoutesById {
   '/api/stt': typeof ApiSttRoute
   '/api/tts': typeof ApiTtsRoute
   '/_authenticated/history/$id': typeof AuthenticatedHistoryIdRoute
+  '/api/public/assistant': typeof ApiPublicAssistantRoute
   '/api/public/rates': typeof ApiPublicRatesRoute
 }
 export interface FileRouteTypes {
@@ -149,6 +167,7 @@ export interface FileRouteTypes {
     | '/demo'
     | '/sitemap.xml'
     | '/history'
+    | '/leads'
     | '/library'
     | '/playground'
     | '/api/llm'
@@ -156,6 +175,7 @@ export interface FileRouteTypes {
     | '/api/stt'
     | '/api/tts'
     | '/history/$id'
+    | '/api/public/assistant'
     | '/api/public/rates'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -164,6 +184,7 @@ export interface FileRouteTypes {
     | '/demo'
     | '/sitemap.xml'
     | '/history'
+    | '/leads'
     | '/library'
     | '/playground'
     | '/api/llm'
@@ -171,6 +192,7 @@ export interface FileRouteTypes {
     | '/api/stt'
     | '/api/tts'
     | '/history/$id'
+    | '/api/public/assistant'
     | '/api/public/rates'
   id:
     | '__root__'
@@ -180,6 +202,7 @@ export interface FileRouteTypes {
     | '/demo'
     | '/sitemap.xml'
     | '/_authenticated/history'
+    | '/_authenticated/leads'
     | '/_authenticated/library'
     | '/_authenticated/playground'
     | '/api/llm'
@@ -187,6 +210,7 @@ export interface FileRouteTypes {
     | '/api/stt'
     | '/api/tts'
     | '/_authenticated/history/$id'
+    | '/api/public/assistant'
     | '/api/public/rates'
   fileRoutesById: FileRoutesById
 }
@@ -200,6 +224,7 @@ export interface RootRouteChildren {
   ApiProvidersRoute: typeof ApiProvidersRoute
   ApiSttRoute: typeof ApiSttRoute
   ApiTtsRoute: typeof ApiTtsRoute
+  ApiPublicAssistantRoute: typeof ApiPublicAssistantRoute
   ApiPublicRatesRoute: typeof ApiPublicRatesRoute
 }
 
@@ -245,6 +270,13 @@ declare module '@tanstack/react-router' {
       path: '/history'
       fullPath: '/history'
       preLoaderRoute: typeof AuthenticatedHistoryRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/leads': {
+      id: '/_authenticated/leads'
+      path: '/leads'
+      fullPath: '/leads'
+      preLoaderRoute: typeof AuthenticatedLeadsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/library': {
@@ -296,6 +328,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedHistoryIdRouteImport
       parentRoute: typeof AuthenticatedHistoryRoute
     }
+    '/api/public/assistant': {
+      id: '/api/public/assistant'
+      path: '/api/public/assistant'
+      fullPath: '/api/public/assistant'
+      preLoaderRoute: typeof ApiPublicAssistantRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/rates': {
       id: '/api/public/rates'
       path: '/api/public/rates'
@@ -319,12 +358,14 @@ const AuthenticatedHistoryRouteWithChildren =
 
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedHistoryRoute: typeof AuthenticatedHistoryRouteWithChildren
+  AuthenticatedLeadsRoute: typeof AuthenticatedLeadsRoute
   AuthenticatedLibraryRoute: typeof AuthenticatedLibraryRoute
   AuthenticatedPlaygroundRoute: typeof AuthenticatedPlaygroundRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedHistoryRoute: AuthenticatedHistoryRouteWithChildren,
+  AuthenticatedLeadsRoute: AuthenticatedLeadsRoute,
   AuthenticatedLibraryRoute: AuthenticatedLibraryRoute,
   AuthenticatedPlaygroundRoute: AuthenticatedPlaygroundRoute,
 }
@@ -342,6 +383,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiProvidersRoute: ApiProvidersRoute,
   ApiSttRoute: ApiSttRoute,
   ApiTtsRoute: ApiTtsRoute,
+  ApiPublicAssistantRoute: ApiPublicAssistantRoute,
   ApiPublicRatesRoute: ApiPublicRatesRoute,
 }
 export const routeTree = rootRouteImport

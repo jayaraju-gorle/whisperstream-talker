@@ -1,7 +1,8 @@
 import { CurrencySelect } from "@/components/CurrencySelect";
 import { createFileRoute, Link, Outlet, redirect, useNavigate } from "@tanstack/react-router";
 import { supabase } from "@/integrations/supabase/client";
-import { BookOpen, History, LogOut } from "lucide-react";
+import { BookOpen, History, Inbox, LogOut } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Logo } from "@/components/Logo";
 import { useState } from "react";
@@ -22,6 +23,22 @@ function Layout() {
   const { user } = Route.useRouteContext();
   const navigate = useNavigate();
   const [signingOut, setSigningOut] = useState(false);
+  const { data: isAdmin = false } = useQuery({
+    queryKey: ["is-admin", user.id],
+    queryFn: async () => {
+      const { data } = await supabase.from("user_roles").select("role").eq("user_id", user.id).eq("role", "admin");
+      return (data?.length ?? 0) > 0;
+    },
+  });
+  const { data: newLeads = 0 } = useQuery({
+    queryKey: ["leads", "new-count"],
+    enabled: isAdmin,
+    refetchInterval: 60000,
+    queryFn: async () => {
+      const { count } = await supabase.from("leads").select("id", { count: "exact", head: true }).eq("status", "new");
+      return count ?? 0;
+    },
+  });
   return (
     <div className="flex min-h-screen flex-col">
       <header className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3 border-b border-border bg-background/80 px-4 py-2.5 backdrop-blur">
@@ -51,6 +68,18 @@ function Layout() {
           >
             <BookOpen className="h-3.5 w-3.5" /> Library
           </Link>
+          {isAdmin && (
+            <Link
+              to="/leads"
+              className="flex items-center gap-1.5 rounded px-2.5 py-2.5 sm:py-1 text-muted-foreground hover:text-foreground"
+              activeProps={{ className: "flex items-center gap-1.5 rounded px-2.5 py-2.5 sm:py-1 bg-secondary text-foreground" }}
+            >
+              <Inbox className="h-3.5 w-3.5" /> Leads
+              {newLeads > 0 && (
+                <span className="rounded-full bg-primary px-1.5 text-[10px] font-semibold text-primary-foreground">{newLeads}</span>
+              )}
+            </Link>
+          )}
         </nav>
         <div className="col-span-2 flex min-w-0 items-center justify-end gap-3 text-xs sm:col-span-1 text-muted-foreground">
           <CurrencySelect />
