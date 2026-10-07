@@ -27,12 +27,11 @@ export const Route = createFileRoute("/api/public/whatsapp/webhook")({
           console.error("whatsapp inbox write failed", error);
           return new Response("Storage failed", { status: 500 });
         }
-        // Process this and any earlier pending events right away. Wait up to ~4s so the reply usually
-        // finishes inside the request; past that, acknowledge and let the work continue. Claimed reply
-        // states make retries and concurrent runs safe.
+        // Process this and any earlier pending events before answering, so multi-step replies (lead
+        // saving, email alert) finish inside the request. A gateway retry of a slow delivery is safe:
+        // the event is deduplicated and the reply is claimed, so it is never sent twice.
         const { drainWhatsApp } = await import("@/lib/server/whatsapp.server");
-        const work = drainWhatsApp().catch((e: unknown) => console.error("whatsapp drain failed", e));
-        await Promise.race([work, new Promise((r) => setTimeout(r, 4000))]);
+        await drainWhatsApp().catch((e: unknown) => console.error("whatsapp drain failed", e));
         return new Response("ok", { status: 200 });
       },
     },
