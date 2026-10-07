@@ -53,6 +53,14 @@ export default {
       }
       const handler = await getServerEntry();
       const response = await handler.fetch(request, env, ctx);
+      // Run Flo's WhatsApp replies after acknowledging the signed webhook (it must answer within 5s).
+      const waitUntil = (ctx as { waitUntil?: (p: Promise<unknown>) => void } | undefined)?.waitUntil;
+      if (response.headers.get("X-Whatsapp-Drain") && waitUntil && !import.meta.env.DEV) {
+        const work = import("./lib/server/whatsapp.server")
+          .then((m) => m.drainWhatsApp())
+          .catch((e: unknown) => console.error("whatsapp drain failed", e));
+        waitUntil.call(ctx, work);
+      }
       return await normalizeCatastrophicSsrResponse(response);
     } catch (error) {
       console.error(error);
