@@ -260,7 +260,7 @@ function FloModelSettings() {
           <p className="mt-3 text-sm text-destructive">Couldn't load the current setting.</p>
         ) : (
           <div className="mt-3 max-w-xs">
-            <Select value={setting.data} onValueChange={save} disabled={saving}>
+            <Select value={setting.data ?? ""} onValueChange={save} disabled={saving}>
               <SelectTrigger aria-label="Flo model"><SelectValue /></SelectTrigger>
               <SelectContent>
                 {vendors.map((v) => (
