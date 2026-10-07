@@ -12,7 +12,8 @@ import {
 
 const MODEL = "openai/gpt-6-astra";
 const MAX_USER_TURNS = 40;
-const VisitorId = z.string().regex(/^[A-Za-z0-9_-]{16,64}$/);
+// WhatsApp conversations use a reserved "whatsapp_" prefix; browsers can never address them.
+const VisitorId = z.string().regex(/^[A-Za-z0-9_-]{16,64}$/).refine((v) => !v.startsWith("whatsapp_"));
 
 function json(body: unknown, status = 200) {
   return new Response(JSON.stringify(body), { status, headers: { "Content-Type": "application/json" } });
@@ -81,43 +82,8 @@ export const Route = createFileRoute("/api/public/assistant")({
           messages: await convertToModelMessages(messages),
           abortSignal: request.signal,
           stopWhen: isStepCount(4),
-          tools: {
-            save_lead: tool({
-              description: "Save or update the visitor's shared contact details so we can get back to them. Preserve unchanged fields; phone is optional.",
-              inputSchema: z.object({
-                name: z.string().min(1).max(120),
-                email: z.string().max(254),
-                phone: z.string().max(40).nullable(),
-                company: z.string().max(160).nullable(),
-                interest: z.string().max(2000).nullable().describe("What they need, in one or two sentences"),
-              }),
-              execute: async (input) => {
-                const details = contactDetails(input);
-                if (!details) return { saved: false, reason: "Ask the visitor to check their name and email address." };
-                const { data: existing, error: lookupError } = await db.from("leads")
-                  .select("id").eq("conversation_id", convo.id).order("created_at", { ascending: false }).limit(1).maybeSingle();
-                if (lookupError) return { saved: false, reason: "Couldn't load the shared details. Please try again." };
-                const { error } = existing
-                  ? await db.from("leads").update(details).eq("id", existing.id).eq("conversation_id", convo.id)
-                  : await db.from("leads").insert({ conversation_id: convo.id, ...details });
-                if (error) {
-                  console.error("lead insert failed", error);
-                  return { saved: false, reason: "Saving failed; apologise and suggest trying again shortly." };
-                }
-                if (!existing) await notifyNewLead(details).catch((e: unknown) => console.error("lead alert email failed", e));
-                return { saved: true, updated: Boolean(existing) };
-              },
-            }),
-          },
-          providerOptions: {
-            openai: {
-              store: false,
-              forceReasoning: true,
-              reasoningEffort: "low",
-              reasoningSummary: "auto",
-              include: ["reasoning.encrypted_content"],
-            },
-          },
+          tools: floTools(db, convo.id),
+          providerOptions: FLO_PROVIDER_OPTIONS,
         });
 
         return withLovableAiGatewayRunIdHeader(
