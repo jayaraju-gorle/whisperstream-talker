@@ -188,23 +188,42 @@ function Transcript({ id }: { id: string }) {
     queryKey: ["assistant-conversation", id],
     refetchInterval: 15_000,
     queryFn: async () => {
-      const { data, error } = await supabase.from("assistant_conversations").select("messages").eq("id", id).single();
+      const [{ data, error }, { data: logs }] = await Promise.all([
+        supabase.from("assistant_conversations").select("messages").eq("id", id).single(),
+        supabase.from("assistant_turn_logs").select("model,first_token_ms,total_ms,ok,created_at").eq("conversation_id", id).order("created_at"),
+      ]);
       if (error) throw error;
-      return (data.messages ?? []) as { id: string; role: string; parts: { type: string; text?: string }[] }[];
+      return {
+        messages: (data.messages ?? []) as { id: string; role: string; parts: { type: string; text?: string }[] }[],
+        logs: logs ?? [],
+      };
     },
   });
   if (isLoading) return <div className="mt-3"><LoadingIndicator label="Loading chat…" /></div>;
   if (isError) return <p className="mt-3 text-sm text-destructive">This conversation couldn't load.</p>;
+  // Timing is logged per Flo reply; older replies from before logging started have none.
+  const replies = data?.messages.filter((m) => m.role !== "user").length ?? 0;
+  const offset = replies - (data?.logs.length ?? 0);
+  let replyIndex = -1;
+  const secs = (ms: number | null) => (ms == null ? "–" : `${(ms / 1000).toFixed(1)} s`);
   return (
     <div className="mt-4 space-y-2 break-words border-t border-border pt-3 text-sm">
-      {data?.length === 0 && <p className="text-muted-foreground">No messages saved yet.</p>}
-      {data?.map((m) => {
+      {data?.messages.length === 0 && <p className="text-muted-foreground">No messages saved yet.</p>}
+      {data?.messages.map((m) => {
+        const isFlo = m.role !== "user";
+        if (isFlo) replyIndex++;
+        const log = isFlo ? data.logs[replyIndex - offset] : undefined;
         const text = m.parts.filter((p) => p.type === "text").map((p) => p.text).join(" ");
         if (!text) return null;
         return (
           <div key={m.id}>
-            <span className="font-mono text-[11px] uppercase text-muted-foreground">{m.role === "user" ? "Visitor" : "Flo"}</span>
+            <span className="font-mono text-[11px] uppercase text-muted-foreground">{isFlo ? "Flo" : "Visitor"}</span>
             <p className="whitespace-pre-wrap">{text}</p>
+            {log && (
+              <p className="mt-1 font-mono text-[11px] text-muted-foreground">
+                {new Date(log.created_at).toLocaleString()} · {log.model.split("/").pop()} · first words {secs(log.first_token_ms)} · full reply {secs(log.total_ms)}
+              </p>
+            )}
           </div>
         );
       })}
