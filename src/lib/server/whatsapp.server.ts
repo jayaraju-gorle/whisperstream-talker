@@ -1,7 +1,7 @@
-import { createOpenAI } from "@ai-sdk/openai";
 import { convertToModelMessages, isStepCount, streamText, type UIMessage } from "ai";
 import { ASSISTANT_INSTRUCTIONS } from "@/lib/assistant-knowledge";
-import { FLO_PROVIDER_OPTIONS, floTools } from "@/lib/server/flo.server";
+import { floTools } from "@/lib/server/flo.server";
+import { floLanguageModel, loadFloModel, logFloTurn } from "@/lib/server/flo-model.server";
 import { createLovableAiGatewayRunIdFetch } from "@/lib/server/run-id";
 
 // Flo over WhatsApp: durable inbox processing, reply sending and delivery-status reconciliation.
@@ -9,7 +9,6 @@ type Db = Awaited<typeof import("@/integrations/supabase/client.server")>["supab
 type Json = Record<string, unknown>;
 
 const GATEWAY = "https://connector-gateway.lovable.dev/whatsapp";
-const MODEL = "openai/gpt-6-astra";
 const MAX_EVENT_ATTEMPTS = 15;
 const MAX_REPLY_ATTEMPTS = 3;
 const STUCK_SENDING_MS = 90_000;
@@ -138,19 +137,29 @@ async function processEvent(db: Db, ev: { id: string; event: string; payload: un
 async function generateReply(db: Db, conversationId: string, history: UIMessage[]) {
   const { lovable } = keys();
   const runIdFetch = createLovableAiGatewayRunIdFetch();
-  const provider = createOpenAI({
-    baseURL: "https://ai.gateway.lovable.dev/v1", apiKey: lovable,
-    headers: { "Lovable-API-Key": lovable, "X-Lovable-AIG-SDK": "vercel-ai-sdk" }, fetch: runIdFetch.fetch,
-  });
-  const result = streamText({
-    model: provider.responses(MODEL),
-    instructions: WHATSAPP_INSTRUCTIONS,
-    messages: await convertToModelMessages(history.slice(-HISTORY_LIMIT)),
-    stopWhen: isStepCount(4),
-    tools: floTools(db, conversationId, "WhatsApp"),
-    providerOptions: FLO_PROVIDER_OPTIONS,
-  });
-  return (await result.text).trim();
+  const choice = await loadFloModel(db);
+  const { model, providerOptions } = floLanguageModel(choice, lovable, runIdFetch.fetch);
+  const started = Date.now();
+  let firstToken: number | null = null;
+  const log = { conversation_id: conversationId, channel: "WhatsApp", model: choice.id, started };
+  try {
+    const result = streamText({
+      model,
+      instructions: WHATSAPP_INSTRUCTIONS,
+      messages: await convertToModelMessages(history.slice(-HISTORY_LIMIT)),
+      stopWhen: isStepCount(4),
+      tools: floTools(db, conversationId, "WhatsApp"),
+      providerOptions,
+      onChunk: ({ chunk }) => { if (firstToken == null && chunk.type === "text-delta") firstToken = Date.now(); },
+    });
+    const text = (await result.text).trim();
+    const usage = await result.totalUsage;
+    await logFloTurn(db, { ...log, firstToken, input_tokens: usage.inputTokens, output_tokens: usage.outputTokens, steps: (await result.steps).length, ok: !!text, ...(text ? {} : { error: "Empty reply" }) });
+    return text;
+  } catch (e) {
+    await logFloTurn(db, { ...log, firstToken, ok: false, error: String((e as Error)?.message ?? e) });
+    throw e;
+  }
 }
 
 async function replyTo(db: Db, msgId: string) {

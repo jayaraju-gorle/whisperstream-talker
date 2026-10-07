@@ -14,6 +14,24 @@ export type Database = {
   }
   public: {
     Tables: {
+      app_settings: {
+        Row: {
+          key: string
+          updated_at: string
+          value: Json
+        }
+        Insert: {
+          key: string
+          updated_at?: string
+          value?: Json
+        }
+        Update: {
+          key?: string
+          updated_at?: string
+          value?: Json
+        }
+        Relationships: []
+      }
       assistant_conversations: {
         Row: {
           created_at: string
@@ -40,6 +58,59 @@ export type Database = {
           visitor_id?: string
         }
         Relationships: []
+      }
+      assistant_turn_logs: {
+        Row: {
+          channel: string
+          conversation_id: string | null
+          created_at: string
+          error: string | null
+          first_token_ms: number | null
+          id: string
+          input_tokens: number | null
+          model: string
+          ok: boolean
+          output_tokens: number | null
+          steps: number | null
+          total_ms: number
+        }
+        Insert: {
+          channel: string
+          conversation_id?: string | null
+          created_at?: string
+          error?: string | null
+          first_token_ms?: number | null
+          id?: string
+          input_tokens?: number | null
+          model: string
+          ok?: boolean
+          output_tokens?: number | null
+          steps?: number | null
+          total_ms: number
+        }
+        Update: {
+          channel?: string
+          conversation_id?: string | null
+          created_at?: string
+          error?: string | null
+          first_token_ms?: number | null
+          id?: string
+          input_tokens?: number | null
+          model?: string
+          ok?: boolean
+          output_tokens?: number | null
+          steps?: number | null
+          total_ms?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "assistant_turn_logs_conversation_id_fkey"
+            columns: ["conversation_id"]
+            isOneToOne: false
+            referencedRelation: "assistant_conversations"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       conversations: {
         Row: {

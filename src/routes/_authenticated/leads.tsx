@@ -5,6 +5,8 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { LoadingIndicator } from "@/components/LoadingIndicator";
 import { Button } from "@/components/ui/button";
+import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { FLO_MODELS, FLO_MODEL_SETTING_KEY, resolveFloModel } from "@/lib/flo-models";
 
 export const Route = createFileRoute("/_authenticated/leads")({
   staticData: { sitemap: false },
@@ -38,7 +40,7 @@ function Leads() {
   const qc = useQueryClient();
   const [openId, setOpenId] = useState<string | null>(null);
   const [updating, setUpdating] = useState<string | null>(null);
-  const [tab, setTab] = useState<"leads" | "whatsapp">("leads");
+  const [tab, setTab] = useState<"leads" | "whatsapp" | "model">("leads");
   const { data, isLoading, isError } = useQuery({
     queryKey: ["leads", "list"],
     queryFn: async () => {
@@ -68,8 +70,9 @@ function Leads() {
       <div className="mt-4 flex gap-2" role="tablist">
         <Button size="sm" role="tab" aria-selected={tab === "leads"} variant={tab === "leads" ? "default" : "outline"} onClick={() => setTab("leads")}>Leads</Button>
         <Button size="sm" role="tab" aria-selected={tab === "whatsapp"} variant={tab === "whatsapp" ? "default" : "outline"} onClick={() => setTab("whatsapp")}>WhatsApp messages</Button>
+        <Button size="sm" role="tab" aria-selected={tab === "model"} variant={tab === "model" ? "default" : "outline"} onClick={() => setTab("model")}>Flo model</Button>
       </div>
-      {tab === "whatsapp" ? <WhatsAppMessages /> : <>
+      {tab === "model" ? <FloModelSettings /> : tab === "whatsapp" ? <WhatsAppMessages /> : <>
       {isLoading && <div className="mt-8"><LoadingIndicator label="Loading leads…" /></div>}
       {isError && <p className="mt-8 text-sm text-destructive">You don't have access to leads, or they couldn't load.</p>}
       {data && data.length === 0 && <p className="mt-8 text-sm text-muted-foreground">No leads yet.</p>}
@@ -207,6 +210,118 @@ function WhatsAppMessages() {
           </div>
         );
       })}
+    </div>
+  );
+}
+
+type TurnLog = { id: string; channel: string; model: string; first_token_ms: number | null; total_ms: number; input_tokens: number | null; output_tokens: number | null; ok: boolean; error: string | null; created_at: string };
+
+const modelLabel = (id: string) => FLO_MODELS.find((m) => m.id === id)?.label ?? id;
+const median = (xs: number[]) => { if (!xs.length) return null; const s = [...xs].sort((a, b) => a - b); return s[Math.floor(s.length / 2)]; };
+
+function FloModelSettings() {
+  const qc = useQueryClient();
+  const [saving, setSaving] = useState(false);
+  const setting = useQuery({
+    queryKey: ["app-settings", FLO_MODEL_SETTING_KEY],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("app_settings").select("value").eq("key", FLO_MODEL_SETTING_KEY).maybeSingle();
+      if (error) throw error;
+      return resolveFloModel(data?.value).id;
+    },
+  });
+  const logs = useQuery({
+    queryKey: ["assistant-turn-logs"],
+    refetchInterval: 15_000,
+    queryFn: async () => {
+      const { data, error } = await supabase.from("assistant_turn_logs").select("*").order("created_at", { ascending: false }).limit(500);
+      if (error) throw error;
+      return data as TurnLog[];
+    },
+  });
+  const save = async (model: string) => {
+    setSaving(true);
+    const { error } = await supabase.from("app_settings").upsert({ key: FLO_MODEL_SETTING_KEY, value: { model }, updated_at: new Date().toISOString() });
+    setSaving(false);
+    if (error) { toast.error("Couldn't save the model."); return; }
+    toast.success(`Flo now uses ${modelLabel(model)}.`);
+    qc.invalidateQueries({ queryKey: ["app-settings"] });
+  };
+  const vendors = [...new Set(FLO_MODELS.map((m) => m.vendor))];
+  const byModel = new Map<string, TurnLog[]>();
+  for (const l of logs.data ?? []) byModel.set(l.model, [...(byModel.get(l.model) ?? []), l]);
+
+  return (
+    <div className="mt-6 space-y-6">
+      <section className="rounded-lg border border-border bg-card p-4">
+        <h2 className="font-medium">AI model for Flo</h2>
+        <p className="mt-1 text-sm text-muted-foreground">Used for both the website chat and WhatsApp. Changes apply to the next message.</p>
+        {setting.isLoading ? <div className="mt-3"><LoadingIndicator label="Loading…" /></div> : setting.isError ? (
+          <p className="mt-3 text-sm text-destructive">Couldn't load the current setting.</p>
+        ) : (
+          <div className="mt-3 max-w-xs">
+            <Select value={setting.data ?? ""} onValueChange={save} disabled={saving}>
+              <SelectTrigger aria-label="Flo model"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                {vendors.map((v) => (
+                  <SelectGroup key={v}>
+                    <SelectLabel className="text-[10px] uppercase tracking-wider">{v}</SelectLabel>
+                    {FLO_MODELS.filter((m) => m.vendor === v).map((m) => <SelectItem key={m.id} value={m.id}>{m.label}</SelectItem>)}
+                  </SelectGroup>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        )}
+      </section>
+
+      <section className="rounded-lg border border-border bg-card p-4">
+        <h2 className="font-medium">Performance by model</h2>
+        <p className="mt-1 text-sm text-muted-foreground">Median times from the last 500 replies. "First words" is how long until Flo starts writing.</p>
+        {logs.isLoading && <div className="mt-3"><LoadingIndicator label="Loading…" /></div>}
+        {logs.data && logs.data.length === 0 && <p className="mt-3 text-sm text-muted-foreground">No replies recorded yet.</p>}
+        {byModel.size > 0 && (
+          <div className="mt-3 overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead className="text-left font-mono text-[11px] uppercase text-muted-foreground">
+                <tr><th className="py-1 pr-4">Model</th><th className="pr-4">Replies</th><th className="pr-4">First words</th><th className="pr-4">Full reply</th><th className="pr-4">Avg tokens out</th><th>Failed</th></tr>
+              </thead>
+              <tbody>
+                {[...byModel.entries()].map(([m, ls]) => {
+                  const ok = ls.filter((l) => l.ok);
+                  const ft = median(ok.flatMap((l) => (l.first_token_ms == null ? [] : [l.first_token_ms])));
+                  const tt = median(ok.map((l) => l.total_ms));
+                  const out = ok.filter((l) => l.output_tokens != null);
+                  return (
+                    <tr key={m} className="border-t border-border">
+                      <td className="py-2 pr-4">{modelLabel(m)}</td><td className="pr-4">{ls.length}</td>
+                      <td className="pr-4">{ft == null ? "—" : `${ft} ms`}</td><td className="pr-4">{tt == null ? "—" : `${tt} ms`}</td>
+                      <td className="pr-4">{out.length ? Math.round(out.reduce((a, l) => a + (l.output_tokens ?? 0), 0) / out.length) : "—"}</td>
+                      <td>{ls.length - ok.length}</td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </section>
+
+      {logs.data && logs.data.length > 0 && (
+        <section className="rounded-lg border border-border bg-card p-4">
+          <h2 className="font-medium">Recent replies</h2>
+          <div className="mt-3 space-y-1 font-mono text-[12px]">
+            {logs.data.slice(0, 50).map((l) => (
+              <div key={l.id} className={`flex flex-wrap gap-x-4 ${l.ok ? "" : "text-destructive"}`}>
+                <span className="text-muted-foreground">{new Date(l.created_at).toLocaleString()}</span>
+                <span>{l.channel}</span><span>{modelLabel(l.model)}</span>
+                <span>first {l.first_token_ms ?? "—"} ms</span><span>total {l.total_ms} ms</span>
+                {l.error && <span>{l.error}</span>}
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
     </div>
   );
 }
