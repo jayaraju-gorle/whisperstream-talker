@@ -6,7 +6,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { LoadingIndicator } from "@/components/LoadingIndicator";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { FLO_MODELS, FLO_MODEL_SETTING_KEY, resolveFloModel } from "@/lib/flo-models";
+import { FLO_MODELS, FLO_MODEL_SETTING_KEY, floTurnCostUsd, resolveFloModel } from "@/lib/flo-models";
+import { useCurrency } from "@/hooks/use-currency";
 import { matchWhatsAppMetrics } from "@/lib/whatsapp-metrics";
 
 export const Route = createFileRoute("/_authenticated/leads")({
@@ -338,6 +339,7 @@ const median = (xs: number[]) => { if (!xs.length) return null; const s = [...xs
 
 function FloModelSettings() {
   const qc = useQueryClient();
+  const { fmt } = useCurrency();
   const [saving, setSaving] = useState(false);
   const setting = useQuery({
     queryKey: ["app-settings", FLO_MODEL_SETTING_KEY],
@@ -394,14 +396,14 @@ function FloModelSettings() {
 
       <section className="rounded-lg border border-border bg-card p-4">
         <h2 className="font-medium">Performance by model</h2>
-        <p className="mt-1 text-sm text-muted-foreground">Median times from the last 500 replies. "First words" is how long until Flo starts writing.</p>
+        <p className="mt-1 text-sm text-muted-foreground">Median times from the last 500 replies. "First words" is how long until Flo starts writing. Costs are estimates from list prices.</p>
         {logs.isLoading && <div className="mt-3"><LoadingIndicator label="Loading…" /></div>}
         {logs.data && logs.data.length === 0 && <p className="mt-3 text-sm text-muted-foreground">No replies recorded yet.</p>}
         {byModel.size > 0 && (
           <div className="mt-3 overflow-x-auto">
             <table className="w-full text-sm">
               <thead className="text-left font-mono text-[11px] uppercase text-muted-foreground">
-                <tr><th className="py-1 pr-4">Model</th><th className="pr-4">Replies</th><th className="pr-4">First words</th><th className="pr-4">Full reply</th><th className="pr-4">Avg tokens out</th><th>Failed</th></tr>
+                <tr><th className="py-1 pr-4">Model</th><th className="pr-4">Replies</th><th className="pr-4">First words</th><th className="pr-4">Full reply</th><th className="pr-4">Avg tokens in/out</th><th className="pr-4">Total cost</th><th className="pr-4">Avg cost / reply</th><th className="pr-4">Per 1,000 replies</th><th>Failed</th></tr>
               </thead>
               <tbody>
                 {[...byModel.entries()].map(([m, ls]) => {
@@ -409,11 +411,18 @@ function FloModelSettings() {
                   const ft = median(ok.flatMap((l) => (l.first_token_ms == null ? [] : [l.first_token_ms])));
                   const tt = median(ok.map((l) => l.total_ms));
                   const out = ok.filter((l) => l.output_tokens != null);
+                  const costs = ls.flatMap((l) => { const c = floTurnCostUsd(l.model, l.input_tokens, l.output_tokens); return c == null ? [] : [c]; });
+                  const total = costs.reduce((a, c) => a + c, 0);
+                  const avg = costs.length ? total / costs.length : null;
+                  const avgIn = out.length ? Math.round(out.reduce((a, l) => a + (l.input_tokens ?? 0), 0) / out.length) : null;
                   return (
                     <tr key={m} className="border-t border-border">
                       <td className="py-2 pr-4">{modelLabel(m)}</td><td className="pr-4">{ls.length}</td>
                       <td className="pr-4">{ft == null ? "—" : `${ft} ms`}</td><td className="pr-4">{tt == null ? "—" : `${tt} ms`}</td>
-                      <td className="pr-4">{out.length ? Math.round(out.reduce((a, l) => a + (l.output_tokens ?? 0), 0) / out.length) : "—"}</td>
+                      <td className="pr-4">{out.length ? `${avgIn}/${Math.round(out.reduce((a, l) => a + (l.output_tokens ?? 0), 0) / out.length)}` : "—"}</td>
+                      <td className="pr-4">{costs.length ? fmt(total) : "—"}</td>
+                      <td className="pr-4">{avg == null ? "—" : fmt(avg)}</td>
+                      <td className="pr-4">{avg == null ? "—" : fmt(avg * 1000)}</td>
                       <td>{ls.length - ok.length}</td>
                     </tr>
                   );
@@ -433,6 +442,7 @@ function FloModelSettings() {
                 <span className="text-muted-foreground">{new Date(l.created_at).toLocaleString()}</span>
                 <span>{l.channel}</span><span>{modelLabel(l.model)}</span>
                 <span>first {l.first_token_ms ?? "—"} ms</span><span>total {l.total_ms} ms</span>
+                {(() => { const c = floTurnCostUsd(l.model, l.input_tokens, l.output_tokens); return c == null ? null : <span>{fmt(c)}</span>; })()}
                 {l.error && <span>{l.error}</span>}
               </div>
             ))}

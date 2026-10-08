@@ -53,7 +53,7 @@ export async function sendWhatsAppText(to: string, body: string) {
 
 /** Marks the inbound message read and shows "typing…" while the reply is generated.
  *  Dismissed when the reply is sent or after 25s. Best-effort: never throws. */
-async function sendTypingIndicator(messageId: string) {
+export async function sendTypingIndicator(messageId: string) {
   try {
     const { lovable, wa } = keys();
     const res = await fetch(`${GATEWAY}/messages`, {
@@ -87,13 +87,11 @@ async function handleMessages(db: Db, payload: Json) {
       : type === "button" ? String((m["button"] as Json | undefined)?.["text"] ?? "")
       : `[${type || "unsupported"} message]`;
     const ts = Number(m["timestamp"]);
-    const { data: inserted, error } = await db.from("whatsapp_messages").upsert({
+    const { error } = await db.from("whatsapp_messages").upsert({
       wa_message_id: id, direction: "in", phone: from, body: body.slice(0, 4000), status: "received",
       reply_state: "pending", provider_ts: Number.isFinite(ts) ? new Date(ts * 1000).toISOString() : null,
     }, { onConflict: "wa_message_id", ignoreDuplicates: true }).select("id");
     if (error) throw new Error(`inbound save failed: ${error.message}`);
-    // Show "typing…" the moment a new message lands, before any model work starts.
-    if (inserted?.length) await sendTypingIndicator(id);
   }
 }
 
@@ -239,4 +237,10 @@ export async function drainWhatsApp(db?: Db) {
     .select("id").eq("direction", "in").in("reply_state", ["pending", "failed"]).lt("reply_attempts", MAX_REPLY_ATTEMPTS)
     .order("created_at", { ascending: false }).limit(3);
   for (const m of pending ?? []) await replyTo(db, m.id);
+}
+
+/** Fire the typing indicator for every inbound message in a webhook payload. Never throws. */
+export async function typingForPayload(payload: unknown) {
+  const msgs = (value((payload ?? {}) as Json)["messages"] as Json[] | undefined) ?? [];
+  await Promise.all(msgs.map((m) => (m["id"] ? sendTypingIndicator(String(m["id"])) : undefined)));
 }
