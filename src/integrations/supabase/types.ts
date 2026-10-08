@@ -201,6 +201,7 @@ export type Database = {
           notes: string
           owner_id: string
           phone: string
+          portal_token: string
           scenario_id: string | null
           test_code: string
           updated_at: string
@@ -220,6 +221,7 @@ export type Database = {
           notes?: string
           owner_id: string
           phone?: string
+          portal_token?: string
           scenario_id?: string | null
           test_code?: string
           updated_at?: string
@@ -239,6 +241,7 @@ export type Database = {
           notes?: string
           owner_id?: string
           phone?: string
+          portal_token?: string
           scenario_id?: string | null
           test_code?: string
           updated_at?: string

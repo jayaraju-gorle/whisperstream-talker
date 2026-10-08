@@ -57,6 +57,13 @@
       "when": 1791450184514,
       "tag": "0007_clinic_map_url",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1791450537656,
+      "tag": "0008_clinic_portal_token",
+      "breakpoints": true
     }
   ]
 }
