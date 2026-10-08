@@ -1,0 +1,2 @@
+ALTER TABLE public.clinics ADD COLUMN IF NOT EXISTS portal_token text NOT NULL DEFAULT (replace(gen_random_uuid()::text,'-','') || replace(gen_random_uuid()::text,'-',''));
+CREATE UNIQUE INDEX IF NOT EXISTS clinics_portal_token_key ON public.clinics(portal_token);
