@@ -1,14 +1,26 @@
 import { useState } from "react";
 import { useNavigate } from "@tanstack/react-router";
 import { useQueryClient } from "@tanstack/react-query";
-import { Plus, Trash2 } from "lucide-react";
+import { Plus, Sparkles, Trash2 } from "lucide-react";
 import { toast } from "sonner";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { stepError, type ClinicInput } from "@/lib/clinic";
+import { IVY_PRESET, IVY_PRESET_LABEL } from "@/lib/clinic-presets";
 import { supabase } from "@/integrations/supabase/client";
 import { saveClinic, type ClinicRow } from "@/lib/clinic-store";
 import { LIBRARY_KEY } from "@/hooks/use-library";
