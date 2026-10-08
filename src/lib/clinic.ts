@@ -60,25 +60,16 @@ export function stepError(step: number, c: ClinicInput): string | null {
 
 export function clinicKnowledge(c: ClinicInput) {
   const docs = c.doctors.filter((d) => d.name.trim());
-  return [
-    `# ${c.name} — Front desk guide`,
-    "",
-    "## Contact",
-    `- Appointments: ${c.phone}`,
-    c.emergency_phone && `- Emergency: ${c.emergency_phone}`,
-    c.email && `- Email: ${c.email}`,
-    c.address && `- Address: ${c.address}`,
-    "",
-    "## Opening hours",
-    ...c.hours.map((h) => `- ${hoursLine(h)}`),
-    "",
-    "## Doctors and consultation fees",
-    ...docs.map((d) => `- ${d.name}${d.specialty ? ` (${d.specialty})` : ""}${d.days ? ` — ${d.days}` : ""}. Fee: ${d.fee}.`),
-    c.insurance && "",
-    c.insurance && `## Insurance\n${c.insurance}`,
-    c.notes && "",
-    c.notes && `## Other information\n${c.notes}`,
-  ].filter((l) => l !== "" || true).filter((l) => l !== false && l !== undefined).join("\n");
+  const lines = [`# ${c.name} — Front desk guide`, "", "## Contact", `- Appointments: ${c.phone}`];
+  if (c.emergency_phone) lines.push(`- Emergency: ${c.emergency_phone}`);
+  if (c.email) lines.push(`- Email: ${c.email}`);
+  if (c.address) lines.push(`- Address: ${c.address}`);
+  lines.push("", "## Opening hours", ...c.hours.map((h) => `- ${hoursLine(h)}`));
+  lines.push("", "## Doctors and consultation fees",
+    ...docs.map((d) => `- ${d.name}${d.specialty ? ` (${d.specialty})` : ""}${d.days ? ` — ${d.days}` : ""}. Fee: ${d.fee}.`));
+  if (c.insurance) lines.push("", "## Insurance", c.insurance);
+  if (c.notes) lines.push("", "## Other information", c.notes);
+  return lines.join("\n");
 }
 
 export function clinicPrompt(name: string) {
