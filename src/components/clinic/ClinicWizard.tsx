@@ -19,7 +19,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
-import { stepError, type ClinicInput } from "@/lib/clinic";
+import { stepError, testCodeError, type ClinicInput } from "@/lib/clinic";
 import { IVY_PRESET, IVY_PRESET_LABEL, IYASHI_PRESET, IYASHI_PRESET_LABEL } from "@/lib/clinic-presets";
 import { supabase } from "@/integrations/supabase/client";
 import { saveClinic, type ClinicRow } from "@/lib/clinic-store";
@@ -36,6 +36,7 @@ export function ClinicWizard({ userId, initial, existing }: { userId: string; in
   const [saved, setSaved] = useState<{ id: string; code: string; scenario_id: string | null; kb_id: string | null } | null>(
     existing ? { id: existing.id, code: existing.test_code, scenario_id: existing.scenario_id, kb_id: existing.kb_id } : null,
   );
+  const [code, setCode] = useState(existing?.test_code ?? "");
   const navigate = useNavigate();
   const qc = useQueryClient();
   const set = <K extends keyof ClinicInput>(k: K, v: ClinicInput[K]) => setC((p) => ({ ...p, [k]: v }));
@@ -47,13 +48,20 @@ export function ClinicWizard({ userId, initial, existing }: { userId: string; in
 
   async function next(saveNow = false) {
     for (const k of saveNow ? [0, 1, 2] : [step]) {
-      const err = stepError(k, c);
+      const err = stepError(k, c) ?? (k === 0 && existing ? testCodeError(code) : null);
       if (err) { setStep(k); return void toast.error(err); }
     }
     if (step < 2 && !saveNow) return setStep(step + 1);
     setSaving(true);
     try {
       const id = await saveClinic(userId, c, saved ?? undefined);
+      if (existing && code !== saved?.code) {
+        const { error } = await supabase.from("clinics").update({ test_code: code }).eq("id", id);
+        if (error) {
+          setStep(0);
+          return void toast.error(error.code === "23505" ? `Test code ${code} is already used by another clinic.` : "Couldn't save the test code.");
+        }
+      }
       await qc.invalidateQueries({ queryKey: LIBRARY_KEY });
       await qc.invalidateQueries({ queryKey: ["clinics"] });
       const { data, error } = await supabase.from("clinics").select("test_code,scenario_id,kb_id").eq("id", id).single();
@@ -131,6 +139,12 @@ export function ClinicWizard({ userId, initial, existing }: { userId: string; in
           <Field label="Email"><Input type="email" value={c.email} onChange={(e) => set("email", e.target.value)} /></Field>
           <div className="sm:col-span-2"><Field label="Address"><Input value={c.address} onChange={(e) => set("address", e.target.value)} /></Field></div>
           <div className="sm:col-span-2"><Field label="Google Maps link"><Input type="url" value={c.map_url} onChange={(e) => set("map_url", e.target.value)} placeholder="https://maps.app.goo.gl/…" /></Field></div>
+          {existing && (
+            <Field label="WhatsApp test code (3–10 letters or numbers)">
+              <Input value={code} maxLength={10} className="font-mono uppercase" placeholder="IVY"
+                onChange={(e) => setCode(e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, ""))} />
+            </Field>
+          )}
           <div className="sm:col-span-2"><Field label="Other things patients often ask (parking, visiting rules…)"><Textarea rows={3} value={c.notes} onChange={(e) => set("notes", e.target.value)} /></Field></div>
         </div>
       )}

@@ -106,10 +106,15 @@ export function testCommand(code: string) {
 
 export function parseClinicCommand(body: string): { kind: "test"; code: string } | { kind: "exit" } | null {
   const t = body.trim();
-  const m = /^test\s+([a-z0-9]{6})$/i.exec(t);
+  const m = /^test\s+([a-z0-9]{3,10})$/i.exec(t);
   if (m) return { kind: "test", code: m[1]!.toUpperCase() };
   if (/^exit$/i.test(t)) return { kind: "exit" };
   return null;
+}
+
+/** Test codes are 3–10 uppercase letters or digits (also enforced by the database). */
+export function testCodeError(code: string): string | null {
+  return /^[A-Z0-9]{3,10}$/.test(code) ? null : "Test code must be 3–10 letters or numbers, with no spaces.";
 }
 
 export const CLINIC_VISITOR_PREFIX = "wa_c_";
