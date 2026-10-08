@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { DAYS, toClinicInput, clinicKnowledge, clinicPrompt, clinicVisitorId, emptyClinic, parseClinicCommand, stepError } from "./clinic";
+import { DAYS, toClinicInput, clinicKnowledge, clinicPrompt, clinicVisitorId, emptyClinic, parseClinicCommand, stepError, testCodeError } from "./clinic";
 
 describe("clinic onboarding", () => {
   it("requires a name and phone on the details step", () => {
@@ -37,6 +37,16 @@ describe("clinic onboarding", () => {
     expect(parseClinicCommand(" test ab12cd ")).toEqual({ kind: "test", code: "AB12CD" });
     expect(parseClinicCommand("EXIT")).toEqual({ kind: "exit" });
     expect(parseClinicCommand("test me please")).toBeNull();
+    expect(parseClinicCommand("test ivy")).toEqual({ kind: "test", code: "IVY" });
+    expect(parseClinicCommand("TEST Iyashi")).toEqual({ kind: "test", code: "IYASHI" });
+    expect(parseClinicCommand("test ab")).toBeNull();
+  });
+  it("validates test codes as 3-10 uppercase letters or digits", () => {
+    expect(testCodeError("IVY")).toBeNull();
+    expect(testCodeError("IVYCLINIC1")).toBeNull();
+    expect(testCodeError("IV")).not.toBeNull();
+    expect(testCodeError("IVYCLINIC12")).not.toBeNull();
+    expect(testCodeError("IVY 2")).not.toBeNull();
   });
   it("keeps clinic WhatsApp visitor ids under the 64-character limit", () => {
     const id = clinicVisitorId("3f6b2a1c-9d4e-4f5a-8b7c-1d2e3f4a5b6c", "916302392274");
