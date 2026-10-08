@@ -28,10 +28,12 @@ export function ClinicWizard({ userId, initial, existing }: { userId: string; in
   const qc = useQueryClient();
   const set = <K extends keyof ClinicInput>(k: K, v: ClinicInput[K]) => setC((p) => ({ ...p, [k]: v }));
 
-  async function next() {
-    const err = stepError(step, c);
-    if (err) return void toast.error(err);
-    if (step < 2) return setStep(step + 1);
+  async function next(saveNow = false) {
+    for (const k of saveNow ? [0, 1, 2] : [step]) {
+      const err = stepError(k, c);
+      if (err) { setStep(k); return void toast.error(err); }
+    }
+    if (step < 2 && !saveNow) return setStep(step + 1);
     setSaving(true);
     try {
       const id = await saveClinic(userId, c, saved ?? undefined);
@@ -40,7 +42,7 @@ export function ClinicWizard({ userId, initial, existing }: { userId: string; in
       const { data, error } = await supabase.from("clinics").select("test_code,scenario_id,kb_id").eq("id", id).single();
       if (error) throw error;
       setSaved({ id, code: data.test_code, scenario_id: data.scenario_id, kb_id: data.kb_id });
-      setStep(3);
+      if (!saveNow) setStep(3);
       toast.success("Clinic saved");
     } catch {
       toast.error("Couldn't save the clinic. Please try again.");
@@ -54,7 +56,7 @@ export function ClinicWizard({ userId, initial, existing }: { userId: string; in
       <ol className="grid grid-cols-4 gap-2 text-xs">
         {STEPS.map((s, i) => (
           <li key={s}>
-            <button type="button" disabled={i === 3 ? !saved : i > step && !saved}
+            <button type="button" disabled={saving || (i === 3 ? !saved : i > step && !saved)}
               onClick={() => setStep(i)}
               className={cn("w-full border-t-2 pt-2 text-left disabled:opacity-50", i <= step ? "border-primary text-foreground" : "border-border text-muted-foreground")}>
               <span className="font-mono">0{i + 1}</span> <span className="hidden sm:inline">{s}</span>
@@ -77,20 +79,33 @@ export function ClinicWizard({ userId, initial, existing }: { userId: string; in
 
       {step === 1 && (
         <div className="divide-y divide-border rounded-lg border border-border">
-          {c.hours.map((h, i) => (
-            <div key={h.day} className="grid grid-cols-[6rem_auto_minmax(0,1fr)] items-center gap-3 p-3 sm:grid-cols-[8rem_auto_minmax(0,1fr)]">
-              <span className="text-sm">{h.day}</span>
-              <Switch checked={h.open} aria-label={`${h.day} open`}
-                onCheckedChange={(open) => set("hours", c.hours.map((x, j) => (j === i ? { ...x, open } : x)))} />
-              {h.open ? (
-                <div className="flex min-w-0 items-center gap-2">
-                  <Input type="time" value={h.from} aria-label={`${h.day} opens`} onChange={(e) => set("hours", c.hours.map((x, j) => (j === i ? { ...x, from: e.target.value } : x)))} />
-                  <span className="text-muted-foreground">–</span>
-                  <Input type="time" value={h.to} aria-label={`${h.day} closes`} onChange={(e) => set("hours", c.hours.map((x, j) => (j === i ? { ...x, to: e.target.value } : x)))} />
-                </div>
-              ) : <span className="text-sm text-muted-foreground">Closed</span>}
-            </div>
-          ))}
+          {c.hours.map((h, i) => {
+            const setDay = (p: Partial<typeof h>) => set("hours", c.hours.map((x, j) => (j === i ? { ...x, ...p } : x)));
+            const setSlot = (k: number, p: Partial<(typeof h.slots)[number]>) => setDay({ slots: h.slots.map((s, m) => (m === k ? { ...s, ...p } : s)) });
+            return (
+              <div key={h.day} className="grid grid-cols-[6rem_auto_minmax(0,1fr)] items-start gap-3 p-3 sm:grid-cols-[8rem_auto_minmax(0,1fr)]">
+                <span className="pt-2 text-sm">{h.day}</span>
+                <Switch className="mt-2" checked={h.open} aria-label={`${h.day} open`} onCheckedChange={(open) => setDay({ open })} />
+                {h.open ? (
+                  <div className="min-w-0 space-y-2">
+                    {h.slots.map((s, k) => (
+                      <div key={k} className="flex min-w-0 items-center gap-2">
+                        <Input type="time" value={s.from} aria-label={`${h.day} slot ${k + 1} opens`} onChange={(e) => setSlot(k, { from: e.target.value })} />
+                        <span className="text-muted-foreground">–</span>
+                        <Input type="time" value={s.to} aria-label={`${h.day} slot ${k + 1} closes`} onChange={(e) => setSlot(k, { to: e.target.value })} />
+                        <Button variant="ghost" size="icon" aria-label={`Remove ${h.day} slot ${k + 1}`} disabled={h.slots.length === 1}
+                          onClick={() => setDay({ slots: h.slots.filter((_, m) => m !== k) })}><Trash2 className="h-4 w-4" /></Button>
+                      </div>
+                    ))}
+                    <Button variant="ghost" size="sm" onClick={() => {
+                      const last = h.slots[h.slots.length - 1]?.to ?? "09:00";
+                      setDay({ slots: [...h.slots, { from: last < "17:00" ? "17:00" : last, to: "20:00" }] });
+                    }}><Plus className="h-4 w-4" /> Add time slot</Button>
+                  </div>
+                ) : <span className="pt-2 text-sm text-muted-foreground">Closed</span>}
+              </div>
+            );
+          })}
         </div>
       )}
 
@@ -126,7 +141,10 @@ export function ClinicWizard({ userId, initial, existing }: { userId: string; in
       <div className="flex justify-between gap-2">
         <Button variant="ghost" disabled={step === 0} onClick={() => setStep(step - 1)}>Back</Button>
         {step < 3 ? (
-          <Button onClick={next} loading={saving} loadingLabel="Saving…">{step === 2 ? "Save and test" : "Continue"}</Button>
+          <div className="flex gap-2">
+            {saved && step < 2 && <Button variant="secondary" onClick={() => next(true)} disabled={saving}>Save changes</Button>}
+            <Button onClick={() => next()} loading={saving} loadingLabel="Saving…">{step === 2 ? "Save and test" : "Continue"}</Button>
+          </div>
         ) : (
           <Button onClick={() => saved && navigate({ to: "/clinics/$id", params: { id: saved.id } })}>Go to dashboard</Button>
         )}

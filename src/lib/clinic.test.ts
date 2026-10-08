@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { clinicKnowledge, emptyClinic, parseClinicCommand, stepError } from "./clinic";
+import { DAYS, toClinicInput, clinicKnowledge, emptyClinic, parseClinicCommand, stepError } from "./clinic";
 
 describe("clinic onboarding", () => {
   it("requires a name and phone on the details step", () => {
@@ -8,8 +8,20 @@ describe("clinic onboarding", () => {
   });
   it("rejects closing before opening", () => {
     const c = emptyClinic();
-    c.hours[0] = { day: "Monday", open: true, from: "18:00", to: "09:00" };
+    c.hours[0] = { day: "Monday", open: true, slots: [{ from: "18:00", to: "09:00" }] };
     expect(stepError(1, c)).toBe("Monday: closing time must be after opening time.");
+  });
+  it("supports split shifts and rejects overlaps", () => {
+    const c = emptyClinic();
+    c.hours[0] = { day: "Monday", open: true, slots: [{ from: "10:00", to: "15:00" }, { from: "17:00", to: "20:00" }] };
+    expect(stepError(1, c)).toBeNull();
+    expect(clinicKnowledge({ ...c, name: "S", phone: "1" })).toContain("Monday: 10:00 – 15:00, 17:00 – 20:00");
+    c.hours[0]!.slots[1] = { from: "14:00", to: "20:00" };
+    expect(stepError(1, c)).toBe("Monday: time slots overlap.");
+  });
+  it("reads older single-range hours", () => {
+    const hours = DAYS.map((day) => ({ day, open: true, from: "09:00", to: "17:00" }));
+    expect(toClinicInput({ hours }).hours[0]!.slots).toEqual([{ from: "09:00", to: "17:00" }]);
   });
   it("requires a fee for every doctor", () => {
     const c = { ...emptyClinic(), doctors: [{ name: "Dr. Rao", specialty: "", days: "", fee: "" }] };

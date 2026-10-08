@@ -1,5 +1,6 @@
 // Browser- and server-safe clinic onboarding helpers: shapes, defaults and the receptionist prompt.
-export type DayHours = { day: string; open: boolean; from: string; to: string };
+export type TimeSlot = { from: string; to: string };
+export type DayHours = { day: string; open: boolean; slots: TimeSlot[] };
 export type Doctor = { name: string; specialty: string; days: string; fee: string };
 export type ClinicInput = {
   name: string;
@@ -16,7 +17,7 @@ export type ClinicInput = {
 export const DAYS = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
 
 export function defaultHours(): DayHours[] {
-  return DAYS.map((day) => ({ day, open: day !== "Sunday", from: "09:00", to: day === "Saturday" ? "14:00" : "18:00" }));
+  return DAYS.map((day) => ({ day, open: day !== "Sunday", slots: [{ from: "09:00", to: day === "Saturday" ? "14:00" : "18:00" }] }));
 }
 
 export function emptyClinic(): ClinicInput {
@@ -27,7 +28,7 @@ export function emptyClinic(): ClinicInput {
 export function toClinicInput(row: Partial<Record<keyof ClinicInput, unknown>>): ClinicInput {
   const base = emptyClinic();
   const str = (v: unknown) => (typeof v === "string" ? v : "");
-  const hours = Array.isArray(row.hours) && row.hours.length === 7 ? (row.hours as DayHours[]) : base.hours;
+  const hours = Array.isArray(row.hours) && row.hours.length === 7 ? (row.hours as unknown[]).map(normalizeDay) : base.hours;
   const doctors = Array.isArray(row.doctors) ? (row.doctors as Doctor[]) : base.doctors;
   return {
     name: str(row.name), phone: str(row.phone), emergency_phone: str(row.emergency_phone), email: str(row.email),
@@ -35,8 +36,18 @@ export function toClinicInput(row: Partial<Record<keyof ClinicInput, unknown>>):
   };
 }
 
+/** Accepts both the current slot shape and the older single from/to shape. */
+function normalizeDay(v: unknown, i: number): DayHours {
+  const o = (v ?? {}) as Record<string, unknown>;
+  const day = typeof o.day === "string" ? o.day : DAYS[i]!;
+  const slots = Array.isArray(o.slots)
+    ? (o.slots as TimeSlot[]).filter((x) => x && typeof x.from === "string" && typeof x.to === "string")
+    : typeof o.from === "string" && typeof o.to === "string" ? [{ from: o.from, to: o.to }] : [];
+  return { day, open: Boolean(o.open) && slots.length > 0, slots: slots.length ? slots : [{ from: "09:00", to: "18:00" }] };
+}
+
 export function hoursLine(h: DayHours) {
-  return h.open ? `${h.day}: ${h.from} – ${h.to}` : `${h.day}: Closed`;
+  return h.open ? `${h.day}: ${h.slots.map((s) => `${s.from} – ${s.to}`).join(", ")}` : `${h.day}: Closed`;
 }
 
 /** Step validation used by the wizard; returns the first problem or null. */
@@ -47,8 +58,12 @@ export function stepError(step: number, c: ClinicInput): string | null {
   }
   if (step === 1) {
     if (!c.hours.some((h) => h.open)) return "Open the clinic on at least one day.";
-    const bad = c.hours.find((h) => h.open && !(h.from < h.to));
-    if (bad) return `${bad.day}: closing time must be after opening time.`;
+    for (const h of c.hours.filter((d) => d.open)) {
+      if (!h.slots.length) return `${h.day}: add at least one time slot.`;
+      if (h.slots.some((s) => !(s.from < s.to))) return `${h.day}: closing time must be after opening time.`;
+      const sorted = [...h.slots].sort((a, b) => a.from.localeCompare(b.from));
+      if (sorted.some((s, k) => k > 0 && s.from < sorted[k - 1]!.to)) return `${h.day}: time slots overlap.`;
+    }
   }
   if (step === 2) {
     const docs = c.doctors.filter((d) => d.name.trim());
