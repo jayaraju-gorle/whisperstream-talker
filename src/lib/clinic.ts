@@ -38,7 +38,7 @@ export function toClinicInput(row: Partial<Record<keyof ClinicInput, unknown>>):
 
 /** Accepts both the current slot shape and the older single from/to shape. */
 function normalizeDay(v: unknown, i: number): DayHours {
-  const o = (v ?? {}) as Record<string, unknown>;
+  const o = (v ?? {}) as { day?: unknown; open?: unknown; slots?: unknown; from?: unknown; to?: unknown };
   const day = typeof o.day === "string" ? o.day : DAYS[i]!;
   const slots = Array.isArray(o.slots)
     ? (o.slots as TimeSlot[]).filter((x) => x && typeof x.from === "string" && typeof x.to === "string")
