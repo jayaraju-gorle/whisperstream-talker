@@ -27,6 +27,7 @@ import { Route as AuthenticatedClinicsNewRouteImport } from './routes/_authentic
 import { Route as AuthenticatedHistoryIdRouteImport } from './routes/_authenticated/history.$id'
 import { Route as ApiPublicAssistantRouteImport } from './routes/api/public/assistant'
 import { Route as ApiPublicRatesRouteImport } from './routes/api/public/rates'
+import { Route as AuthenticatedClinicsIdIndexRouteImport } from './routes/_authenticated/clinics.$id.index'
 import { Route as AuthenticatedClinicsIdEditRouteImport } from './routes/_authenticated/clinics.$id.edit'
 import { Route as ApiPublicWhatsappWebhookRouteImport } from './routes/api/public/whatsapp/webhook'
 
@@ -120,6 +121,12 @@ const ApiPublicRatesRoute = ApiPublicRatesRouteImport.update({
   path: '/api/public/rates',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthenticatedClinicsIdIndexRoute =
+  AuthenticatedClinicsIdIndexRouteImport.update({
+    id: '/clinics/$id/',
+    path: '/clinics/$id/',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedClinicsIdEditRoute =
   AuthenticatedClinicsIdEditRouteImport.update({
     id: '/clinics/$id/edit',
@@ -153,6 +160,7 @@ export interface FileRoutesByFullPath {
   '/clinics/': typeof AuthenticatedClinicsIndexRoute
   '/clinics/$id/edit': typeof AuthenticatedClinicsIdEditRoute
   '/api/public/whatsapp/webhook': typeof ApiPublicWhatsappWebhookRoute
+  '/clinics/$id/': typeof AuthenticatedClinicsIdIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -174,6 +182,7 @@ export interface FileRoutesByTo {
   '/clinics': typeof AuthenticatedClinicsIndexRoute
   '/clinics/$id/edit': typeof AuthenticatedClinicsIdEditRoute
   '/api/public/whatsapp/webhook': typeof ApiPublicWhatsappWebhookRoute
+  '/clinics/$id': typeof AuthenticatedClinicsIdIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -197,6 +206,7 @@ export interface FileRoutesById {
   '/_authenticated/clinics/': typeof AuthenticatedClinicsIndexRoute
   '/_authenticated/clinics/$id/edit': typeof AuthenticatedClinicsIdEditRoute
   '/api/public/whatsapp/webhook': typeof ApiPublicWhatsappWebhookRoute
+  '/_authenticated/clinics/$id/': typeof AuthenticatedClinicsIdIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -220,6 +230,7 @@ export interface FileRouteTypes {
     | '/clinics/'
     | '/clinics/$id/edit'
     | '/api/public/whatsapp/webhook'
+    | '/clinics/$id/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -241,6 +252,7 @@ export interface FileRouteTypes {
     | '/clinics'
     | '/clinics/$id/edit'
     | '/api/public/whatsapp/webhook'
+    | '/clinics/$id'
   id:
     | '__root__'
     | '/'
@@ -263,6 +275,7 @@ export interface FileRouteTypes {
     | '/_authenticated/clinics/'
     | '/_authenticated/clinics/$id/edit'
     | '/api/public/whatsapp/webhook'
+    | '/_authenticated/clinics/$id/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -408,6 +421,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicRatesRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_authenticated/clinics/$id/': {
+      id: '/_authenticated/clinics/$id/'
+      path: '/clinics/$id'
+      fullPath: '/clinics/$id/'
+      preLoaderRoute: typeof AuthenticatedClinicsIdIndexRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/clinics/$id/edit': {
       id: '/_authenticated/clinics/$id/edit'
       path: '/clinics/$id/edit'
@@ -444,6 +464,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedClinicsNewRoute: typeof AuthenticatedClinicsNewRoute
   AuthenticatedClinicsIndexRoute: typeof AuthenticatedClinicsIndexRoute
   AuthenticatedClinicsIdEditRoute: typeof AuthenticatedClinicsIdEditRoute
+  AuthenticatedClinicsIdIndexRoute: typeof AuthenticatedClinicsIdIndexRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
@@ -454,6 +475,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedClinicsNewRoute: AuthenticatedClinicsNewRoute,
   AuthenticatedClinicsIndexRoute: AuthenticatedClinicsIndexRoute,
   AuthenticatedClinicsIdEditRoute: AuthenticatedClinicsIdEditRoute,
+  AuthenticatedClinicsIdIndexRoute: AuthenticatedClinicsIdIndexRoute,
 }
 
 const AuthenticatedRouteRouteWithChildren =
