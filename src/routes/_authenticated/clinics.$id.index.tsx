@@ -104,7 +104,7 @@ function Dashboard() {
           {c.map_url && <a href={c.map_url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-sm text-primary underline-offset-4 hover:underline"><MapPin className="h-4 w-4" /> View on Google Maps</a>}
         </div>
         <div className="flex flex-wrap gap-2">
-          {c.portal_token && <Button variant="secondary" onClick={() => { void navigator.clipboard.writeText(`${window.location.origin}/portal/${c.portal_token}`); toast.success("Receptionist portal link copied — share it only with the clinic's front desk."); }}>Copy receptionist link</Button>}
+          {clinic.data.portal_token && <Button variant="secondary" onClick={() => { void navigator.clipboard.writeText(`${window.location.origin}/portal/${clinic.data.portal_token}`); toast.success("Receptionist portal link copied — share it only with the clinic's front desk."); }}>Copy receptionist link</Button>}
           <Button asChild variant="secondary"><Link to="/clinics/$id/edit" params={{ id }}><Pencil className="h-4 w-4" /> Edit setup</Link></Button>
         </div>
       </div>
