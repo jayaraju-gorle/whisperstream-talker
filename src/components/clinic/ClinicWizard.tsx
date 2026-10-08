@@ -84,35 +84,42 @@ export function ClinicWizard({ userId, initial, existing }: { userId: string; in
       <h2 className="text-xl font-semibold">{STEPS[step]}</h2>
 
       {step === 0 && !existing && (
-        <div className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-border bg-muted/40 px-3 py-2.5">
+        <div className="space-y-2 rounded-lg border border-border bg-muted/40 px-3 py-2.5">
           <p className="text-sm text-muted-foreground">
-            Setting up Ivy Women and Fertility Centre? Fill in its details with one click, then review before saving.
+            Setting up one of these clinics? Fill in its details with one click, then review before saving.
           </p>
-          {c.name.trim() ? (
-            <AlertDialog>
-              <AlertDialogTrigger asChild>
-                <Button variant="secondary" size="sm" className="shrink-0">
-                  <Sparkles className="h-4 w-4" /> Load {IVY_PRESET_LABEL}
+          <div className="flex flex-wrap gap-2">
+            {([
+              { preset: IVY_PRESET, label: IVY_PRESET_LABEL },
+              { preset: IYASHI_PRESET, label: IYASHI_PRESET_LABEL },
+            ] as const).map(({ preset, label }) =>
+              c.name.trim() ? (
+                <AlertDialog key={label}>
+                  <AlertDialogTrigger asChild>
+                    <Button variant="secondary" size="sm" className="shrink-0">
+                      <Sparkles className="h-4 w-4" /> Load {label}
+                    </Button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>Replace what you've entered?</AlertDialogTitle>
+                      <AlertDialogDescription>
+                        Loading {label} overwrites the details typed so far with its pre-filled profile.
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel>Keep my entries</AlertDialogCancel>
+                      <AlertDialogAction onClick={() => loadPreset(preset, label)}>Load {label}'s details</AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
+              ) : (
+                <Button key={label} variant="secondary" size="sm" className="shrink-0" onClick={() => loadPreset(preset, label)}>
+                  <Sparkles className="h-4 w-4" /> Load {label}
                 </Button>
-              </AlertDialogTrigger>
-              <AlertDialogContent>
-                <AlertDialogHeader>
-                  <AlertDialogTitle>Replace what you've entered?</AlertDialogTitle>
-                  <AlertDialogDescription>
-                    Loading Ivy Women and Fertility Centre overwrites the details typed so far with its pre-filled profile.
-                  </AlertDialogDescription>
-                </AlertDialogHeader>
-                <AlertDialogFooter>
-                  <AlertDialogCancel>Keep my entries</AlertDialogCancel>
-                  <AlertDialogAction onClick={loadIvy}>Load Ivy's details</AlertDialogAction>
-                </AlertDialogFooter>
-              </AlertDialogContent>
-            </AlertDialog>
-          ) : (
-            <Button variant="secondary" size="sm" className="shrink-0" onClick={loadIvy}>
-              <Sparkles className="h-4 w-4" /> Load {IVY_PRESET_LABEL}
-            </Button>
-          )}
+              ),
+            )}
+          </div>
         </div>
       )}
 
