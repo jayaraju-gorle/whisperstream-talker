@@ -39,6 +39,11 @@ export function ClinicWizard({ userId, initial, existing }: { userId: string; in
   const navigate = useNavigate();
   const qc = useQueryClient();
   const set = <K extends keyof ClinicInput>(k: K, v: ClinicInput[K]) => setC((p) => ({ ...p, [k]: v }));
+  function loadIvy() {
+    setC(IVY_PRESET);
+    setStep(0);
+    toast.success("Ivy's details loaded — review them before saving.");
+  }
 
   async function next(saveNow = false) {
     for (const k of saveNow ? [0, 1, 2] : [step]) {
