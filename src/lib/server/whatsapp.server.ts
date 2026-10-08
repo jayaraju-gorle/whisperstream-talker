@@ -1,8 +1,10 @@
-import { convertToModelMessages, isStepCount, streamText, type UIMessage } from "ai";
+import { convertToModelMessages, isStepCount, streamText, tool, type UIMessage } from "ai";
 import { ASSISTANT_INSTRUCTIONS } from "@/lib/assistant-knowledge";
 import { floTools } from "@/lib/server/flo.server";
 import { floLanguageModel, loadFloModel, logFloTurn } from "@/lib/server/flo-model.server";
 import { createLovableAiGatewayRunIdFetch } from "@/lib/server/run-id";
+import { z } from "zod";
+import { clinicKnowledge, clinicPrompt, clinicVisitorId, parseClinicCommand, toClinicInput } from "@/lib/clinic";
 
 // Flo over WhatsApp: durable inbox processing, reply sending and delivery-status reconciliation.
 type Db = Awaited<typeof import("@/integrations/supabase/client.server")>["supabaseAdmin"];
@@ -135,21 +137,72 @@ async function processEvent(db: Db, ev: { id: string; event: string; payload: un
   }
 }
 
-async function generateReply(db: Db, conversationId: string, history: UIMessage[]) {
+type ClinicCtx = { id: string; name: string; instructions: string; phone: string };
+
+async function loadClinic(db: Db, id: string, phone: string): Promise<ClinicCtx | null> {
+  const { data } = await db.from("clinics").select("id,name,phone,emergency_phone,email,address,hours,doctors,insurance,notes").eq("id", id).maybeSingle();
+  if (!data) return null;
+  const c = toClinicInput(data);
+  return {
+    id: data.id, name: c.name, phone,
+    instructions: `${clinicPrompt(c.name)}\n\nCLINIC INFORMATION\n${clinicKnowledge(c)}\n\nCHANNEL: WHATSAPP\n- Keep replies short and use WhatsApp formatting only (*bold*, plain lists).\n- The patient's WhatsApp number is known; use it as their phone unless they give another.\n- When you have the patient's name and preferred time, call request_appointment once, then confirm.\n- This is a test conversation; the patient can send EXIT to stop.`,
+  };
+}
+
+function clinicTools(db: Db, clinic: ClinicCtx) {
+  return {
+    request_appointment: tool({
+      description: "Save a patient's appointment request for the clinic team to confirm.",
+      inputSchema: z.object({
+        patient_name: z.string().min(1).max(120),
+        phone: z.string().max(40).optional(),
+        doctor: z.string().max(120).optional(),
+        preferred_time: z.string().max(120).optional(),
+        reason: z.string().max(500).optional(),
+      }),
+      execute: async (i) => {
+        const { error } = await db.from("clinic_appointment_requests").insert({
+          clinic_id: clinic.id, channel: "WhatsApp", patient_name: i.patient_name, phone: i.phone || `+${clinic.phone}`,
+          doctor: i.doctor ?? "", preferred_time: i.preferred_time ?? "", reason: i.reason ?? "",
+        });
+        return error ? { ok: false, error: "Could not save the request" } : { ok: true };
+      },
+    }),
+  };
+}
+
+/** Handles TEST <code> / EXIT and finds the clinic a phone is currently testing, if any. */
+async function routeMessage(db: Db, phone: string, body: string): Promise<{ text?: string; clinic?: ClinicCtx | null }> {
+  const cmd = parseClinicCommand(body);
+  if (cmd?.kind === "test") {
+    const { data } = await db.from("clinics").select("id,name").eq("test_code", cmd.code).maybeSingle();
+    if (!data) return { text: "That test code wasn't found. Check the code on the clinic dashboard and try again." };
+    await db.from("clinic_whatsapp_sessions").upsert({ phone, clinic_id: data.id, started_at: new Date().toISOString() });
+    return { text: `You're now chatting with the *${data.name}* test receptionist. Ask anything a patient would. Send EXIT to go back to Flo.` };
+  }
+  if (cmd?.kind === "exit") {
+    const { data } = await db.from("clinic_whatsapp_sessions").delete().eq("phone", phone).select("phone");
+    if (data?.length) return { text: "Test ended. You're back with Flo from Conversational AI Flows Studio. How can I help?" };
+  }
+  const { data: session } = await db.from("clinic_whatsapp_sessions").select("clinic_id").eq("phone", phone).maybeSingle();
+  return { clinic: session ? await loadClinic(db, session.clinic_id, phone) : null };
+}
+
+async function generateReply(db: Db, conversationId: string, history: UIMessage[], clinic?: ClinicCtx | null) {
   const { lovable } = keys();
   const runIdFetch = createLovableAiGatewayRunIdFetch();
   const choice = await loadFloModel(db);
   const { model, providerOptions } = floLanguageModel(choice, lovable, runIdFetch.fetch);
   const started = Date.now();
   let firstToken: number | null = null;
-  const log = { conversation_id: conversationId, channel: "WhatsApp", model: choice.id, started };
+  const log = { conversation_id: conversationId, channel: clinic ? "WhatsApp clinic test" : "WhatsApp", model: choice.id, started };
   try {
     const result = streamText({
       model,
-      instructions: WHATSAPP_INSTRUCTIONS,
+      instructions: clinic?.instructions ?? WHATSAPP_INSTRUCTIONS,
       messages: await convertToModelMessages(history.slice(-HISTORY_LIMIT)),
       stopWhen: isStepCount(4),
-      tools: floTools(db, conversationId, "WhatsApp"),
+      tools: clinic ? clinicTools(db, clinic) : floTools(db, conversationId, "WhatsApp"),
       providerOptions,
       onChunk: ({ chunk }) => { if (firstToken == null && chunk.type === "text-delta") firstToken = Date.now(); },
     });
@@ -176,8 +229,10 @@ async function replyTo(db: Db, msgId: string) {
     }).eq("id", claimed.id);
   };
   try {
+    const routed = await routeMessage(db, claimed.phone, claimed.body);
+    const visitorId = routed.clinic ? clinicVisitorId(routed.clinic.id, claimed.phone) : `whatsapp_${claimed.phone}`;
     const { data: convo, error: cErr } = await db.from("assistant_conversations")
-      .upsert({ visitor_id: `whatsapp_${claimed.phone}`, updated_at: new Date().toISOString() }, { onConflict: "visitor_id" })
+      .upsert({ visitor_id: visitorId, updated_at: new Date().toISOString() }, { onConflict: "visitor_id" })
       .select("id,messages").single();
     if (cErr || !convo) throw new Error(`conversation failed: ${cErr?.message}`);
     const prior = (Array.isArray(convo.messages) ? convo.messages : []) as unknown as UIMessage[];
@@ -186,7 +241,7 @@ async function replyTo(db: Db, msgId: string) {
       : [...prior, { id: userId, role: "user" as const, parts: [{ type: "text" as const, text: claimed.body }] }];
     // Retries refresh the indicator; first attempts already showed it when the message was saved.
     if (claimed.reply_attempts > 0 && claimed.wa_message_id) await sendTypingIndicator(claimed.wa_message_id);
-    const text = await generateReply(db, convo.id, history);
+    const text = routed.text ?? await generateReply(db, convo.id, history, routed.clinic);
     if (!text) return await fail("failed", "Empty reply");
     const sent = await sendWhatsAppText(claimed.phone, text);
     if (!sent.ok) return await fail("failed", sent.error);

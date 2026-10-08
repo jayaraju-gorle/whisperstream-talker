@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import { LoaderCircle, Mic, MicOff, Play, RotateCcw, Send, Square } from "lucide-react";
@@ -29,6 +29,7 @@ export const Route = createFileRoute("/_authenticated/playground")({
       { property: "og:description", content: "Compare voice and text agents using OpenAI, Google Gemini, Anthropic Claude, xAI Grok, Groq and Sarvam AI, with speech providers, response times and estimated costs." },
     ],
   }),
+  validateSearch: (s: Record<string, unknown>): { clinic?: string } => (typeof s["clinic"] === "string" ? { clinic: s["clinic"] } : {}),
   component: Playground,
 });
 
@@ -57,6 +58,21 @@ function Playground() {
   const [simulating, setSimulating] = useState(false);
   const simRef = useRef(false);
   const library = useLibrary();
+  const { clinic: clinicId } = Route.useSearch();
+  const [clinicName, setClinicName] = useState<string | null>(null);
+  const clinicRef = useRef<string | null>(null);
+  useEffect(() => {
+    clinicRef.current = null;
+    setClinicName(null);
+    if (!clinicId) return;
+    void supabase.from("clinics").select("id,name,scenario_id").eq("id", clinicId).maybeSingle().then(({ data }) => {
+      if (!data?.scenario_id) return void toast.error("Couldn't load this clinic's receptionist.");
+      clinicRef.current = data.id;
+      convId.current = null;
+      setClinicName(data.name);
+      setConfigs((all) => all.map((c) => ({ ...c, scenario: `custom:${data.scenario_id}` })));
+    });
+  }, [clinicId]);
   const [sessionKbs, setSessionKbs] = useState<string[]>([]);
   const libRef = useRef({ library, sessionKbs });
   libRef.current = { library, sessionKbs };
@@ -104,7 +120,7 @@ function Playground() {
     const { compare, mode, configs } = live.current;
     const { data, error } = await supabase
       .from("conversations")
-      .insert({ user_id: user.id, title: title.slice(0, 80) || "Untitled session", mode, compare, agents: configs.slice(0, compare ? 2 : 1) })
+      .insert({ user_id: user.id, title: title.slice(0, 80) || "Untitled session", mode, compare, agents: configs.slice(0, compare ? 2 : 1), clinic_id: clinicRef.current })
       .select("id")
       .single();
     if (error) {
@@ -237,6 +253,12 @@ function Playground() {
 
   return (
     <div className="flex flex-1 flex-col">
+      {clinicName && clinicId && (
+        <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border bg-secondary/50 px-4 py-2 text-sm">
+          <span>Test patient call for <strong>{clinicName}</strong> — talk as a patient would. Calls are saved to the clinic dashboard.</span>
+          <Link to="/clinics/$id" params={{ id: clinicId }} className="text-primary hover:underline">Back to dashboard</Link>
+        </div>
+      )}
       {/* Control rail */}
       <div className="flex flex-wrap items-center gap-x-6 gap-y-3 border-b border-border px-4 py-3">
         <div className="flex rounded-md border border-border p-0.5 text-sm">

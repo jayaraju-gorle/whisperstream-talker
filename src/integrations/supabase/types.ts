@@ -112,9 +112,140 @@ export type Database = {
           },
         ]
       }
+      clinic_appointment_requests: {
+        Row: {
+          channel: string
+          clinic_id: string
+          created_at: string
+          doctor: string
+          id: string
+          patient_name: string
+          phone: string
+          preferred_time: string
+          reason: string
+          status: string
+        }
+        Insert: {
+          channel?: string
+          clinic_id: string
+          created_at?: string
+          doctor?: string
+          id?: string
+          patient_name: string
+          phone?: string
+          preferred_time?: string
+          reason?: string
+          status?: string
+        }
+        Update: {
+          channel?: string
+          clinic_id?: string
+          created_at?: string
+          doctor?: string
+          id?: string
+          patient_name?: string
+          phone?: string
+          preferred_time?: string
+          reason?: string
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "clinic_appointment_requests_clinic_id_fkey"
+            columns: ["clinic_id"]
+            isOneToOne: false
+            referencedRelation: "clinics"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      clinic_whatsapp_sessions: {
+        Row: {
+          clinic_id: string
+          phone: string
+          started_at: string
+        }
+        Insert: {
+          clinic_id: string
+          phone: string
+          started_at?: string
+        }
+        Update: {
+          clinic_id?: string
+          phone?: string
+          started_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "clinic_whatsapp_sessions_clinic_id_fkey"
+            columns: ["clinic_id"]
+            isOneToOne: false
+            referencedRelation: "clinics"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      clinics: {
+        Row: {
+          address: string
+          created_at: string
+          doctors: Json
+          email: string
+          emergency_phone: string
+          hours: Json
+          id: string
+          insurance: string
+          kb_id: string | null
+          name: string
+          notes: string
+          owner_id: string
+          phone: string
+          scenario_id: string | null
+          test_code: string
+          updated_at: string
+        }
+        Insert: {
+          address?: string
+          created_at?: string
+          doctors?: Json
+          email?: string
+          emergency_phone?: string
+          hours?: Json
+          id?: string
+          insurance?: string
+          kb_id?: string | null
+          name: string
+          notes?: string
+          owner_id: string
+          phone?: string
+          scenario_id?: string | null
+          test_code?: string
+          updated_at?: string
+        }
+        Update: {
+          address?: string
+          created_at?: string
+          doctors?: Json
+          email?: string
+          emergency_phone?: string
+          hours?: Json
+          id?: string
+          insurance?: string
+          kb_id?: string | null
+          name?: string
+          notes?: string
+          owner_id?: string
+          phone?: string
+          scenario_id?: string | null
+          test_code?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       conversations: {
         Row: {
           agents: Json
+          clinic_id: string | null
           compare: boolean
           created_at: string
           id: string
@@ -124,6 +255,7 @@ export type Database = {
         }
         Insert: {
           agents?: Json
+          clinic_id?: string | null
           compare?: boolean
           created_at?: string
           id?: string
@@ -133,6 +265,7 @@ export type Database = {
         }
         Update: {
           agents?: Json
+          clinic_id?: string | null
           compare?: boolean
           created_at?: string
           id?: string
@@ -140,7 +273,15 @@ export type Database = {
           title?: string
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "conversations_clinic_id_fkey"
+            columns: ["clinic_id"]
+            isOneToOne: false
+            referencedRelation: "clinics"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       custom_scenarios: {
         Row: {

@@ -43,6 +43,13 @@
       "when": 1791358507184,
       "tag": "0005_flo_model_settings_and_turn_logs",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1791424897668,
+      "tag": "0006_clinic_onboarding",
+      "breakpoints": true
     }
   ]
 }

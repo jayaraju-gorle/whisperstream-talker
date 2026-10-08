@@ -36,3 +36,4 @@
 - [x] Email notification for new leads (Resend → gorlej2015@email.iimcal.ac.in)
 - [x] Friendly contact-us wording, optional phone nudge and editable shared contact summaries in Flo; live reply, editor, visitor-scoped update and regression tests verified.
 - [x] Add a confirmed restart-conversation action to Flo while retaining previously saved leads; confirmation, cancellation and new visitor identity verified.
+- [x] Clinic onboarding (details, hours, doctors & fees, test call via browser + WhatsApp) and clinic dashboard (setup, call history, appointment requests, cost & speed).
