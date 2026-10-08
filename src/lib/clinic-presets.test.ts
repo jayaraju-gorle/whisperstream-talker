@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { stepError } from "./clinic";
-import { IVY_PRESET } from "./clinic-presets";
+import { IVY_PRESET, IYASHI_PRESET } from "./clinic-presets";
 
 describe("Ivy Women and Fertility Centre preset", () => {
   it("passes every wizard validation step", () => {
