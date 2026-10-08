@@ -1,4 +1,4 @@
-import { convertToModelMessages, isStepCount, streamText, tool, type UIMessage } from "ai";
+import { convertToModelMessages, isStepCount, streamText, type UIMessage } from "ai";
 import { ASSISTANT_INSTRUCTIONS } from "@/lib/assistant-knowledge";
 import { floTools } from "@/lib/server/flo.server";
 import { floLanguageModel, loadFloModel, logFloTurn } from "@/lib/server/flo-model.server";
