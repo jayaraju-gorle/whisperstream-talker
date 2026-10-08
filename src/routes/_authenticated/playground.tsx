@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import { LoaderCircle, Mic, MicOff, Play, RotateCcw, Send, Square } from "lucide-react";
@@ -253,6 +253,12 @@ function Playground() {
 
   return (
     <div className="flex flex-1 flex-col">
+      {clinicName && clinicId && (
+        <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border bg-secondary/50 px-4 py-2 text-sm">
+          <span>Test patient call for <strong>{clinicName}</strong> — talk as a patient would. Calls are saved to the clinic dashboard.</span>
+          <Link to="/clinics/$id" params={{ id: clinicId }} className="text-primary hover:underline">Back to dashboard</Link>
+        </div>
+      )}
       {/* Control rail */}
       <div className="flex flex-wrap items-center gap-x-6 gap-y-3 border-b border-border px-4 py-3">
         <div className="flex rounded-md border border-border p-0.5 text-sm">
