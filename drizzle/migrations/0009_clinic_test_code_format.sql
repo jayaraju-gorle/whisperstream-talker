@@ -1,0 +1,1 @@
+ALTER TABLE public.clinics ADD CONSTRAINT clinics_test_code_format CHECK (test_code ~ '^[A-Z0-9]{3,10}$');
