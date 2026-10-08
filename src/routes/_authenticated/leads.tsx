@@ -135,6 +135,7 @@ function WebConversations({ leads }: { leads: Lead[] }) {
       const { data, count, error } = await supabase.from("assistant_conversations")
         .select("id,created_at,updated_at", { count: "exact" })
         .not("visitor_id", "like", "whatsapp\\_%")
+        .not("visitor_id", "like", "wa\\_c\\_%")
         .order("updated_at", { ascending: false }).order("id", { ascending: false })
         .range(page * pageSize, (page + 1) * pageSize - 1);
       if (error) throw error;
