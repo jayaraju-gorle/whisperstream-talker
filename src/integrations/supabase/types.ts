@@ -196,6 +196,7 @@ export type Database = {
           id: string
           insurance: string
           kb_id: string | null
+          map_url: string
           name: string
           notes: string
           owner_id: string
@@ -214,6 +215,7 @@ export type Database = {
           id?: string
           insurance?: string
           kb_id?: string | null
+          map_url?: string
           name: string
           notes?: string
           owner_id: string
@@ -232,6 +234,7 @@ export type Database = {
           id?: string
           insurance?: string
           kb_id?: string | null
+          map_url?: string
           name?: string
           notes?: string
           owner_id?: string
