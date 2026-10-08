@@ -110,7 +110,11 @@ export function parseClinicCommand(body: string): { kind: "test"; code: string }
   return null;
 }
 
-export const CLINIC_VISITOR_PREFIX = "whatsapp_clinic_";
+export const CLINIC_VISITOR_PREFIX = "wa_c_";
+/** Short key for a clinic (uuid without dashes) so visitor ids stay under the 64-char limit. */
+export function clinicVisitorKey(clinicId: string) {
+  return clinicId.replace(/-/g, "");
+}
 export function clinicVisitorId(clinicId: string, phone: string) {
-  return `${CLINIC_VISITOR_PREFIX}${clinicId}_${phone}`;
+  return `${CLINIC_VISITOR_PREFIX}${clinicVisitorKey(clinicId)}_${phone}`;
 }
