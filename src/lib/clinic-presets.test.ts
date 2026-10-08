@@ -55,4 +55,8 @@ describe("Iyashi Clinics preset", () => {
     expect(IYASHI_PRESET.phone).toBe("+91 78429 57575");
     expect(IYASHI_PRESET.address).toContain("Madhapur, Hyderabad, Telangana 500081");
   });
+  it("includes both clinics' Google Maps links", () => {
+    expect(IVY_PRESET.map_url).toBe("https://maps.app.goo.gl/iy6xNvqdDzBdanBs6");
+    expect(IYASHI_PRESET.map_url).toBe("https://maps.app.goo.gl/g3yRGnthyvs82pAD6");
+  });
 });
