@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { LoadingIndicator } from "@/components/LoadingIndicator";
 import { ClinicTestCall } from "@/components/clinic/ClinicTestCall";
-import { CLINIC_VISITOR_PREFIX, hoursLine, toClinicInput } from "@/lib/clinic";
+import { CLINIC_VISITOR_PREFIX, clinicVisitorKey, hoursLine, toClinicInput } from "@/lib/clinic";
 import { CLINIC_COLUMNS, type ClinicRow } from "@/lib/clinic-store";
 import { floTurnCostUsd } from "@/lib/flo-models";
 import { useCurrency } from "@/hooks/use-currency";
@@ -51,7 +51,7 @@ function Dashboard() {
     queryFn: async (): Promise<Call[]> => {
       const [browser, wa] = await Promise.all([
         supabase.from("conversations").select("id,title,created_at,turns(metrics)").eq("clinic_id", id).order("created_at", { ascending: false }).limit(100),
-        supabase.from("assistant_conversations").select("id,updated_at,messages").like("visitor_id", `${CLINIC_VISITOR_PREFIX}${id}_%`).order("updated_at", { ascending: false }).limit(100),
+        supabase.from("assistant_conversations").select("id,updated_at,messages").like("visitor_id", `${CLINIC_VISITOR_PREFIX}${clinicVisitorKey(id)}_%`).order("updated_at", { ascending: false }).limit(100),
       ]);
       if (browser.error) throw browser.error;
       if (wa.error) throw wa.error;
