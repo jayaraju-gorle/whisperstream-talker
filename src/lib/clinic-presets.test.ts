@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { stepError } from "./clinic";
-import { IVY_PRESET } from "./clinic-presets";
+import { IVY_PRESET, IYASHI_PRESET } from "./clinic-presets";
 
 describe("Ivy Women and Fertility Centre preset", () => {
   it("passes every wizard validation step", () => {
@@ -26,5 +26,33 @@ describe("Ivy Women and Fertility Centre preset", () => {
       "Dr. Harish Chandra Reddy",
     ]);
     expect(IVY_PRESET.doctors.every((d) => d.fee.trim() && d.name.trim())).toBe(true);
+  });
+});
+
+describe("Iyashi Clinics preset", () => {
+  it("passes every wizard validation step", () => {
+    expect(stepError(0, IYASHI_PRESET)).toBeNull();
+    expect(stepError(1, IYASHI_PRESET)).toBeNull();
+    expect(stepError(2, IYASHI_PRESET)).toBeNull();
+  });
+
+  it("carries the confirmed hours: Mon–Sat 10:00–21:00, Sunday closed", () => {
+    const mon = IYASHI_PRESET.hours.find((h) => h.day === "Monday");
+    expect(mon).toEqual({ day: "Monday", open: true, slots: [{ from: "10:00", to: "21:00" }] });
+    const sat = IYASHI_PRESET.hours.find((h) => h.day === "Saturday");
+    expect(sat).toEqual({ day: "Saturday", open: true, slots: [{ from: "10:00", to: "21:00" }] });
+    const sun = IYASHI_PRESET.hours.find((h) => h.day === "Sunday");
+    expect(sun?.open).toBe(false);
+  });
+
+  it("lists both doctors with their ₹800 fees", () => {
+    const names = IYASHI_PRESET.doctors.map((d) => d.name);
+    expect(names).toEqual(["Dr. Chaitra Rachamalla", "Dr. S.V.S. Yashwant"]);
+    expect(IYASHI_PRESET.doctors.every((d) => d.fee === "₹800")).toBe(true);
+  });
+
+  it("carries the confirmed phone and address", () => {
+    expect(IYASHI_PRESET.phone).toBe("+91 78429 57575");
+    expect(IYASHI_PRESET.address).toContain("Madhapur, Hyderabad, Telangana 500081");
   });
 });

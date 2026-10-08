@@ -29,3 +29,37 @@ export const IVY_PRESET: ClinicInput = {
   notes:
     "Women's health and fertility centre: IVF, IUI, ICSI, PCOD/PCOS care, pregnancy and high-risk pregnancy care. Also offers orthopaedics and pain management, general medicine, and psychiatric counselling. Registered under India's ART (Regulation) Act and ICMR-listed. First floor clinic above Coal Spark Restaurant; entry from Gachibowli–Miyapur Road.",
 };
+
+export const IYASHI_PRESET_LABEL = "Iyashi Clinics";
+
+const IYASHI_DAYS = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+
+export const IYASHI_PRESET: ClinicInput = {
+  name: IYASHI_PRESET_LABEL,
+  phone: "+91 78429 57575",
+  emergency_phone: "",
+  email: "",
+  address:
+    "3rd Floor, Meher Elite, Plot No. 324, Near YSR Statue, 60 Feet Road, Ayyappa Society Main Rd, Mega Hills, Madhapur, Hyderabad, Telangana 500081",
+  hours: [
+    ...IYASHI_DAYS.map((day) => ({ day, open: true, slots: [{ from: "10:00", to: "21:00" }] })),
+    { day: "Sunday", open: false, slots: [{ from: "10:00", to: "21:00" }] },
+  ],
+  doctors: [
+    {
+      name: "Dr. Chaitra Rachamalla",
+      specialty: "Consultant gynaecologist & obstetrician, infertility specialist (Gold Medalist; MBBS, MS-OBGYN, Diploma in ART & RM, APPR London)",
+      days: "Mon–Sat 10:00–21:00",
+      fee: "₹800",
+    },
+    {
+      name: "Dr. S.V.S. Yashwant",
+      specialty: "Consultant paediatrician & neonatologist (MBBS, MD-PAEDS Niloufer, MRCPCH UK, PGPN-PRO)",
+      days: "Mon–Sat 10:00–21:00",
+      fee: "₹800",
+    },
+  ],
+  insurance: "",
+  notes:
+    "Women & child healthcare: gynaecology, obstetrics, high-risk pregnancy, infertility/ART, newborn & neonatal care, child vaccination & immunization, growth assessment, and general paediatrics, plus wellness and surgical care. Appointments/WhatsApp: +91 76720 00735. Website: https://womenchildcare.com",
+};
