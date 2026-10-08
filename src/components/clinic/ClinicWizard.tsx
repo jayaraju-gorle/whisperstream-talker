@@ -9,6 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { stepError, type ClinicInput } from "@/lib/clinic";
+import { supabase } from "@/integrations/supabase/client";
 import { saveClinic, type ClinicRow } from "@/lib/clinic-store";
 import { LIBRARY_KEY } from "@/hooks/use-library";
 import { ClinicTestCall } from "./ClinicTestCall";
@@ -20,7 +21,9 @@ export function ClinicWizard({ userId, initial, existing }: { userId: string; in
   const [c, setC] = useState(initial);
   const [step, setStep] = useState(0);
   const [saving, setSaving] = useState(false);
-  const [saved, setSaved] = useState<{ id: string; code: string } | null>(existing ? { id: existing.id, code: existing.test_code } : null);
+  const [saved, setSaved] = useState<{ id: string; code: string; scenario_id: string | null; kb_id: string | null } | null>(
+    existing ? { id: existing.id, code: existing.test_code, scenario_id: existing.scenario_id, kb_id: existing.kb_id } : null,
+  );
   const navigate = useNavigate();
   const qc = useQueryClient();
   const set = <K extends keyof ClinicInput>(k: K, v: ClinicInput[K]) => setC((p) => ({ ...p, [k]: v }));
@@ -31,11 +34,12 @@ export function ClinicWizard({ userId, initial, existing }: { userId: string; in
     if (step < 2) return setStep(step + 1);
     setSaving(true);
     try {
-      const id = await saveClinic(userId, c, existing ?? (saved ? { id: saved.id, scenario_id: null, kb_id: null } : undefined));
+      const id = await saveClinic(userId, c, saved ?? undefined);
       await qc.invalidateQueries({ queryKey: LIBRARY_KEY });
       await qc.invalidateQueries({ queryKey: ["clinics"] });
-      const { data } = await (await import("@/integrations/supabase/client")).supabase.from("clinics").select("test_code").eq("id", id).single();
-      setSaved({ id, code: data?.test_code ?? "" });
+      const { data, error } = await supabase.from("clinics").select("test_code,scenario_id,kb_id").eq("id", id).single();
+      if (error) throw error;
+      setSaved({ id, code: data.test_code, scenario_id: data.scenario_id, kb_id: data.kb_id });
       setStep(3);
       toast.success("Clinic saved");
     } catch {
