@@ -5,7 +5,7 @@ import { CLINIC_SAMPLE, clinicKnowledge, clinicPrompt, type ClinicInput } from "
 
 export type ClinicRow = ClinicInput & { id: string; scenario_id: string | null; kb_id: string | null; test_code: string; created_at: string };
 
-export const CLINIC_COLUMNS = "id,name,phone,emergency_phone,email,address,hours,doctors,insurance,notes,scenario_id,kb_id,test_code,created_at";
+export const CLINIC_COLUMNS = "id,name,phone,emergency_phone,email,address,map_url,hours,doctors,insurance,notes,scenario_id,kb_id,test_code,created_at";
 
 export async function saveClinic(userId: string, input: ClinicInput, existing?: Pick<ClinicRow, "id" | "scenario_id" | "kb_id">) {
   const clean = { ...input, doctors: input.doctors.filter((d) => d.name.trim()) };

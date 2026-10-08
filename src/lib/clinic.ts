@@ -8,6 +8,7 @@ export type ClinicInput = {
   emergency_phone: string;
   email: string;
   address: string;
+  map_url: string;
   hours: DayHours[];
   doctors: Doctor[];
   insurance: string;
@@ -21,7 +22,7 @@ export function defaultHours(): DayHours[] {
 }
 
 export function emptyClinic(): ClinicInput {
-  return { name: "", phone: "", emergency_phone: "", email: "", address: "", hours: defaultHours(), doctors: [{ name: "", specialty: "", days: "", fee: "" }], insurance: "", notes: "" };
+  return { name: "", phone: "", emergency_phone: "", email: "", address: "", map_url: "", hours: defaultHours(), doctors: [{ name: "", specialty: "", days: "", fee: "" }], insurance: "", notes: "" };
 }
 
 /** Normalise stored JSON back into the editable shape. */
@@ -32,7 +33,7 @@ export function toClinicInput(row: Partial<Record<keyof ClinicInput, unknown>>):
   const doctors = Array.isArray(row.doctors) ? (row.doctors as Doctor[]) : base.doctors;
   return {
     name: str(row.name), phone: str(row.phone), emergency_phone: str(row.emergency_phone), email: str(row.email),
-    address: str(row.address), hours, doctors, insurance: str(row.insurance), notes: str(row.notes),
+    address: str(row.address), map_url: str(row.map_url), hours, doctors, insurance: str(row.insurance), notes: str(row.notes),
   };
 }
 
@@ -79,6 +80,7 @@ export function clinicKnowledge(c: ClinicInput) {
   if (c.emergency_phone) lines.push(`- Emergency: ${c.emergency_phone}`);
   if (c.email) lines.push(`- Email: ${c.email}`);
   if (c.address) lines.push(`- Address: ${c.address}`);
+  if (c.map_url) lines.push(`- Google Maps / Directions: ${c.map_url}`);
   lines.push("", "## Opening hours", ...c.hours.map((h) => `- ${hoursLine(h)}`));
   lines.push("", "## Doctors and consultation fees",
     ...docs.map((d) => `- ${d.name}${d.specialty ? ` (${d.specialty})` : ""}${d.days ? ` — ${d.days}` : ""}. Fee: ${d.fee}.`));
@@ -88,7 +90,7 @@ export function clinicKnowledge(c: ClinicInput) {
 }
 
 export function clinicPrompt(name: string) {
-  return `You are the friendly front-desk receptionist for ${name}. Help patients with opening hours, doctors, consultation fees and booking appointments using only the clinic information provided. To request an appointment, collect the patient's name, phone number, preferred doctor and preferred day/time, then confirm the request back in one sentence and say the clinic will call to confirm. Never give medical advice or diagnoses. For emergencies, immediately share the emergency number. If information is missing, say you'll ask the clinic team.`;
+  return `You are the friendly front-desk receptionist for ${name}. Help patients with opening hours, doctors, consultation fees and booking appointments using only the clinic information provided. To request an appointment, collect the patient's name, phone number, preferred doctor and preferred day/time, then confirm the request back in one sentence and say the clinic will call to confirm. Never give medical advice or diagnoses. Whenever a patient asks for the location, address or directions, share the address and the Google Maps / Directions link from the clinic information if it is provided. For emergencies, immediately share the emergency number. If information is missing, say you'll ask the clinic team.`;
 }
 
 export const CLINIC_SAMPLE = [

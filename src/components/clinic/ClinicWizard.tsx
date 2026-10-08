@@ -130,6 +130,7 @@ export function ClinicWizard({ userId, initial, existing }: { userId: string; in
           <Field label="Emergency phone"><Input value={c.emergency_phone} onChange={(e) => set("emergency_phone", e.target.value)} /></Field>
           <Field label="Email"><Input type="email" value={c.email} onChange={(e) => set("email", e.target.value)} /></Field>
           <div className="sm:col-span-2"><Field label="Address"><Input value={c.address} onChange={(e) => set("address", e.target.value)} /></Field></div>
+          <div className="sm:col-span-2"><Field label="Google Maps link"><Input type="url" value={c.map_url} onChange={(e) => set("map_url", e.target.value)} placeholder="https://maps.app.goo.gl/…" /></Field></div>
           <div className="sm:col-span-2"><Field label="Other things patients often ask (parking, visiting rules…)"><Textarea rows={3} value={c.notes} onChange={(e) => set("notes", e.target.value)} /></Field></div>
         </div>
       )}

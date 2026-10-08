@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { DAYS, toClinicInput, clinicKnowledge, clinicVisitorId, emptyClinic, parseClinicCommand, stepError } from "./clinic";
+import { DAYS, toClinicInput, clinicKnowledge, clinicPrompt, clinicVisitorId, emptyClinic, parseClinicCommand, stepError } from "./clinic";
 
 describe("clinic onboarding", () => {
   it("requires a name and phone on the details step", () => {
@@ -42,5 +42,11 @@ describe("clinic onboarding", () => {
     const id = clinicVisitorId("3f6b2a1c-9d4e-4f5a-8b7c-1d2e3f4a5b6c", "916302392274");
     expect(id).toBe("wa_c_3f6b2a1c9d4e4f5a8b7c1d2e3f4a5b6c_916302392274");
     expect(id.length).toBeLessThanOrEqual(64);
+  });
+  it("keeps the Google Maps link and puts it in knowledge and prompt", () => {
+    const url = "https://maps.app.goo.gl/abc";
+    expect(toClinicInput({ map_url: url }).map_url).toBe(url);
+    expect(clinicKnowledge({ ...emptyClinic(), name: "S", phone: "1", map_url: url })).toContain(`- Google Maps / Directions: ${url}`);
+    expect(clinicPrompt("S")).toContain("Google Maps");
   });
 });

@@ -14,6 +14,7 @@ export const IVY_PRESET: ClinicInput = {
   email: "",
   address:
     "3rd Floor, Above Coal Spark Restaurant, Gachibowli–Miyapur Rd, Banjara Basthi, Anjaiah Nagar, Gachibowli, Hyderabad, Telangana 500084",
+  map_url: "https://maps.app.goo.gl/iy6xNvqdDzBdanBs6",
   hours: [
     ...OPEN_DAYS.map((day) => ({ day, open: true, slots: [{ from: "10:00", to: "15:00" }, { from: "17:00", to: "20:00" }] })),
     { day: "Sunday", open: true, slots: [{ from: "10:00", to: "14:00" }] },
@@ -41,6 +42,7 @@ export const IYASHI_PRESET: ClinicInput = {
   email: "",
   address:
     "3rd Floor, Meher Elite, Plot No. 324, Near YSR Statue, 60 Feet Road, Ayyappa Society Main Rd, Mega Hills, Madhapur, Hyderabad, Telangana 500081",
+  map_url: "https://maps.app.goo.gl/g3yRGnthyvs82pAD6",
   hours: [
     ...IYASHI_DAYS.map((day) => ({ day, open: true, slots: [{ from: "10:00", to: "21:00" }] })),
     { day: "Sunday", open: false, slots: [{ from: "10:00", to: "21:00" }] },

@@ -1,0 +1,1 @@
+ALTER TABLE public.clinics ADD COLUMN IF NOT EXISTS map_url text NOT NULL DEFAULT '';

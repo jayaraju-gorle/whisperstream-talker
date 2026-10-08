@@ -50,6 +50,13 @@
       "when": 1791424897668,
       "tag": "0006_clinic_onboarding",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1791450184514,
+      "tag": "0007_clinic_map_url",
+      "breakpoints": true
     }
   ]
 }

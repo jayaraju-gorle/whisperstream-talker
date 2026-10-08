@@ -1,3 +1,4 @@
+import { MapPin } from "lucide-react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
@@ -100,6 +101,7 @@ function Dashboard() {
           <Link to="/clinics" className="text-xs text-muted-foreground hover:text-foreground">← Clinics</Link>
           <h1 className="text-2xl font-semibold">{c.name}</h1>
           <p className="text-sm text-muted-foreground">{c.phone}{c.address ? ` · ${c.address}` : ""}</p>
+          {c.map_url && <a href={c.map_url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-sm text-primary underline-offset-4 hover:underline"><MapPin className="h-4 w-4" /> View on Google Maps</a>}
         </div>
         <Button asChild variant="secondary"><Link to="/clinics/$id/edit" params={{ id }}><Pencil className="h-4 w-4" /> Edit setup</Link></Button>
       </div>
