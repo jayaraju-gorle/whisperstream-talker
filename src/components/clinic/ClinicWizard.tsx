@@ -20,7 +20,7 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { stepError, type ClinicInput } from "@/lib/clinic";
-import { IVY_PRESET, IVY_PRESET_LABEL } from "@/lib/clinic-presets";
+import { IVY_PRESET, IVY_PRESET_LABEL, IYASHI_PRESET, IYASHI_PRESET_LABEL } from "@/lib/clinic-presets";
 import { supabase } from "@/integrations/supabase/client";
 import { saveClinic, type ClinicRow } from "@/lib/clinic-store";
 import { LIBRARY_KEY } from "@/hooks/use-library";
@@ -39,10 +39,10 @@ export function ClinicWizard({ userId, initial, existing }: { userId: string; in
   const navigate = useNavigate();
   const qc = useQueryClient();
   const set = <K extends keyof ClinicInput>(k: K, v: ClinicInput[K]) => setC((p) => ({ ...p, [k]: v }));
-  function loadIvy() {
-    setC(IVY_PRESET);
+  function loadPreset(preset: ClinicInput, label: string) {
+    setC(preset);
     setStep(0);
-    toast.success("Ivy's details loaded — review them before saving.");
+    toast.success(`${label}'s details loaded — review them before saving.`);
   }
 
   async function next(saveNow = false) {
