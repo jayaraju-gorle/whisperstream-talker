@@ -70,7 +70,8 @@ function Playground() {
       clinicRef.current = data.id;
       convId.current = null;
       setClinicName(data.name);
-      setConfigs((all) => all.map((c) => ({ ...c, scenario: `custom:${data.scenario_id}` })));
+      // Clinic demos: English locked (avoids Hindi misdetection of local names) and a fast no-reasoning model for Agent A.
+      setConfigs((all) => all.map((c, i) => ({ ...c, scenario: `custom:${data.scenario_id}`, language: "en", ...(i === 0 ? { llmId: "lv-chat-latest" } : {}) })));
     });
   }, [clinicId]);
   const [sessionKbs, setSessionKbs] = useState<string[]>([]);
