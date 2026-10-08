@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { z } from "zod";
-import { convertToModelMessages, isStepCount, streamText, type UIMessage } from "ai";
+import { convertToModelMessages, createUIMessageStream, createUIMessageStreamResponse, isStepCount, streamText, type UIMessage } from "ai";
+import { activeClinicCommand, clinicAppointmentTools, loadClinicSession } from "@/lib/server/clinic-mode.server";
 import { ASSISTANT_INSTRUCTIONS } from "@/lib/assistant-knowledge";
 import { floTools } from "@/lib/server/flo.server";
 import { floLanguageModel, loadFloModel, logFloTurn } from "@/lib/server/flo-model.server";
@@ -67,20 +68,60 @@ export const Route = createFileRoute("/api/public/assistant")({
           .single();
         if (convoErr || !convo) return json({ error: "Couldn't start the conversation" }, 500);
 
+        const save = async (all: UIMessage[]) => {
+          const { error } = await db
+            .from("assistant_conversations")
+            .update({ messages: all as never, updated_at: new Date().toISOString() })
+            .eq("id", convo.id);
+          if (error) console.error("conversation save failed", error);
+        };
+
+        // Clinic test mode: TEST <code> switches to that clinic's receptionist, EXIT returns to Flo.
+        const cmd = activeClinicCommand(messages);
+        let clinic: Awaited<ReturnType<typeof loadClinicSession>> = null;
+        let notice: string | null = null;
+        if (cmd.code) {
+          const { data } = await db.from("clinics").select("id").eq("test_code", cmd.code).maybeSingle();
+          clinic = data ? await loadClinicSession(db, data.id, "Website") : null;
+          if (!clinic && cmd.index === messages.length - 1)
+            notice = "That test code wasn't found. Check the code on the clinic dashboard and try again.";
+          else if (clinic && cmd.index === messages.length - 1)
+            notice = `You're now chatting with the **${clinic.name}** test receptionist. Ask anything a patient would. Type EXIT to go back to Flo.`;
+        } else if (cmd.index === messages.length - 1) {
+          notice = "You're back with Flo. How can I help with the studio?";
+        }
+        if (notice) {
+          const text = notice;
+          const stream = createUIMessageStream({
+            originalMessages: messages,
+            execute: ({ writer }) => {
+              const id = crypto.randomUUID();
+              writer.write({ type: "start" });
+              writer.write({ type: "text-start", id });
+              writer.write({ type: "text-delta", id, delta: text });
+              writer.write({ type: "text-end", id });
+              writer.write({ type: "finish" });
+            },
+            onFinish: async ({ messages: all }) => save(all),
+          });
+          return createUIMessageStreamResponse({ stream });
+        }
+        const history = clinic ? messages.slice(cmd.index + 1) : messages;
+
         const runIdFetch = createLovableAiGatewayRunIdFetch(getLovableAiGatewayRunId(request));
         const choice = await loadFloModel(db);
         const { model, providerOptions } = floLanguageModel(choice, apiKey, runIdFetch.fetch);
         const started = Date.now();
         let firstToken: number | null = null;
-        const log = { conversation_id: convo.id, channel: "Website", model: choice.id, started };
+        const log = { conversation_id: convo.id, channel: clinic ? "Website clinic test" : "Website", model: choice.id, started };
 
         const result = streamText({
           model,
-          instructions: ASSISTANT_INSTRUCTIONS,
-          messages: await convertToModelMessages(messages),
+          instructions: clinic ? clinic.instructions : ASSISTANT_INSTRUCTIONS,
+          messages: await convertToModelMessages(history),
           abortSignal: request.signal,
           stopWhen: isStepCount(4),
-          tools: floTools(db, convo.id),
+          tools: clinic ? clinicAppointmentTools(db, clinic.id, "Website") : floTools(db, convo.id),
           providerOptions,
           onChunk: ({ chunk }) => { if (firstToken == null && chunk.type === "text-delta") firstToken = Date.now(); },
           onFinish: async ({ totalUsage, steps }) => {
@@ -95,13 +136,7 @@ export const Route = createFileRoute("/api/public/assistant")({
           result.toUIMessageStreamResponse({
             originalMessages: messages,
             sendReasoning: false,
-            onFinish: async ({ messages: all }) => {
-              const { error } = await db
-                .from("assistant_conversations")
-                .update({ messages: all as never, updated_at: new Date().toISOString() })
-                .eq("id", convo.id);
-              if (error) console.error("conversation save failed", error);
-            },
+            onFinish: async ({ messages: all }) => save(all),
           }),
           runIdFetch,
         );

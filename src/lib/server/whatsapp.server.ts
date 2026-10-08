@@ -1,10 +1,10 @@
-import { convertToModelMessages, isStepCount, streamText, tool, type UIMessage } from "ai";
+import { convertToModelMessages, isStepCount, streamText, type UIMessage } from "ai";
 import { ASSISTANT_INSTRUCTIONS } from "@/lib/assistant-knowledge";
 import { floTools } from "@/lib/server/flo.server";
 import { floLanguageModel, loadFloModel, logFloTurn } from "@/lib/server/flo-model.server";
 import { createLovableAiGatewayRunIdFetch } from "@/lib/server/run-id";
-import { z } from "zod";
-import { clinicKnowledge, clinicPrompt, clinicVisitorId, parseClinicCommand, toClinicInput } from "@/lib/clinic";
+import { clinicVisitorId, parseClinicCommand } from "@/lib/clinic";
+import { clinicAppointmentTools, loadClinicSession, type ClinicSession } from "@/lib/server/clinic-mode.server";
 
 // Flo over WhatsApp: durable inbox processing, reply sending and delivery-status reconciliation.
 type Db = Awaited<typeof import("@/integrations/supabase/client.server")>["supabaseAdmin"];
@@ -137,38 +137,15 @@ async function processEvent(db: Db, ev: { id: string; event: string; payload: un
   }
 }
 
-type ClinicCtx = { id: string; name: string; instructions: string; phone: string };
+type ClinicCtx = ClinicSession & { phone: string };
 
 async function loadClinic(db: Db, id: string, phone: string): Promise<ClinicCtx | null> {
-  const { data } = await db.from("clinics").select("id,name,phone,emergency_phone,email,address,hours,doctors,insurance,notes").eq("id", id).maybeSingle();
-  if (!data) return null;
-  const c = toClinicInput(data);
-  return {
-    id: data.id, name: c.name, phone,
-    instructions: `${clinicPrompt(c.name)}\n\nCLINIC INFORMATION\n${clinicKnowledge(c)}\n\nCHANNEL: WHATSAPP\n- Keep replies short and use WhatsApp formatting only (*bold*, plain lists).\n- The patient's WhatsApp number is known; use it as their phone unless they give another.\n- When you have the patient's name and preferred time, call request_appointment once, then confirm.\n- This is a test conversation; the patient can send EXIT to stop.`,
-  };
+  const c = await loadClinicSession(db, id, "WhatsApp");
+  return c ? { ...c, phone } : null;
 }
 
 function clinicTools(db: Db, clinic: ClinicCtx) {
-  return {
-    request_appointment: tool({
-      description: "Save a patient's appointment request for the clinic team to confirm.",
-      inputSchema: z.object({
-        patient_name: z.string().min(1).max(120),
-        phone: z.string().max(40).optional(),
-        doctor: z.string().max(120).optional(),
-        preferred_time: z.string().max(120).optional(),
-        reason: z.string().max(500).optional(),
-      }),
-      execute: async (i) => {
-        const { error } = await db.from("clinic_appointment_requests").insert({
-          clinic_id: clinic.id, channel: "WhatsApp", patient_name: i.patient_name, phone: i.phone || `+${clinic.phone}`,
-          doctor: i.doctor ?? "", preferred_time: i.preferred_time ?? "", reason: i.reason ?? "",
-        });
-        return error ? { ok: false, error: "Could not save the request" } : { ok: true };
-      },
-    }),
-  };
+  return clinicAppointmentTools(db, clinic.id, "WhatsApp", `+${clinic.phone}`);
 }
 
 /** Handles TEST <code> / EXIT and finds the clinic a phone is currently testing, if any. */
