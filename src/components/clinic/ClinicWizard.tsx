@@ -20,7 +20,7 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { stepError, testCodeError, type ClinicInput } from "@/lib/clinic";
-import { IVY_PRESET, IVY_PRESET_LABEL, IYASHI_PRESET, IYASHI_PRESET_LABEL } from "@/lib/clinic-presets";
+import { IVY_PRESET, IVY_PRESET_LABEL, IYASHI_PRESET, IYASHI_PRESET_LABEL, SSK_PRESET, SSK_PRESET_LABEL } from "@/lib/clinic-presets";
 import { supabase } from "@/integrations/supabase/client";
 import { saveClinic, type ClinicRow } from "@/lib/clinic-store";
 import { LIBRARY_KEY } from "@/hooks/use-library";
@@ -100,6 +100,7 @@ export function ClinicWizard({ userId, initial, existing }: { userId: string; in
             {([
               { preset: IVY_PRESET, label: IVY_PRESET_LABEL },
               { preset: IYASHI_PRESET, label: IYASHI_PRESET_LABEL },
+              { preset: SSK_PRESET, label: SSK_PRESET_LABEL },
             ] as const).map(({ preset, label }) =>
               c.name.trim() ? (
                 <AlertDialog key={label}>

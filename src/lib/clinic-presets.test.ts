@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { stepError } from "./clinic";
-import { IVY_PRESET, IYASHI_PRESET } from "./clinic-presets";
+import { IVY_PRESET, IYASHI_PRESET, SSK_PRESET } from "./clinic-presets";
 
 describe("Ivy Women and Fertility Centre preset", () => {
   it("passes every wizard validation step", () => {
@@ -58,5 +58,29 @@ describe("Iyashi Clinics preset", () => {
   it("includes both clinics' Google Maps links", () => {
     expect(IVY_PRESET.map_url).toBe("https://maps.app.goo.gl/iy6xNvqdDzBdanBs6");
     expect(IYASHI_PRESET.map_url).toBe("https://maps.app.goo.gl/g3yRGnthyvs82pAD6");
+  });
+});
+
+describe("SSK & Associates preset", () => {
+  it("passes every wizard validation step", () => {
+    expect(stepError(0, SSK_PRESET)).toBeNull();
+    expect(stepError(1, SSK_PRESET)).toBeNull();
+    expect(stepError(2, SSK_PRESET)).toBeNull();
+  });
+
+  it("is open Mon–Sat 10:00–19:00 and closed Sunday", () => {
+    expect(SSK_PRESET.hours.find((h) => h.day === "Monday")).toEqual({ day: "Monday", open: true, slots: [{ from: "10:00", to: "19:00" }] });
+    expect(SSK_PRESET.hours.find((h) => h.day === "Saturday")).toEqual({ day: "Saturday", open: true, slots: [{ from: "10:00", to: "19:00" }] });
+    expect(SSK_PRESET.hours.find((h) => h.day === "Sunday")?.open).toBe(false);
+  });
+
+  it("carries the confirmed contact details and ₹500 fee", () => {
+    expect(SSK_PRESET.name).toBe("SSK & Associates");
+    expect(SSK_PRESET.phone).toBe("+91 86396 28613");
+    expect(SSK_PRESET.email).toBe("Sasumana.saikumar@gmail.com");
+    expect(SSK_PRESET.address).toBe("Kakatiya Hills, Madhapur, Hyderabad – 500081");
+    expect(SSK_PRESET.doctors).toHaveLength(1);
+    expect(SSK_PRESET.doctors[0]?.name).toBe("CA Sasumana Saikumar");
+    expect(SSK_PRESET.doctors[0]?.fee).toBe("₹500");
   });
 });

@@ -65,3 +65,29 @@ export const IYASHI_PRESET: ClinicInput = {
   notes:
     "Women & child healthcare: gynaecology, obstetrics, high-risk pregnancy, infertility/ART, newborn & neonatal care, child vaccination & immunization, growth assessment, and general paediatrics, plus wellness and surgical care. Appointments/WhatsApp: +91 76720 00735. Website: https://womenchildcare.com",
 };
+
+export const SSK_PRESET_LABEL = "SSK & Associates";
+
+export const SSK_PRESET: ClinicInput = {
+  name: SSK_PRESET_LABEL,
+  phone: "+91 86396 28613",
+  emergency_phone: "",
+  email: "Sasumana.saikumar@gmail.com",
+  address: "Kakatiya Hills, Madhapur, Hyderabad – 500081",
+  map_url: "",
+  hours: [
+    ...IYASHI_DAYS.map((day) => ({ day, open: true, slots: [{ from: "10:00", to: "19:00" }] })),
+    { day: "Sunday", open: false, slots: [{ from: "10:00", to: "19:00" }] },
+  ],
+  doctors: [
+    {
+      name: "CA Sasumana Saikumar",
+      specialty: "Founder · Chartered Accountant — Personal & business taxation, ITR filing, GST, TDS, notices, tax planning",
+      days: "Mon–Sat 10:00–19:00",
+      fee: "₹500",
+    },
+  ],
+  insurance: "",
+  notes:
+    "Full taxation and compliance services: ITR filing, presumptive taxation (44AD/ADA), capital gains computation, TDS returns & Form 26AS reconciliation, GST registration & returns, PAN/TAN/DSC, advance tax calculation, income tax notice representation, and tax planning.",
+};
