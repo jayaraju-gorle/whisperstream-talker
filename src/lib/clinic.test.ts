@@ -41,13 +41,16 @@ describe("clinic onboarding", () => {
     expect(kb).toContain("Sunday: Closed");
     expect(kb).toContain("Dr. Rao (Ortho) — Mon. Fee: ₹900.");
   });
-  it("parses WhatsApp test and exit commands", () => {
-    expect(parseClinicCommand(" test ab12cd ")).toEqual({ kind: "test", code: "AB12CD" });
+  it("parses TRY and EXIT receptionist commands", () => {
+    expect(parseClinicCommand(" try ab12cd ")).toEqual({ kind: "try", code: "AB12CD" });
+    expect(parseClinicCommand("TRY SSK")).toEqual({ kind: "try", code: "SSK" });
+    expect(parseClinicCommand("TRY ESC")).toEqual({ kind: "try", code: "ESC" });
+    expect(parseClinicCommand("TEST SSK")).toBeNull();
     expect(parseClinicCommand("EXIT")).toEqual({ kind: "exit" });
-    expect(parseClinicCommand("test me please")).toBeNull();
-    expect(parseClinicCommand("test ivy")).toEqual({ kind: "test", code: "IVY" });
-    expect(parseClinicCommand("TEST Iyashi")).toEqual({ kind: "test", code: "IYASHI" });
-    expect(parseClinicCommand("test ab")).toBeNull();
+    expect(parseClinicCommand("try me please")).toBeNull();
+    expect(parseClinicCommand("try ivy")).toEqual({ kind: "try", code: "IVY" });
+    expect(parseClinicCommand("TRY Iyashi")).toEqual({ kind: "try", code: "IYASHI" });
+    expect(parseClinicCommand("try ab")).toBeNull();
   });
   it("validates test codes as 3-10 uppercase letters or digits", () => {
     expect(testCodeError("IVY")).toBeNull();
