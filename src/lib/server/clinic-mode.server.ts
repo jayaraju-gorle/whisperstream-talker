@@ -35,7 +35,7 @@ export async function loadClinicSession(db: Db, id: string, channel: ClinicChann
 export function clinicAppointmentTools(db: Db, clinicId: string, channel: ClinicChannel, fallbackPhone = "") {
   return {
     request_appointment: tool({
-      description: "Save a contact's appointment request for the clinic team to confirm.",
+      description: "Save a consultation or appointment request for the team to confirm.",
       inputSchema: z.object({
         name: z.string().min(1).max(120),
         phone: z.string().max(40).optional(),

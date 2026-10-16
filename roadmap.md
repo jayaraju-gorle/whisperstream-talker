@@ -15,7 +15,7 @@
 - [x] Prefill built-in scenarios and sample knowledge from the original playground
 
 ## Business roadmap (internal only)
-- [ ] Correct SSK/CA test welcomes, shared receptionist instructions and stored SSK profile/scenario/knowledge; verify regressions and the live web test flow.
+- [x] Correct SSK/CA welcomes, shared instructions and stored SSK profile/scenario/knowledge; regressions and website chat verified. Live WhatsApp verification awaits publishing.
 - [x] Correct WhatsApp reply metric matching so older unlogged messages cannot displace the latest replies' model and timing; regression tests and latest stored reply timings verified.
 - [x] Rename admin navigation and header to Assistant; organize Leads, Web conversations, WhatsApp and Flo model tabs; add paginated web conversation transcripts.
 - [x] Google Search Console: verification meta tag live, sitemap submitted (0 errors)
