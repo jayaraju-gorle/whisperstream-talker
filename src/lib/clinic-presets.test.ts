@@ -80,7 +80,7 @@ describe("SSK & Associates preset", () => {
     expect(SSK_PRESET.email).toBe("Sasumana.saikumar@gmail.com");
     expect(SSK_PRESET.address).toBe("Kakatiya Hills, Madhapur, Hyderabad – 500081");
     expect(SSK_PRESET.doctors).toHaveLength(1);
-    expect(SSK_PRESET.doctors[0].name).toBe("CA Sasumana Saikumar");
-    expect(SSK_PRESET.doctors[0].fee).toBe("₹500");
+    expect(SSK_PRESET.doctors[0]?.name).toBe("CA Sasumana Saikumar");
+    expect(SSK_PRESET.doctors[0]?.fee).toBe("₹500");
   });
 });
