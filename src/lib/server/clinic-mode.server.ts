@@ -2,7 +2,7 @@ import { tool, type UIMessage } from "ai";
 import { z } from "zod";
 import { clinicKnowledge, clinicPrompt, parseClinicCommand, receptionistAudience, toClinicInput } from "@/lib/clinic";
 
-// Shared clinic test-receptionist mode for Flo on WhatsApp and the website chat.
+// Shared clinic receptionist mode for Flo on WhatsApp and the website chat.
 type Db = Awaited<typeof import("@/integrations/supabase/client.server")>["supabaseAdmin"];
 export type ClinicChannel = "WhatsApp" | "Website";
 export type ClinicSession = { id: string; name: string; audience: "client" | "patient"; instructions: string };
@@ -12,12 +12,12 @@ const CHANNEL_RULES: Record<ClinicChannel, string> = {
 - Keep replies short and use WhatsApp formatting only (*bold*, plain lists).
 - The contact's WhatsApp number is known; use it as their phone unless they give another.
 - When you have the contact's name and preferred time, call request_appointment once, then confirm only after success.
-- This is a test conversation; the patient can send EXIT to stop.`,
+- The visitor can send EXIT to go back to Flo. Never describe yourself or this conversation as a test.`,
   Website: `CHANNEL: WEBSITE CHAT
 - Keep replies short; light markdown is fine. Write links in full.
 - Ask for the contact's phone number before saving the request.
 - When you have the contact's name, phone and preferred time, call request_appointment once, then confirm only after success.
-- This is a test conversation; the patient can type EXIT to go back to Flo.`,
+- The visitor can type EXIT to go back to Flo. Never describe yourself or this conversation as a test.`,
 };
 
 export async function loadClinicSession(db: Db, id: string, channel: ClinicChannel): Promise<ClinicSession | null> {
@@ -59,14 +59,15 @@ export function messageText(m: UIMessage) {
   return (m.parts ?? []).map((p) => (p.type === "text" ? p.text : "")).join("").trim();
 }
 
-/** Finds the latest TEST/EXIT command in the user's messages. Returns the active test code (or null)
+/** Finds the latest TRY/EXIT command in the user's messages. Returns the active receptionist code (or null)
  *  and the index of that command, so clinic mode only sees messages sent after it. */
 export function activeClinicCommand(messages: UIMessage[]) {
   for (let i = messages.length - 1; i >= 0; i--) {
-    const m = messages[i]!;
+    const m = messages[i];
+    if (!m) continue;
     if (m.role !== "user") continue;
     const cmd = parseClinicCommand(messageText(m));
-    if (cmd?.kind === "test") return { code: cmd.code, index: i };
+    if (cmd?.kind === "try") return { code: cmd.code, index: i };
     if (cmd?.kind === "exit") return { code: null, index: i };
   }
   return { code: null, index: -1 };

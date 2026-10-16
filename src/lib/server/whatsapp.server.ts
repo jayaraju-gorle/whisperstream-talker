@@ -148,18 +148,18 @@ function clinicTools(db: Db, clinic: ClinicCtx) {
   return clinicAppointmentTools(db, clinic.id, "WhatsApp", `+${clinic.phone}`);
 }
 
-/** Handles TEST <code> / EXIT and finds the clinic a phone is currently testing, if any. */
+/** Handles TRY <code> / EXIT and finds the clinic a phone is currently testing, if any. */
 async function routeMessage(db: Db, phone: string, body: string): Promise<{ text?: string; clinic?: ClinicCtx | null }> {
   const cmd = parseClinicCommand(body);
-  if (cmd?.kind === "test") {
+  if (cmd?.kind === "try") {
     const { data } = await db.from("clinics").select("id,name,doctors").eq("test_code", cmd.code).maybeSingle();
-    if (!data) return { text: "That test code wasn't found. Check the code on the clinic dashboard and try again." };
+    if (!data) return { text: "That receptionist code wasn't found. Check the code and try again." };
     await db.from("clinic_whatsapp_sessions").upsert({ phone, clinic_id: data.id, started_at: new Date().toISOString() });
-    return { text: `You're now chatting with the *${data.name}* test receptionist. Ask anything a ${receptionistAudience(data.name, toClinicInput(data).doctors)} would. Send EXIT to go back to Flo.` };
+    return { text: `You're now chatting with the *${data.name}* receptionist. Ask anything a ${receptionistAudience(data.name, toClinicInput(data).doctors)} would. Send EXIT to go back to Flo.` };
   }
   if (cmd?.kind === "exit") {
     const { data } = await db.from("clinic_whatsapp_sessions").delete().eq("phone", phone).select("phone");
-    if (data?.length) return { text: "Test ended. You're back with Flo from Conversational AI Flows Studio. How can I help?" };
+    if (data?.length) return { text: "You're back with Flo from Conversational AI Flows Studio. How can I help?" };
   }
   const { data: session } = await db.from("clinic_whatsapp_sessions").select("clinic_id").eq("phone", phone).maybeSingle();
   return { clinic: session ? await loadClinic(db, session.clinic_id, phone) : null };

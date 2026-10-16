@@ -76,7 +76,7 @@ export const Route = createFileRoute("/api/public/assistant")({
           if (error) console.error("conversation save failed", error);
         };
 
-        // Clinic test mode: TEST <code> switches to that clinic's receptionist, EXIT returns to Flo.
+        // Clinic test mode: TRY <code> switches to that clinic's receptionist, EXIT returns to Flo.
         const cmd = activeClinicCommand(messages);
         let clinic: Awaited<ReturnType<typeof loadClinicSession>> = null;
         let notice: string | null = null;
@@ -84,9 +84,9 @@ export const Route = createFileRoute("/api/public/assistant")({
           const { data } = await db.from("clinics").select("id").eq("test_code", cmd.code).maybeSingle();
           clinic = data ? await loadClinicSession(db, data.id, "Website") : null;
           if (!clinic && cmd.index === messages.length - 1)
-            notice = "That test code wasn't found. Check the code on the clinic dashboard and try again.";
+            notice = "That receptionist code wasn't found. Check the code and try again.";
           else if (clinic && cmd.index === messages.length - 1)
-            notice = `You're now chatting with the **${clinic.name}** test receptionist. Ask anything a ${clinic.audience} would. Type EXIT to go back to Flo.`;
+            notice = `You're now chatting with the **${clinic.name}** receptionist. Ask anything a ${clinic.audience} would. Type EXIT to go back to Flo.`;
         } else if (cmd.index === messages.length - 1) {
           notice = "You're back with Flo. How can I help with the studio?";
         }

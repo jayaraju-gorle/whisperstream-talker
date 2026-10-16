@@ -15,6 +15,7 @@
 - [x] Prefill built-in scenarios and sample knowledge from the original playground
 
 ## Business roadmap (internal only)
+- [x] Switch receptionist activation to TRY and remove test wording from acknowledgements; shared command checks and website TRY SSK/IVY/IYASHI → EXIT verified. WhatsApp update awaits publishing.
 - [x] Correct SSK/CA welcomes, shared instructions and stored SSK profile/scenario/knowledge; regressions and website chat verified. Live WhatsApp verification awaits publishing.
 - [x] Correct WhatsApp reply metric matching so older unlogged messages cannot displace the latest replies' model and timing; regression tests and latest stored reply timings verified.
 - [x] Rename admin navigation and header to Assistant; organize Leads, Web conversations, WhatsApp and Flo model tabs; add paginated web conversation transcripts.

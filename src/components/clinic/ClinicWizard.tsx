@@ -27,7 +27,7 @@ import { LIBRARY_KEY } from "@/hooks/use-library";
 import { ClinicTestCall } from "./ClinicTestCall";
 import { cn } from "@/lib/utils";
 
-const STEPS = ["Clinic details", "Opening hours", "Doctors & fees", "Test call"];
+const STEPS = ["Clinic details", "Opening hours", "Doctors & fees", "Try receptionist"];
 
 export function ClinicWizard({ userId, initial, existing }: { userId: string; initial: ClinicInput; existing?: ClinicRow }) {
   const [c, setC] = useState(initial);
@@ -59,7 +59,7 @@ export function ClinicWizard({ userId, initial, existing }: { userId: string; in
         const { error } = await supabase.from("clinics").update({ test_code: code }).eq("id", id);
         if (error) {
           setStep(0);
-          return void toast.error(error.code === "23505" ? `Test code ${code} is already used by another clinic.` : "Couldn't save the test code.");
+          return void toast.error(error.code === "23505" ? `Receptionist code ${code} is already used by another clinic.` : "Couldn't save the receptionist code.");
         }
       }
       await qc.invalidateQueries({ queryKey: LIBRARY_KEY });
@@ -141,7 +141,7 @@ export function ClinicWizard({ userId, initial, existing }: { userId: string; in
           <div className="sm:col-span-2"><Field label="Address"><Input value={c.address} onChange={(e) => set("address", e.target.value)} /></Field></div>
           <div className="sm:col-span-2"><Field label="Google Maps link"><Input type="url" value={c.map_url} onChange={(e) => set("map_url", e.target.value)} placeholder="https://maps.app.goo.gl/…" /></Field></div>
           {existing && (
-            <Field label="WhatsApp test code (3–10 letters or numbers)">
+            <Field label="WhatsApp receptionist code (3–10 letters or numbers)">
               <Input value={code} maxLength={10} className="font-mono uppercase" placeholder="IVY"
                 onChange={(e) => setCode(e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, ""))} />
             </Field>
@@ -216,7 +216,7 @@ export function ClinicWizard({ userId, initial, existing }: { userId: string; in
         {step < 3 ? (
           <div className="flex gap-2">
             {saved && step < 2 && <Button variant="secondary" onClick={() => next(true)} disabled={saving}>Save changes</Button>}
-            <Button onClick={() => next()} loading={saving} loadingLabel="Saving…">{step === 2 ? "Save and test" : "Continue"}</Button>
+            <Button onClick={() => next()} loading={saving} loadingLabel="Saving…">{step === 2 ? "Save and try" : "Continue"}</Button>
           </div>
         ) : (
           <Button onClick={() => saved && navigate({ to: "/clinics/$id", params: { id: saved.id } })}>Go to dashboard</Button>
