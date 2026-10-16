@@ -1,7 +1,15 @@
 import { describe, expect, it } from "vitest";
-import { DAYS, toClinicInput, clinicKnowledge, clinicPrompt, clinicVisitorId, emptyClinic, parseClinicCommand, stepError, testCodeError } from "./clinic";
+import { DAYS, toClinicInput, clinicKnowledge, clinicPrompt, clinicVisitorId, emptyClinic, parseClinicCommand, receptionistAudience, stepError, testCodeError } from "./clinic";
 
 describe("clinic onboarding", () => {
+  it("uses the client audience for SSK and CA/tax firms, not medical practices", () => {
+    expect(receptionistAudience("SSK & Associates")).toBe("client");
+    expect(receptionistAudience("Example Chartered Accountants")).toBe("client");
+    expect(receptionistAudience("Example Tax Advisory")).toBe("client");
+    expect(receptionistAudience("Example & Associates", [{name: "CA Example", specialty: "", days: "", fee: "500"}])).toBe("client");
+    expect(receptionistAudience("Ivy Women and Fertility Centre")).toBe("patient");
+    expect(receptionistAudience("Iyashi Clinics")).toBe("patient");
+  });
   it("requires a name and phone on the details step", () => {
     expect(stepError(0, emptyClinic())).toBe("Add the clinic name.");
     expect(stepError(0, { ...emptyClinic(), name: "Sunrise" })).toBe("Add the appointments phone number.");
