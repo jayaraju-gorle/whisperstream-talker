@@ -86,7 +86,7 @@ export const Route = createFileRoute("/api/public/assistant")({
           if (!clinic && cmd.index === messages.length - 1)
             notice = "That test code wasn't found. Check the code on the clinic dashboard and try again.";
           else if (clinic && cmd.index === messages.length - 1)
-            notice = `You're now chatting with the **${clinic.name}** test receptionist. Ask anything a patient would. Type EXIT to go back to Flo.`;
+            notice = `You're now chatting with the **${clinic.name}** test receptionist. Ask anything a ${clinic.audience} would. Type EXIT to go back to Flo.`;
         } else if (cmd.index === messages.length - 1) {
           notice = "You're back with Flo. How can I help with the studio?";
         }

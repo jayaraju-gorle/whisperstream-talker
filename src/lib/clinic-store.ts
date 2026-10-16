@@ -1,7 +1,7 @@
 // Browser-side persistence for clinic onboarding: keeps the clinic row, its knowledge base and its
 // receptionist scenario in sync so the playground and WhatsApp test use the same information.
 import { supabase } from "@/integrations/supabase/client";
-import { CLINIC_SAMPLE, clinicKnowledge, clinicPrompt, type ClinicInput } from "@/lib/clinic";
+import { CLINIC_SAMPLE, clinicKnowledge, clinicPrompt, receptionistAudience, type ClinicInput } from "@/lib/clinic";
 
 export type ClinicRow = ClinicInput & { id: string; scenario_id: string | null; kb_id: string | null; test_code: string; portal_token?: string; created_at: string };
 
@@ -9,7 +9,8 @@ export const CLINIC_COLUMNS = "id,name,phone,emergency_phone,email,address,map_u
 
 export async function saveClinic(userId: string, input: ClinicInput, existing?: Pick<ClinicRow, "id" | "scenario_id" | "kb_id">) {
   const clean = { ...input, doctors: input.doctors.filter((d) => d.name.trim()) };
-  const kb = { user_id: userId, name: `${clean.name} — clinic guide`, content: clinicKnowledge(clean), updated_at: new Date().toISOString() };
+  const firm = receptionistAudience(clean.name, clean.doctors) === "client";
+  const kb = { user_id: userId, name: `${clean.name} — ${firm ? "firm" : "clinic"} guide`, content: clinicKnowledge(clean), updated_at: new Date().toISOString() };
   let kbId = existing?.kb_id ?? null;
   if (kbId) {
     const { error } = await supabase.from("knowledge_bases").update(kb).eq("id", kbId);
@@ -19,7 +20,7 @@ export async function saveClinic(userId: string, input: ClinicInput, existing?: 
     if (error) throw error;
     kbId = data.id;
   }
-  const scenario = { user_id: userId, label: `${clean.name} receptionist`, prompt: clinicPrompt(clean.name), sample: CLINIC_SAMPLE, kb_ids: [kbId], updated_at: new Date().toISOString() };
+  const scenario = { user_id: userId, label: `${clean.name} receptionist`, prompt: clinicPrompt(clean.name, clean.doctors), sample: CLINIC_SAMPLE, kb_ids: [kbId], updated_at: new Date().toISOString() };
   let scenarioId = existing?.scenario_id ?? null;
   if (scenarioId) {
     const { error } = await supabase.from("custom_scenarios").update(scenario).eq("id", scenarioId);

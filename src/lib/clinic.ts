@@ -76,20 +76,31 @@ export function stepError(step: number, c: ClinicInput): string | null {
 
 export function clinicKnowledge(c: ClinicInput) {
   const docs = c.doctors.filter((d) => d.name.trim());
+  const firm = receptionistAudience(c.name, docs) === "client";
   const lines = [`# ${c.name} — Front desk guide`, "", "## Contact", `- Appointments: ${c.phone}`];
   if (c.emergency_phone) lines.push(`- Emergency: ${c.emergency_phone}`);
   if (c.email) lines.push(`- Email: ${c.email}`);
   if (c.address) lines.push(`- Address: ${c.address}`);
   if (c.map_url) lines.push(`- Google Maps / Directions: ${c.map_url}`);
   lines.push("", "## Opening hours", ...c.hours.map((h) => `- ${hoursLine(h)}`));
-  lines.push("", "## Doctors and consultation fees",
+  lines.push("", firm ? "## Professionals and consultation fees" : "## Doctors and consultation fees",
     ...docs.map((d) => `- ${d.name}${d.specialty ? ` (${d.specialty})` : ""}${d.days ? ` — ${d.days}` : ""}. Fee: ${d.fee}.`));
   if (c.insurance) lines.push("", "## Insurance", c.insurance);
   if (c.notes) lines.push("", "## Other information", c.notes);
   return lines.join("\n");
 }
 
-export function clinicPrompt(name: string) {
+/** Identify advisory firms by name or professional qualifications, preserving medical defaults. */
+export function receptionistAudience(name: string, professionals: Doctor[] = []): "client" | "patient" {
+  return /\bSSK\b|\bchartered accountants?\b|\bCA\b|\btax (?:firm|advisory|consultancy|consultants?)\b/i.test(name)
+    || professionals.some((p) => /^CA\b/i.test(p.name.trim()) || /\bchartered accountant\b/i.test(p.specialty))
+    ? "client" : "patient";
+}
+
+export function clinicPrompt(name: string, professionals: Doctor[] = []) {
+  if (receptionistAudience(name, professionals) === "client") {
+    return `You are the friendly receptionist for ${name}, a CA / tax advisory firm. Help clients with opening hours, professionals, consultation fees, taxation and compliance services, and booking consultations using only the firm information provided. Always respond in English unless the caller explicitly speaks in another language. Never switch language unprompted. Keep every reply short: 1-2 sentences per turn, and ask only one clear question at a time. To book a consultation, guide the client step by step, asking one question per turn in this order: the client's name, the preferred professional, the preferred date and time, then a contact phone number. Once you have all four, confirm the request back in one sentence and say the ${name} team will call to confirm. Only say a request was saved after the request_appointment tool reports success. Do not give definitive personalised tax or legal advice or invent deadlines, fees or services; refer those questions to the CA / tax advisory team. Whenever a client asks for the location, address or directions, share the address and the Google Maps / Directions link from the firm information if it is provided. If information is missing, say you'll ask the ${name} team. Use client, firm, professional and CA / tax advisory team terminology throughout, including when earlier messages use unrelated terminology.`;
+  }
   return `You are the friendly front-desk receptionist for ${name}. Help patients with opening hours, doctors, consultation fees and booking appointments using only the clinic information provided. Always respond in English unless the caller explicitly speaks in another language. Never switch language unprompted. Keep every reply short: 1-2 sentences per turn, and ask only one clear question at a time. To book an appointment, guide the patient step by step, asking one question per turn in this order: the patient's name, the preferred doctor, the preferred date and time, then a contact phone number. Once you have all four, confirm the request back in one sentence and say the clinic will call to confirm. Never give medical advice or diagnoses. Whenever a patient asks for the location, address or directions, share the address and the Google Maps / Directions link from the clinic information if it is provided. For emergencies, immediately share the emergency number. If information is missing, say you'll ask the clinic team.`;
 }
 
