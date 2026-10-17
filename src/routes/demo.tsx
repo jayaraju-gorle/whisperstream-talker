@@ -1,3 +1,4 @@
+import { DEFAULT_COMPARE } from "@/lib/studio-defaults";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
 import { BookOpen, History, LoaderCircle, Mic, MicOff, PhoneOff, Play, Radio, RotateCcw, Send, Square } from "lucide-react";
@@ -38,7 +39,7 @@ export const Route = createFileRoute("/demo")({
 type Mode = "voice" | "text" | "live";
 function Demo() {
   const [mode, setMode] = useState<Mode>("voice");
-  const [compare, setCompare] = useState(false);
+  const [compare, setCompare] = useState(DEFAULT_COMPARE);
   const [configs, setConfigs] = useState<AgentConfig[]>([DEFAULT_AGENT_A, DEFAULT_AGENT_B]);
   const [turns, setTurns] = useState<PlaygroundTurn[][]>([[], []]);
   const [muted, setMuted] = useState([false, false]);
@@ -120,7 +121,7 @@ function Demo() {
     <header className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3 border-b border-border bg-background/80 px-4 py-2.5 backdrop-blur">
       <Link to="/" className="col-span-2 flex min-w-0 items-center gap-2 font-semibold"><Logo className="h-6 w-6 shrink-0" /><span>Conversational AI Flows Studio</span></Link>
       <nav className="col-span-2 flex min-w-0 items-center gap-1 text-sm sm:col-span-1"><Button variant="secondary" size="sm" onClick={() => { setLibraryOpen(false); setHistoryOpen(false); }}>Playground</Button><Button variant="ghost" size="sm" onClick={() => setHistoryOpen(true)}><History className="h-3.5 w-3.5" /> History</Button><Button variant="ghost" size="sm" onClick={() => setLibraryOpen(true)}><BookOpen className="h-3.5 w-3.5" /> Library</Button></nav>
-      <div className="col-span-2 flex items-center justify-end gap-3 sm:col-span-1"><span className="font-mono text-xs text-primary">GUEST DEMO</span><CurrencySelect /><Button asChild variant="outline" size="sm"><Link to="/auth">Sign in</Link></Button></div>
+      <div className="col-span-2 flex flex-wrap items-center justify-end gap-3 sm:col-span-1"><span className="font-mono text-xs text-primary">GUEST DEMO</span><CurrencySelect /><Button asChild variant="outline" size="sm"><Link to="/auth">Sign in</Link></Button></div>
     </header>
     <div className="border-b border-border bg-secondary/40 px-4 py-2 text-center text-xs text-muted-foreground">Interactive samples only · no AI credits used · replies, audio activity and metrics are illustrative. <Link to="/auth" className="text-primary underline">Sign in for real AI conversations and saved sessions.</Link></div>
     <div className="flex flex-wrap items-center gap-x-6 gap-y-3 border-b border-border px-4 py-3">

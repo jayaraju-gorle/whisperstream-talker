@@ -1,3 +1,4 @@
+import { DEFAULT_COMPARE } from "@/lib/studio-defaults";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
@@ -40,7 +41,7 @@ const LABELS = ["A", "B"] as const;
 function Playground() {
   const { user } = Route.useRouteContext();
   const [mode, setMode] = useState<"voice" | "text" | "live">("voice");
-  const [compare, setCompare] = useState(false);
+  const [compare, setCompare] = useState(DEFAULT_COMPARE);
   const [configs, setConfigs] = useState<AgentConfig[]>([DEFAULT_AGENT_A, DEFAULT_AGENT_B]);
   const [turns, setTurns] = useState<Turn[][]>([[], []]);
   const [status, setStatus] = useState<Status[]>(["idle", "idle"]);
