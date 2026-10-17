@@ -65,14 +65,15 @@ export const STT_MODELS: SttModel[] = [
 // First-party model IDs and standard USD/MTok pricing:
 // https://platform.claude.com/docs/en/models/overview
 export const LLM_MODELS: LlmModel[] = [
-  { id: "an-claude-sonnet-5", provider: "anthropic", model: "claude-sonnet-5", label: "Claude Sonnet 5", usdPerMInput: 2, usdPerMOutput: 10 },
-  { id: "an-claude-haiku-4.5", provider: "anthropic", model: "claude-haiku-4-5-20251001", label: "Claude Haiku 4.5", usdPerMInput: 1, usdPerMOutput: 5 },
+  { id: "an-claude-sonnet-5", provider: "anthropic", connection: "lovable", model: "anthropic/claude-sonnet-5", label: "Claude Sonnet 5", usdPerMInput: 2, usdPerMOutput: 10 },
+  { id: "an-claude-haiku-4.5", provider: "anthropic", connection: "lovable", model: "anthropic/claude-haiku-4-5", label: "Claude Haiku 4.5", usdPerMInput: 1, usdPerMOutput: 5 },
   { id: "xai-grok-4.7", provider: "xai", model: "grok-4.7", label: "Grok 4.7", usdPerMInput: 2, usdPerMOutput: 6, longContext: { threshold: 200000, usdPerMInput: 4, usdPerMOutput: 12 } },
   { id: "lv-gpt-6-astra", provider: "openai", connection: "lovable", model: "openai/gpt-6-astra", label: "GPT-6 Astra", usdPerMInput: 5, usdPerMOutput: 20 },
   { id: "lv-gpt-6-sol", provider: "openai", connection: "lovable", model: "openai/gpt-6-sol", label: "GPT-6 Sol", usdPerMInput: 1.5, usdPerMOutput: 6 },
   { id: "lv-gpt-6-luna", provider: "openai", connection: "lovable", model: "openai/gpt-6-luna", label: "GPT-6 Luna", usdPerMInput: 0.2, usdPerMOutput: 0.8 },
   { id: "lv-chat-latest", provider: "openai", connection: "lovable", model: "openai/chat-latest", label: "ChatGPT Instant", usdPerMInput: 1.25, usdPerMOutput: 10 },
   { id: "lv-gemini-3.5-flash", provider: "google", connection: "lovable", model: "google/gemini-3.5-flash", label: "Gemini 3.5 Flash", usdPerMInput: 0.3, usdPerMOutput: 2.5 },
+  { id: "lv-gemini-4-argon", provider: "google", connection: "lovable", model: "google/gemini-4-argon", label: "Gemini 4 Argon", usdPerMInput: 2, usdPerMOutput: 10 },
   { id: "lv-gemini-2.5-flash-lite", provider: "google", connection: "lovable", model: "google/gemini-2.5-flash-lite", label: "Gemini 2.5 Flash-Lite", usdPerMInput: 0.1, usdPerMOutput: 0.4 },
   { id: "oa-gpt-4.1-mini", provider: "openai", model: "gpt-4.1-mini", label: "GPT-4.1 mini (OpenAI)", usdPerMInput: 0.4, usdPerMOutput: 1.6 },
   { id: "oa-gpt-4.1-nano", provider: "openai", model: "gpt-4.1-nano", label: "GPT-4.1 nano (OpenAI)", usdPerMInput: 0.1, usdPerMOutput: 0.4 },

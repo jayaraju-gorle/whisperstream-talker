@@ -50,14 +50,16 @@ describe("provider model access and pricing", () => {
   });
 
   it.each([
-    ["an-claude-sonnet-5", "claude-sonnet-5", 2, 10],
-    ["an-claude-haiku-4.5", "claude-haiku-4-5-20251001", 1, 5],
+    ["an-claude-sonnet-5", "anthropic/claude-sonnet-5", 2, 10],
+    ["an-claude-haiku-4.5", "anthropic/claude-haiku-4-5", 1, 5],
+    ["lv-gemini-4-argon", "google/gemini-4-argon", 2, 10],
   ])("uses live Anthropic access and pricing for %s", (id, apiModel, input, output) => {
     const model = findLlm(String(id));
     if (!model) throw new Error("Missing Claude model");
     expect(model.model).toBe(apiModel);
-    expect(modelAvailable(model, { anthropic: true, groq: false })).toBe(true);
-    expect(modelAvailable(model, { anthropic: false, groq: true })).toBe(false);
+    expect(model.connection).toBe("lovable");
+    expect(modelAvailable(model, { lovable: true, anthropic: false, google: false })).toBe(true);
+    expect(modelAvailable(model, { lovable: false, anthropic: true, google: true })).toBe(false);
     const cost = computeCost({ sttId: "x", llmId: String(id), ttsId: "x" }, { inputTokens: 1000000, outputTokens: 1000000 });
     expect(cost.llm).toBe(Number(input) + Number(output));
   });
