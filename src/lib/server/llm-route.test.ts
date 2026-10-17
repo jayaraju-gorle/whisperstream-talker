@@ -17,23 +17,24 @@ afterEach(() => vi.unstubAllGlobals());
 
 describe("LLM provider routing", () => {
   it.each([
-    ["an-claude-sonnet-5", "claude-sonnet-5"],
-    ["an-claude-haiku-4.5", "claude-haiku-4-5-20251001"],
-  ])("streams %s through native Anthropic Messages", async (id, model) => {
+    ["an-claude-sonnet-5", "anthropic/claude-sonnet-5"],
+    ["an-claude-haiku-4.5", "anthropic/claude-haiku-4-5"],
+  ])("streams built-in %s through gateway native Messages without a direct key", async (id, model) => {
     const fetchMock = vi.fn(async () => new Response([
-      { type: "message_start", message: { usage: { input_tokens: 12, output_tokens: 1 } } },
+      { type: "message_start", message: { id: "msg_1", model, usage: { input_tokens: 12, output_tokens: 1 } } },
       { type: "ping" },
-      { type: "content_block_delta", delta: { type: "thinking_delta", thinking: "hidden" } },
-      { type: "content_block_delta", delta: { type: "text_delta", text: "Hello" } },
-      { type: "message_delta", usage: { output_tokens: 3 } },
+      { type: "content_block_start", index: 0, content_block: { type: "text", text: "" } },
+      { type: "content_block_delta", index: 0, delta: { type: "text_delta", text: "Hello" } },
+      { type: "content_block_stop", index: 0 },
+      { type: "message_delta", delta: { stop_reason: "end_turn" }, usage: { output_tokens: 3 } },
       { type: "message_stop" },
-    ].map((event) => `data: ${JSON.stringify(event)}\n\n`).join("")));
+    ].map((event) => `data: ${JSON.stringify(event)}\n\n`).join(""), { headers: { "Content-Type": "text/event-stream" } }));
     vi.stubGlobal("fetch", fetchMock);
     const response = await handler({ request: request(id) });
-    expect(fetchMock).toHaveBeenCalledWith("https://api.anthropic.com/v1/messages", expect.objectContaining({
-      headers: { "x-api-key": "test-anthropic-key", "anthropic-version": "2023-06-01", "Content-Type": "application/json" },
-      body: JSON.stringify({ model, system: "Sample", messages: [{ role: "user", content: "Hello" }], max_tokens: 1024, stream: true }),
-    }));
+    expect(fetchMock.mock.calls[0]?.[0]).toBe("https://ai.gateway.lovable.dev/v1/messages");
+    const options = (fetchMock.mock.calls as unknown as [string, RequestInit][])[0]?.[1];
+    expect(JSON.parse(String(options?.body))).toMatchObject({ model, max_tokens: 1024, stream: true });
+    expect(new Headers(options?.headers).get("X-Lovable-AIG-SDK")).toBe("vercel-ai-sdk");
     expect((await response.text()).trim().split("\n").map((line) => JSON.parse(line))).toEqual([{ t: "d", v: "Hello" }, { t: "u", in: 12, out: 3 }]);
   });
 

@@ -4,7 +4,7 @@ import { createLovableAiGatewayRunIdFetch } from "./run-id.ts";
 export function createLovableAiGatewayProvider(
   lovableApiKey: string,
   initialRunId: string | undefined,
-  options: { baseURL: string; structuredOutputs?: boolean },
+  options: { baseURL: string; structuredOutputs?: boolean; fetch?: typeof globalThis.fetch },
 ) {
   const runIdFetch = createLovableAiGatewayRunIdFetch(initialRunId);
   const provider = createOpenAICompatible({
@@ -12,7 +12,7 @@ export function createLovableAiGatewayProvider(
     baseURL: `${options.baseURL.replace(/\/+$/, "").replace(/\/v1$/, "")}/v1`,
     supportsStructuredOutputs: options.structuredOutputs ?? false,
     headers: { "Lovable-API-Key": lovableApiKey, "X-Lovable-AIG-SDK": "vercel-ai-sdk" },
-    fetch: runIdFetch.fetch,
+    fetch: options.fetch ?? runIdFetch.fetch,
   });
   return Object.assign(provider, { getRunId: runIdFetch.getRunId, waitForRunId: runIdFetch.waitForRunId });
 }

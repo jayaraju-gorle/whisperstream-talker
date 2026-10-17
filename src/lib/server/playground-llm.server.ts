@@ -16,13 +16,19 @@ export async function streamPlaygroundGateway(
   const runId = getLovableAiGatewayRunId(request);
   const gateway = createLovableAiGatewayRunIdFetch(runId);
   let failedResponse: Response | undefined;
+  let resolveHeaders: () => void = () => {};
+  const headersReady = new Promise<void>((resolve) => { resolveHeaders = resolve; });
   const fetchWithStatus: typeof fetch = async (input, init) => {
-    const response = await gateway.fetch(input, init);
-    if (!response.ok) failedResponse = response.clone();
-    return response;
+    try {
+      const response = await gateway.fetch(input, init);
+      if (!response.ok) failedResponse = response.clone();
+      return response;
+    } finally {
+      resolveHeaders();
+    }
   };
   const isClaude = model.provider === "anthropic";
-  const compatible = createLovableAiGatewayProvider(key, runId, { baseURL: GATEWAY });
+  const compatible = createLovableAiGatewayProvider(key, runId, { baseURL: GATEWAY, fetch: fetchWithStatus });
   const languageModel = isClaude
     ? createAnthropic({ baseURL: GATEWAY, apiKey: key, headers: { "Lovable-API-Key": key, "X-Lovable-AIG-SDK": "vercel-ai-sdk" }, fetch: fetchWithStatus })(model.model)
     : compatible(model.model);
@@ -57,9 +63,9 @@ export async function streamPlaygroundGateway(
       }
     },
   });
-  const correlation = isClaude ? gateway : compatible;
+  const correlation = gateway;
   // Only wait for upstream headers, never for the generated answer.
-  await correlation.waitForRunId();
+  await headersReady;
   if (request.signal.aborted) return new Response(null, { status: 499 });
   if (failedResponse) return upstreamError(failedResponse, "Model");
   return withLovableAiGatewayRunIdHeader(new Response(body, {
