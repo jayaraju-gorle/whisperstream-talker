@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { z } from "zod";
 import { findLlm } from "@/lib/catalog";
+import { streamPlaygroundGateway } from "@/lib/server/playground-llm.server";
 import {
   GATEWAY,
   gatewayHeaders,
@@ -33,6 +34,9 @@ export const Route = createFileRoute("/api/llm")({
         const { llmId, system, messages } = parsed.data;
         const m = findLlm(llmId);
         if (!m) return json({ error: "Unknown model" }, 400);
+        if (m.connection === "lovable" && (m.provider === "anthropic" || m.model === "google/gemini-4-argon")) {
+          return streamPlaygroundGateway(request, m, system, messages);
+        }
 
         let upstream: Response;
         let kind: "responses" | "chat" | "anthropic";
