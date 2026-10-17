@@ -67,7 +67,7 @@ function Playground() {
     setClinicName(null);
     if (!clinicId) return;
     void supabase.from("clinics").select("id,name,scenario_id").eq("id", clinicId).maybeSingle().then(({ data }) => {
-      if (!data?.scenario_id) return void toast.error("Couldn't load this clinic's receptionist.");
+      if (!data?.scenario_id) return void toast.error("Couldn't load this business's assistant.");
       clinicRef.current = data.id;
       convId.current = null;
       setClinicName(data.name);

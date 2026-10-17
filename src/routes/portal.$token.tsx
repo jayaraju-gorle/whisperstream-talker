@@ -14,10 +14,10 @@ export const Route = createFileRoute("/portal/$token")({
   ssr: false,
   head: () => ({
     meta: [
-      { title: "Receptionist portal — Conversational AI Flows Studio" },
-      { name: "description", content: "Review and confirm incoming appointment requests for your clinic." },
-      { property: "og:title", content: "Receptionist portal — Conversational AI Flows Studio" },
-      { property: "og:description", content: "Review and confirm incoming appointment requests for your clinic." },
+      { title: "Assistant portal — Conversational AI Flows Studio" },
+      { name: "description", content: "Review and confirm incoming appointment requests for your business." },
+      { property: "og:title", content: "Assistant portal — Conversational AI Flows Studio" },
+      { property: "og:description", content: "Review and confirm incoming appointment requests for your business." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
       { name: "robots", content: "noindex, nofollow" },
@@ -47,7 +47,7 @@ function Portal() {
   }
 
   if (q.isLoading) return <main className="p-6"><LoadingIndicator /></main>;
-  if (q.isError || !q.data) return <main className="mx-auto max-w-md p-6 text-center text-sm text-destructive">This portal link is invalid or has been replaced. Ask your clinic admin for the current link.</main>;
+  if (q.isError || !q.data) return <main className="mx-auto max-w-md p-6 text-center text-sm text-destructive">This portal link is invalid or has been replaced. Ask your business admin for the current link.</main>;
 
   const all = q.data.requests;
   const list = filter === "all" ? all : all.filter((r) => r.status === filter);
@@ -56,7 +56,7 @@ function Portal() {
   return (
     <main className="mx-auto w-full max-w-2xl space-y-4 p-4 pb-16">
       <header>
-        <p className="text-xs text-muted-foreground">Receptionist portal</p>
+        <p className="text-xs text-muted-foreground">Assistant portal</p>
         <h1 className="text-xl font-semibold">{q.data.clinic.name}</h1>
       </header>
       <div className="grid grid-cols-4 gap-1 rounded-lg border border-border p-1 text-xs">

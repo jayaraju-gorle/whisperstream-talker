@@ -9,10 +9,10 @@ export const Route = createFileRoute("/_authenticated/clinics/")({
   staticData: { sitemap: false },
   head: () => ({
     meta: [
-      { title: "Clinics — Conversational AI Flows Studio" },
-      { name: "description", content: "Set up AI front-desk receptionists for client clinics and track their test calls." },
-      { property: "og:title", content: "Clinics — Conversational AI Flows Studio" },
-      { property: "og:description", content: "Set up AI front-desk receptionists for client clinics and track their test calls." },
+      { title: "Businesses — Conversational AI Flows Studio" },
+      { name: "description", content: "Set up AI assistants for client businesses and track their calls." },
+      { property: "og:title", content: "Businesses — Conversational AI Flows Studio" },
+      { property: "og:description", content: "Set up AI assistants for client businesses and track their calls." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
     ],
@@ -33,16 +33,16 @@ function Clinics() {
     <main className="mx-auto w-full max-w-5xl space-y-6 p-4 sm:p-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-semibold">Clinics</h1>
-          <p className="text-sm text-muted-foreground">AI front-desk receptionists you've set up for client clinics.</p>
+          <h1 className="text-2xl font-semibold">Businesses</h1>
+          <p className="text-sm text-muted-foreground">AI assistants you've set up for client businesses — clinics, firms and more.</p>
         </div>
-        <Button asChild><Link to="/clinics/new"><Plus className="h-4 w-4" /> New clinic</Link></Button>
+        <Button asChild><Link to="/clinics/new"><Plus className="h-4 w-4" /> New business</Link></Button>
       </div>
       {isLoading && <LoadingIndicator />}
-      {isError && <p className="text-sm text-destructive">Couldn't load clinics.</p>}
+      {isError && <p className="text-sm text-destructive">Couldn't load businesses.</p>}
       {data && !data.length && (
         <div className="rounded-lg border border-dashed border-border p-10 text-center text-sm text-muted-foreground">
-          No clinics yet. Start with the clinic's details, hours and fees — then run a test patient call.
+          No businesses yet. Start with the business's details, hours and fees — then run a practice call.
         </div>
       )}
       <div className="grid gap-3 sm:grid-cols-2">
