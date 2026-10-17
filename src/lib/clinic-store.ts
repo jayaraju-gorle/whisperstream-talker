@@ -3,9 +3,9 @@
 import { supabase } from "@/integrations/supabase/client";
 import { CLINIC_SAMPLE, clinicKnowledge, clinicPrompt, receptionistAudience, type ClinicInput } from "@/lib/clinic";
 
-export type ClinicRow = ClinicInput & { id: string; scenario_id: string | null; kb_id: string | null; test_code: string; portal_token?: string; created_at: string };
+export type ClinicRow = ClinicInput & { id: string; scenario_id: string | null; kb_id: string | null; test_code: string; portal_token?: string; created_at: string; call_settings?: unknown };
 
-export const CLINIC_COLUMNS = "id,name,phone,emergency_phone,email,address,map_url,hours,doctors,insurance,notes,scenario_id,kb_id,test_code,portal_token,created_at";
+export const CLINIC_COLUMNS = "id,name,phone,emergency_phone,email,address,map_url,hours,doctors,insurance,notes,scenario_id,kb_id,test_code,portal_token,created_at,call_settings";
 
 export async function saveClinic(userId: string, input: ClinicInput, existing?: Pick<ClinicRow, "id" | "scenario_id" | "kb_id">) {
   const clean = { ...input, doctors: input.doctors.filter((d) => d.name.trim()) };
