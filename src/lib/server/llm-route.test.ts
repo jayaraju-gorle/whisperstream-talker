@@ -4,7 +4,7 @@ vi.mock("@tanstack/react-router", () => ({ createFileRoute: () => (options: unkn
 vi.mock("@/lib/server/auth.server", async (original) => ({
   ...await original<typeof import("@/lib/server/auth.server")>(),
   verifyRequest: vi.fn(async () => ({ userId: "test-user" })),
-  providerKey: vi.fn((name: string) => name === "XAI_API_KEY" ? "test-xai-key" : name === "ANTHROPIC_API_KEY" ? "test-anthropic-key" : undefined),
+  providerKey: vi.fn((name: string) => name === "XAI_API_KEY" ? "test-xai-key" : undefined),
 }));
 
 import { Route } from "../../routes/api/llm";
