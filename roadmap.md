@@ -32,7 +32,7 @@
 - [x] Update public provider attribution; add Anthropic Claude 3.5 sample-only options and xAI Grok with pricing; verify tests and preview.
 - [ ] Enable live Grok calls — blocked: needs an xAI API key; routing verified with mocked streaming responses.
 - [x] Replace old Claude sample entries with Sonnet 5 and Haiku 4.5, native streaming, accurate pricing and updated tests (38 passing; preview build clean).
-- [ ] Route playground Claude through built-in native Messages and add verified Gemini 4; verify streaming, access and costs.
+- [x] Route playground Claude through built-in native Messages and add Gemini 4 Argon; signed-in replies, usage/cost metrics and 18 regression tests verified. Published site awaits republishing.
 - [x] Visible navigation progress and loading feedback for delayed actions across the studio; browser checked navigation, demo replies, and sign-in error recovery.
 - [x] Website assistant Flo with lead capture and Leads page
 - [x] Email notification for new leads (Resend → gorlej2015@email.iimcal.ac.in)
