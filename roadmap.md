@@ -15,6 +15,7 @@
 - [x] Prefill built-in scenarios and sample knowledge from the original playground
 
 ## Business roadmap (internal only)
+- [x] Add saved business call switch, forwarding number, voice greeting and working-hours settings; signed-in save/reload and mobile verified, 26 tests passed. Configuration only; phone service remains unconnected.
 - [x] Comparison-first demo/playground, Home navigation, clearer homepage value and cost-currency label; 7 tests passed, demo sample/currency flow and signed-in Home → demo verified on desktop and mobile.
 - [x] Switch receptionist activation to TRY and remove test wording from acknowledgements; shared command checks and website TRY SSK/IVY/IYASHI → EXIT verified. WhatsApp update awaits publishing.
 - [x] Correct SSK/CA welcomes, shared instructions and stored SSK profile/scenario/knowledge; regressions and website chat verified. Live WhatsApp verification awaits publishing.

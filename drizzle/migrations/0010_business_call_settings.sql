@@ -1,0 +1,2 @@
+ALTER TABLE public.clinics ADD COLUMN call_settings jsonb NOT NULL DEFAULT '{}'::jsonb;
+COMMENT ON COLUMN public.clinics.call_settings IS 'Per-business phone call configuration only; live telephony integration is separate. Existing owner-scoped clinics RLS and grants apply.';

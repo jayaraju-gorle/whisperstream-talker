@@ -188,6 +188,7 @@ export type Database = {
       clinics: {
         Row: {
           address: string
+          call_settings: Json
           created_at: string
           doctors: Json
           email: string
@@ -208,6 +209,7 @@ export type Database = {
         }
         Insert: {
           address?: string
+          call_settings?: Json
           created_at?: string
           doctors?: Json
           email?: string
@@ -228,6 +230,7 @@ export type Database = {
         }
         Update: {
           address?: string
+          call_settings?: Json
           created_at?: string
           doctors?: Json
           email?: string

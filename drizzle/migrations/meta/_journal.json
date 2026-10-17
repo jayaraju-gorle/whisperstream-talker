@@ -71,6 +71,13 @@
       "when": 1791451494770,
       "tag": "0009_clinic_test_code_format",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1792230889111,
+      "tag": "0010_business_call_settings",
+      "breakpoints": true
     }
   ]
 }
