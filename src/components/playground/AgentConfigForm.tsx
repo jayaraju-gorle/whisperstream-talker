@@ -20,6 +20,10 @@ type Props = {
   available: Partial<Record<ConnectionId, boolean>>;
   sample?: boolean;
   customScenarios?: { id: string; label: string }[];
+  /** Speech-to-text is only used when the caller speaks; hidden for typed flows. */
+  showStt?: boolean;
+  /** Voice-model and voice pickers only matter when replies are spoken. */
+  showTts?: boolean;
 };
 
 function grouped<T extends { provider: ProviderId; id: string; label: string }>(items: T[]) {
@@ -71,30 +75,44 @@ function ModelSelect<T extends ModelAccess & { id: string; label: string }>({
   );
 }
 
-export function AgentConfigForm({ config, onChange, available, sample = false, customScenarios = [] }: Props) {
+export function AgentConfigForm({
+  config,
+  onChange,
+  available,
+  sample = false,
+  customScenarios = [],
+  showStt = true,
+  showTts = true,
+}: Props) {
   const tts = findTts(config.ttsId);
   return (
-    <div className="grid grid-cols-[repeat(2,minmax(0,1fr))] gap-2.5">
-      <ModelSelect label="Speech to text" value={config.sttId} items={STT_MODELS} available={available} sample={sample}
-        onValue={(v) => onChange({ ...config, sttId: v })} />
+    <div className="grid grid-cols-[repeat(auto-fit,minmax(160px,1fr))] gap-2.5">
+      {showStt && (
+        <ModelSelect label="Speech to text" value={config.sttId} items={STT_MODELS} available={available} sample={sample}
+          onValue={(v) => onChange({ ...config, sttId: v })} />
+      )}
       <ModelSelect label="AI model" value={config.llmId} items={LLM_MODELS} available={available} sample={sample}
         onValue={(v) => onChange({ ...config, llmId: v })} />
-      <ModelSelect label="Voice model" value={config.ttsId} items={TTS_MODELS} available={available} sample={sample}
-        onValue={(v) => {
-          const t = findTts(v);
-          onChange({ ...config, ttsId: v, voice: t?.voices[0]?.id ?? "" });
-        }} />
-      <label className="block min-w-0 space-y-1">
-        <span className="font-mono text-[10px] uppercase tracking-wider text-muted-foreground">Voice</span>
-        <Select value={config.voice} onValueChange={(v) => onChange({ ...config, voice: v })}>
-          <SelectTrigger className="h-8 text-xs"><SelectValue /></SelectTrigger>
-          <SelectContent>
-            {tts?.voices.map((v) => (
-              <SelectItem key={v.id} value={v.id} className="text-xs capitalize">{v.label}</SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </label>
+      {showTts && (
+        <>
+          <ModelSelect label="Voice model" value={config.ttsId} items={TTS_MODELS} available={available} sample={sample}
+            onValue={(v) => {
+              const t = findTts(v);
+              onChange({ ...config, ttsId: v, voice: t?.voices[0]?.id ?? "" });
+            }} />
+          <label className="block min-w-0 space-y-1">
+            <span className="font-mono text-[10px] uppercase tracking-wider text-muted-foreground">Voice</span>
+            <Select value={config.voice} onValueChange={(v) => onChange({ ...config, voice: v })}>
+              <SelectTrigger className="h-8 text-xs"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                {tts?.voices.map((v) => (
+                  <SelectItem key={v.id} value={v.id} className="text-xs capitalize">{v.label}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </label>
+        </>
+      )}
       <label className="block min-w-0 space-y-1">
         <span className="font-mono text-[10px] uppercase tracking-wider text-muted-foreground">Scenario</span>
         <Select value={config.scenario} onValueChange={(v) => onChange({ ...config, scenario: v })}>
