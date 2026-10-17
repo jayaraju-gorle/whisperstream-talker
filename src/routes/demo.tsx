@@ -46,7 +46,7 @@ function Demo() {
   const [bargeIn, setBargeIn] = useState(true);
   const [silenceMs, setSilenceMs] = useState(700);
   const [sensitivity, setSensitivity] = useState(0.5);
-  const [speakReplies, setSpeakReplies] = useState(true);
+  const [speakReplies, setSpeakReplies] = useState(false);
   const [draft, setDraft] = useState("");
   const [busy, setBusy] = useState(false);
   const [simulating, setSimulating] = useState(false);

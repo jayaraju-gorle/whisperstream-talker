@@ -41,3 +41,4 @@
 - [x] Add a confirmed restart-conversation action to Flo while retaining previously saved leads; confirmation, cancellation and new visitor identity verified.
 - [x] Clinic onboarding (details, hours, doctors & fees, test call via browser + WhatsApp) and clinic dashboard (setup, call history, appointment requests, cost & speed).
 - [x] Ivy Women and Fertility Centre one-click prefill on /clinics/new — preset from public listings, wizard validations pass, Playwright verified load → hours → doctors (fees still need a human review before saving).
+- [ ] Speak replies toggle defaults to off (text-only); voice pickers appear only when toggled on
