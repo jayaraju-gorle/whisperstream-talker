@@ -257,7 +257,7 @@ function Playground() {
     <div className="flex flex-1 flex-col">
       {clinicName && clinicId && (
         <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border bg-secondary/50 px-4 py-2 text-sm">
-          <span>Test patient call for <strong>{clinicName}</strong> — talk as a patient would. Calls are saved to the clinic dashboard.</span>
+          <span>Practice call for <strong>{clinicName}</strong> — talk as a caller would. Calls are saved to the business dashboard.</span>
           <Link to="/clinics/$id" params={{ id: clinicId }} className="text-primary hover:underline">Back to dashboard</Link>
         </div>
       )}
