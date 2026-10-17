@@ -11,6 +11,7 @@ import { supabase } from "@/integrations/supabase/client";
 import type { Json } from "@/integrations/supabase/types";
 import { toCallSettings, callSettingsError } from "@/lib/business-call-settings";
 import type { DayHours } from "@/lib/clinic";
+import { BusinessPhoneSetup } from "@/components/clinic/BusinessPhoneSetup";
 
 export function BusinessCallSettings({ businessId, initial, businessHours }: { businessId: string; initial: unknown; businessHours: DayHours[] }) {
   const [settings, setSettings] = useState(() => toCallSettings(initial, businessHours));
@@ -32,7 +33,7 @@ export function BusinessCallSettings({ businessId, initial, businessHours }: { b
   }
   return <section className="mx-auto w-full max-w-3xl space-y-5 border-t border-border pt-6" aria-labelledby="call-settings-title">
     <div className="flex items-center gap-2"><Phone className="h-5 w-5 text-primary" /><h2 id="call-settings-title" className="text-xl font-semibold">Call settings</h2></div>
-    <p className="text-sm text-muted-foreground">Phone service not connected</p>
+    <BusinessPhoneSetup businessId={businessId} />
     <div className="flex items-center justify-between gap-3"><Label htmlFor="business-calls">Enable assistant calls</Label><Switch id="business-calls" checked={settings.enabled} onCheckedChange={v => set("enabled", v)} /></div>
     <div className="grid gap-4 sm:grid-cols-2">
       <div className="space-y-2"><Label htmlFor="forwarding-number">Forwarding number</Label><Input id="forwarding-number" type="tel" placeholder="+91 …" value={settings.forwarding_number} onChange={e => set("forwarding_number", e.target.value)} /></div>
