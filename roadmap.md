@@ -15,7 +15,7 @@
 - [x] Prefill built-in scenarios and sample knowledge from the original playground
 
 ## Business roadmap (internal only)
-- [ ] Comparison-first demo/playground, Home navigation, clearer homepage value and cost-currency label; verify both entry flows.
+- [x] Comparison-first demo/playground, Home navigation, clearer homepage value and cost-currency label; 7 tests passed, demo sample/currency flow and signed-in Home → demo verified on desktop and mobile.
 - [x] Switch receptionist activation to TRY and remove test wording from acknowledgements; shared command checks and website TRY SSK/IVY/IYASHI → EXIT verified. WhatsApp update awaits publishing.
 - [x] Correct SSK/CA welcomes, shared instructions and stored SSK profile/scenario/knowledge; regressions and website chat verified. Live WhatsApp verification awaits publishing.
 - [x] Correct WhatsApp reply metric matching so older unlogged messages cannot displace the latest replies' model and timing; regression tests and latest stored reply timings verified.
