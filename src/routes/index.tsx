@@ -11,6 +11,8 @@ import {
   Shuffle,
 } from "lucide-react";
 import { Logo } from "@/components/Logo";
+import { Button } from "@/components/ui/button";
+import { useAuth } from "@/hooks/use-auth";
 
 export const Route = createFileRoute("/")({
   staticData: { sitemap: true },
@@ -98,13 +100,13 @@ const FEATURES = [
   },
   {
     icon: Shuffle,
-    t: "Swap providers",
-    d: "Choose OpenAI, Google Gemini, Anthropic Claude, xAI (Grok), Groq or Sarvam AI for replies; Deepgram and ElevenLabs for speech. Compare sample conversations in the demo or connect provider keys for live conversations.",
+    t: "Build your own combination",
+    d: "Mix speech-to-text (STT), language models (LLMs) and text-to-speech (TTS). Choose OpenAI, Gemini, Claude, Grok, Groq, Sarvam AI, Deepgram and ElevenLabs options, including built-in models and connected providers.",
   },
   {
     icon: Gauge,
-    t: "Real metrics",
-    d: "Time to first token, time to first audio, end-to-end voice response time, token usage and cost for every turn.",
+    t: "Measure speed & price",
+    d: "See how long each step takes, how soon the bot starts replying, and the estimated cost of each conversation — displayed in your chosen currency.",
   },
   {
     icon: Columns2,
@@ -123,49 +125,41 @@ const FEATURES = [
   },
   {
     icon: History,
-    t: "History & cost",
-    d: "Every session is saved with per-turn timing, token usage and estimated cost, so you can compare stacks over time — in your currency.",
+    t: "Explore languages & voices",
+    d: "Choose from each provider’s supported languages and voices. Hear how an agent sounds, judge its replies, and revisit saved playground sessions with their timing and costs.",
   },
 ];
 
 function Index() {
+  const { user } = useAuth();
   return (
     <div className="min-h-screen">
       <header className="mx-auto grid max-w-6xl grid-cols-[minmax(0,1fr)_auto] items-center gap-4 px-4 py-5 sm:px-6">
         <div className="flex min-w-0 items-center gap-2 font-semibold">
           <Logo className="h-6 w-6 shrink-0" /> Conversational AI Flows Studio
         </div>
-        <Link
-          to="/auth"
-          className="flex min-h-11 shrink-0 items-center whitespace-nowrap text-sm text-muted-foreground hover:text-foreground"
-        >
-          Sign in
-        </Link>
+        <Button asChild variant="ghost" size="sm">
+          <Link to={user ? "/playground" : "/auth"}>{user ? "Playground" : "Sign in"}</Link>
+        </Button>
       </header>
       <main className="mx-auto max-w-6xl px-4 pb-24 pt-8 sm:px-6 sm:pt-12">
-        <p className="font-mono text-xs uppercase tracking-[0.2em] text-primary">Voice &amp; text agent test bench</p>
+        <p className="font-mono text-xs uppercase tracking-[0.2em] text-primary">For conversational AI builders</p>
         <h1 className="mt-4 w-full text-4xl font-semibold leading-[1.1] sm:text-5xl md:text-6xl">
-          Hear — and read — the difference between AI stacks before you commit.
+          Compare conversational AI setups.
         </h1>
         <p className="mt-6 w-full text-lg text-muted-foreground">
-          Speak or type to an agent, swap the transcription, model and voice provider, and watch latency and cost tick
-          up on every turn. Test in full voice or text-only mode, run two stacks side by side, and try it all free in
-          the demo before you sign in.
+          Talk or type once. Experience two AI agents side by side. Mix language models, speech-to-text and
+          text-to-speech, then choose languages and voices to find the right setup for your product.
+        </p>
+        <p className="mt-3 text-base text-muted-foreground">
+          Judge the replies yourself. Compare response speed and estimated cost on every turn — not just a model’s specifications.
         </p>
         <div className="mt-8 flex flex-wrap gap-3">
-          <Link
-            to="/playground"
-            className="inline-flex items-center gap-2 rounded-md bg-primary px-5 py-2.5 font-medium text-primary-foreground hover:bg-primary/90"
-          >
-            Open the playground <ArrowRight className="h-4 w-4" />
-          </Link>
-          <Link
-            to="/demo"
-            className="inline-flex items-center gap-2 rounded-md border border-border px-5 py-2.5 font-medium text-foreground hover:bg-accent"
-          >
-            Try the free demo
-          </Link>
+          <Button asChild size="lg"><Link to="/playground">Open the playground <ArrowRight className="h-4 w-4" /></Link></Button>
+          <Button asChild variant="outline" size="lg"><Link to="/demo">Try the free demo</Link></Button>
         </div>
+
+        <p className="mt-3 text-sm text-muted-foreground">Free demo: illustrative sample replies and metrics. Playground: real AI conversations after sign-in.</p>
 
         <div className="mt-16 w-full rounded-lg border border-border bg-card/70 font-mono text-sm">
           <div className="p-4 sm:p-6">

@@ -1,7 +1,7 @@
 import { CurrencySelect } from "@/components/CurrencySelect";
 import { createFileRoute, Link, Outlet, redirect, useNavigate } from "@tanstack/react-router";
 import { supabase } from "@/integrations/supabase/client";
-import { BookOpen, History, Inbox, LogOut, Stethoscope } from "lucide-react";
+import { BookOpen, Home, History, Inbox, LogOut, Stethoscope } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Logo } from "@/components/Logo";
@@ -42,11 +42,12 @@ function Layout() {
   return (
     <div className="flex min-h-screen flex-col">
       <header className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3 border-b border-border bg-background/80 px-4 py-2.5 backdrop-blur">
-        <Link to="/playground" className="col-span-2 flex min-w-0 items-center gap-2 font-semibold xl:col-span-1">
+        <Link to="/" className="col-span-2 flex min-w-0 items-center gap-2 font-semibold xl:col-span-1">
           <Logo className="h-6 w-6 shrink-0" />
           <span>Conversational AI Flows Studio</span>
         </Link>
-        <nav className="col-span-2 flex min-w-0 items-center gap-1 text-sm sm:col-span-1">
+        <nav className="col-span-2 flex min-w-0 flex-wrap items-center gap-1 text-sm sm:col-span-1">
+          <Button asChild variant="ghost" size="sm"><Link to="/"><Home className="h-3.5 w-3.5" /> Home</Link></Button>
           <Link
             to="/playground"
             className="rounded px-2.5 py-2.5 sm:py-1 text-muted-foreground hover:text-foreground"
@@ -90,7 +91,7 @@ function Layout() {
             </Link>
           )}
         </nav>
-        <div className="col-span-2 flex min-w-0 items-center justify-end gap-3 text-xs sm:col-span-1 text-muted-foreground">
+        <div className="col-span-2 flex min-w-0 flex-wrap items-center justify-end gap-3 text-xs sm:col-span-1 text-muted-foreground">
           <CurrencySelect />
           <span className="hidden max-w-52 truncate font-mono lg:inline">{user.email}</span>
           <Button variant="ghost" size="sm"

@@ -13,7 +13,7 @@
 - Provider/model catalog and pricing live in src/lib/catalog.ts; adding a provider means a catalog entry plus a branch in each relevant /api route.
 - Catalog provider identifies the foundation vendor; optional connection identifies built-in transport, preserving saved model IDs and independent key availability. Only supported live models are listed to avoid misleading availability.
 - Built-in playground Anthropic and Gemini additions use request-scoped AI SDK gateway providers in playground-llm.server.ts, preserving catalog IDs and normalizing streamed text and final usage to the pipeline protocol so saved comparisons remain compatible.
-- Guest access is a public browser-only sample playground with ephemeral scenarios, knowledge and history; it shares AgentPanel with the authenticated playground to preserve visual parity, and never imports paid runners or live connections, preventing anonymous credit abuse.
+- Guest demo stays browser-only and ephemeral, shares AgentPanel and studio-defaults.ts with the playground for parity, and never imports paid runners or live connections to prevent anonymous credit abuse.
 - Account profiles are initialized idempotently after confirmed sign-in instead of using a trigger on the managed auth schema.
 - Live speech-to-speech calls use a persistent WebSocket relay (src/lib/live-relay.server.ts, dispatched in src/server.ts and a Vite dev plugin); the browser sends its auth token in app.start and the relay verifies it before opening a paid session.
 - Costs are stored in USD; display currency is converted client-side from /api/public/rates (daily rates + edge-country suggestion) and the user's choice is saved in profiles.preferences.currency.

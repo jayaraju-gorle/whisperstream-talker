@@ -5,8 +5,10 @@ import { CURRENCIES, type CurrencyCode } from "@/lib/currency";
 export function CurrencySelect() {
   const { code, setCode } = useCurrency();
   return (
+    <div className="flex shrink-0 flex-col gap-1">
+      <span className="text-xs text-muted-foreground">Estimated costs in</span>
     <Select value={code} onValueChange={(v) => void setCode(v as CurrencyCode)}>
-      <SelectTrigger className="h-8 w-[92px] font-mono text-xs" aria-label="Currency">
+      <SelectTrigger className="h-8 w-[92px] font-mono text-xs" aria-label="Estimated cost currency" title="Choose the currency used to display estimated conversation costs.">
         <SelectValue>{code}</SelectValue>
       </SelectTrigger>
       <SelectContent>
@@ -17,5 +19,6 @@ export function CurrencySelect() {
         ))}
       </SelectContent>
     </Select>
+    </div>
   );
 }
