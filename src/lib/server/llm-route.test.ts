@@ -31,8 +31,9 @@ describe("LLM provider routing", () => {
     ].map((event) => `data: ${JSON.stringify(event)}\n\n`).join(""), { headers: { "Content-Type": "text/event-stream" } }));
     vi.stubGlobal("fetch", fetchMock);
     const response = await handler({ request: request(id) });
-    expect(fetchMock.mock.calls[0]?.[0]).toBe("https://ai.gateway.lovable.dev/v1/messages");
-    const options = (fetchMock.mock.calls as unknown as [string, RequestInit][])[0]?.[1];
+    const calls = fetchMock.mock.calls as unknown as [string, RequestInit][];
+    expect(calls[0]?.[0]).toBe("https://ai.gateway.lovable.dev/v1/messages");
+    const options = calls[0]?.[1];
     expect(JSON.parse(String(options?.body))).toMatchObject({ model, max_tokens: 1024, stream: true });
     expect(new Headers(options?.headers).get("X-Lovable-AIG-SDK")).toBe("vercel-ai-sdk");
     expect((await response.text()).trim().split("\n").map((line) => JSON.parse(line))).toEqual([{ t: "d", v: "Hello" }, { t: "u", in: 12, out: 3 }]);
@@ -44,6 +45,29 @@ describe("LLM provider routing", () => {
     const response = await handler({ request: request("an-claude-sonnet-5") });
     expect(response.status).toBe(403);
     expect(await response.text()).toContain("Access denied");
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+
+  it("streams Gemini 4 Argon through built-in chat completions and reports usage", async () => {
+    const fetchMock = vi.fn(async () => new Response('data: {"id":"chat_1","object":"chat.completion.chunk","created":1,"model":"google/gemini-4-argon","choices":[{"index":0,"delta":{"content":"Hello"},"finish_reason":null}]}\n\ndata: {"choices":[{"index":0,"delta":{},"finish_reason":"stop"}],"usage":{"prompt_tokens":12,"completion_tokens":3}}\n\ndata: [DONE]\n\n', { headers: { "Content-Type": "text/event-stream" } }));
+    vi.stubGlobal("fetch", fetchMock);
+    const response = await handler({ request: request("lv-gemini-4-argon") });
+    const calls = fetchMock.mock.calls as unknown as [string, RequestInit][];
+    expect(calls[0]?.[0]).toBe("https://ai.gateway.lovable.dev/v1/chat/completions");
+    expect(JSON.parse(String(calls[0]?.[1]?.body))).toMatchObject({ model: "google/gemini-4-argon", stream: true });
+    expect((await response.text()).trim().split("\n").map((line) => JSON.parse(line))).toEqual([{ t: "d", v: "Hello" }, { t: "u", in: 12, out: 3 }]);
+  });
+
+  it("ends an empty Claude refusal without retrying or reporting a successful turn", async () => {
+    const events = [
+      { type: "message_start", message: { id: "msg_1", model: "anthropic/claude-sonnet-5", usage: { input_tokens: 12, output_tokens: 0 } } },
+      { type: "message_delta", delta: { stop_reason: "refusal" }, usage: { output_tokens: 0 } },
+      { type: "message_stop" },
+    ];
+    const fetchMock = vi.fn(async () => new Response(events.map((event) => `data: ${JSON.stringify(event)}\n\n`).join(""), { headers: { "Content-Type": "text/event-stream" } }));
+    vi.stubGlobal("fetch", fetchMock);
+    const response = await handler({ request: request("an-claude-sonnet-5") });
+    expect((await response.text()).trim().split("\n").map((line) => JSON.parse(line))).toEqual([{ t: "e", error: "The model declined this request." }]);
     expect(fetchMock).toHaveBeenCalledTimes(1);
   });
 
