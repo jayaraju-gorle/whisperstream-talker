@@ -13,6 +13,7 @@ import {
   type ProviderId,
 } from "@/lib/catalog";
 import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { cn } from "@/lib/utils";
 
 type Props = {
   config: AgentConfig;
@@ -87,9 +88,10 @@ export function AgentConfigForm({
   const tts = findTts(config.ttsId);
   // Two columns keep long model names readable; an odd count stretches the last
   // picker across the row so no empty cell is left behind.
-  const odd = (showStt ? 1 : 0) + (showTts ? 2 : 0) + 3 === 5 || (!showStt && !showTts);
+  // Always AI model, scenario and language; the speech pickers come and go with the mode.
+  const fieldCount = 3 + (showStt ? 1 : 0) + (showTts ? 2 : 0);
   return (
-    <div className={cn("grid grid-cols-[repeat(2,minmax(0,1fr))] gap-2.5", odd && "[&>*:last-child]:col-span-2")}>
+    <div className={cn("grid grid-cols-[repeat(2,minmax(0,1fr))] gap-2.5", fieldCount % 2 === 1 && "[&>*:last-child]:col-span-2")}>
       {showStt && (
         <ModelSelect label="Speech to text" value={config.sttId} items={STT_MODELS} available={available} sample={sample}
           onValue={(v) => onChange({ ...config, sttId: v })} />
