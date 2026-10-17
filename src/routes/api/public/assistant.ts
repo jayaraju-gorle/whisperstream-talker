@@ -84,9 +84,9 @@ export const Route = createFileRoute("/api/public/assistant")({
           const { data } = await db.from("clinics").select("id").eq("test_code", cmd.code).maybeSingle();
           clinic = data ? await loadClinicSession(db, data.id, "Website") : null;
           if (!clinic && cmd.index === messages.length - 1)
-            notice = "That receptionist code wasn't found. Check the code and try again.";
+            notice = "That assistant code wasn't found. Check the code and try again.";
           else if (clinic && cmd.index === messages.length - 1)
-            notice = `You're now chatting with the **${clinic.name}** receptionist. Ask anything a ${clinic.audience} would. Type EXIT to go back to Flo.`;
+            notice = `You're now chatting with the **${clinic.name}** assistant. Ask anything a ${clinic.audience} would. Type EXIT to go back to Flo.`;
         } else if (cmd.index === messages.length - 1) {
           notice = "You're back with Flo. How can I help with the studio?";
         }
