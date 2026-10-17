@@ -30,3 +30,4 @@
 - The assistant admin area retains /leads and reads web conversations through the authenticated browser client with paginated metadata and on-demand transcripts, excluding the reserved WhatsApp visitor prefix; this preserves public URLs and existing admin-only access policies without loading every transcript at once.
 - Legacy WhatsApp reply metrics match successful WhatsApp turn logs by conversation and nearest preceding completion timestamp, never array index; this keeps unlogged older replies and failed attempts from shifting metrics onto the wrong messages.
 - Receptionists share clinic-row storage, linked knowledge/scenarios and audience-aware helpers (business name/professional qualifications) across playground, web and WhatsApp to keep prompts and welcomes consistent.
+- Agent configuration lists only the pipeline stages the active mode runs, so a typed flow never offers a transcription picker.

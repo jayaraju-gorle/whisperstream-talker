@@ -325,6 +325,8 @@ function Playground() {
             turns={turns[i]!}
             status={status[i]!}
             voice={mode === "voice"}
+            stt={mode === "voice"}
+            tts={mode === "voice" || speakReplies}
             muted={muted[i]!}
             onMute={() => setMuted((m) => m.map((x, j) => (j === i ? !x : x)))}
             wide={!compare}

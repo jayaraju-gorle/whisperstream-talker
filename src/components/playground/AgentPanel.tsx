@@ -21,6 +21,10 @@ export function AgentPanel(props: {
   turns: PlaygroundTurn[];
   status: PlaygroundStatus;
   voice: boolean;
+  /** This flow transcribes spoken input (voice mode only). */
+  stt: boolean;
+  /** This flow speaks replies (voice mode, or text mode with "Speak replies"). */
+  tts: boolean;
   muted: boolean;
   onMute: () => void;
   wide: boolean;
@@ -34,6 +38,11 @@ export function AgentPanel(props: {
   const v2vs = done.map((t) => t.metrics?.v2vMs).filter((v): v is number => v != null);
   const avg = v2vs.length ? v2vs.reduce((a, b) => a + b, 0) / v2vs.length : undefined;
   const color = label === "A" ? "text-agent-a" : "text-agent-b";
+  const chain = [
+    props.stt ? findStt(config.sttId)?.label : null,
+    findLlm(config.llmId)?.label,
+    props.tts ? findTts(config.ttsId)?.label : null,
+  ].filter(Boolean).join(" → ");
   const scroller = useRef<HTMLDivElement>(null);
   useEffect(() => {
     scroller.current?.scrollTo({ top: scroller.current.scrollHeight, behavior: "smooth" });
@@ -45,14 +54,14 @@ export function AgentPanel(props: {
         <div className="min-w-0">
           <div className="mb-3 grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-2">
             <span className={cn("shrink-0 whitespace-nowrap font-mono text-sm font-bold", color)}>AGENT {label}</span>
-            <span className="truncate text-xs text-muted-foreground">
-              {findStt(config.sttId)?.label} → {findLlm(config.llmId)?.label} → {findTts(config.ttsId)?.label}
-            </span>
-            <Button variant="ghost" size="icon" onClick={props.onMute} className="h-9 w-9 shrink-0 text-muted-foreground" aria-label={props.muted ? "Unmute agent" : "Mute agent"}>
-              {props.muted ? <VolumeX className="h-4 w-4" /> : <Volume2 className="h-4 w-4" />}
-            </Button>
+            <span className="truncate text-xs text-muted-foreground">{chain}</span>
+            {props.tts && (
+              <Button variant="ghost" size="icon" onClick={props.onMute} className="h-9 w-9 shrink-0 text-muted-foreground" aria-label={props.muted ? "Unmute agent" : "Mute agent"}>
+                {props.muted ? <VolumeX className="h-4 w-4" /> : <Volume2 className="h-4 w-4" />}
+              </Button>
+            )}
           </div>
-          <AgentConfigForm config={config} onChange={props.onConfig} available={props.available} customScenarios={props.customScenarios} sample={props.sample ?? false} />
+          <AgentConfigForm config={config} onChange={props.onConfig} available={props.available} customScenarios={props.customScenarios} sample={props.sample ?? false} showStt={props.stt} showTts={props.tts} />
         </div>
         <div className="min-w-0 space-y-2 self-end">
           <div className="grid grid-cols-[auto_minmax(0,1fr)] items-center gap-2 font-mono text-[11px] text-muted-foreground">
