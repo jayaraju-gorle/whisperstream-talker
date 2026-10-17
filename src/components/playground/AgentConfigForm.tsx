@@ -85,8 +85,11 @@ export function AgentConfigForm({
   showTts = true,
 }: Props) {
   const tts = findTts(config.ttsId);
+  // Two columns keep long model names readable; an odd count stretches the last
+  // picker across the row so no empty cell is left behind.
+  const odd = (showStt ? 1 : 0) + (showTts ? 2 : 0) + 3 === 5 || (!showStt && !showTts);
   return (
-    <div className="grid grid-cols-[repeat(auto-fit,minmax(160px,1fr))] gap-2.5">
+    <div className={cn("grid grid-cols-[repeat(2,minmax(0,1fr))] gap-2.5", odd && "[&>*:last-child]:col-span-2")}>
       {showStt && (
         <ModelSelect label="Speech to text" value={config.sttId} items={STT_MODELS} available={available} sample={sample}
           onValue={(v) => onChange({ ...config, sttId: v })} />
