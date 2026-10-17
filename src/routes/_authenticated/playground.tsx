@@ -54,7 +54,7 @@ function Playground() {
   const [bargeIn, setBargeIn] = useState(true);
   const [silenceMs, setSilenceMs] = useState(700);
   const [sensitivity, setSensitivity] = useState(0.5);
-  const [speakReplies, setSpeakReplies] = useState(true);
+  const [speakReplies, setSpeakReplies] = useState(false);
   const [draft, setDraft] = useState("");
   const [simulating, setSimulating] = useState(false);
   const simRef = useRef(false);
@@ -67,7 +67,7 @@ function Playground() {
     setClinicName(null);
     if (!clinicId) return;
     void supabase.from("clinics").select("id,name,scenario_id").eq("id", clinicId).maybeSingle().then(({ data }) => {
-      if (!data?.scenario_id) return void toast.error("Couldn't load this clinic's receptionist.");
+      if (!data?.scenario_id) return void toast.error("Couldn't load this business's assistant.");
       clinicRef.current = data.id;
       convId.current = null;
       setClinicName(data.name);
@@ -257,7 +257,7 @@ function Playground() {
     <div className="flex flex-1 flex-col">
       {clinicName && clinicId && (
         <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border bg-secondary/50 px-4 py-2 text-sm">
-          <span>Test patient call for <strong>{clinicName}</strong> — talk as a patient would. Calls are saved to the clinic dashboard.</span>
+          <span>Practice call for <strong>{clinicName}</strong> — talk as a caller would. Calls are saved to the business dashboard.</span>
           <Link to="/clinics/$id" params={{ id: clinicId }} className="text-primary hover:underline">Back to dashboard</Link>
         </div>
       )}

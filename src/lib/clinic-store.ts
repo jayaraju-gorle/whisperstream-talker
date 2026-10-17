@@ -20,7 +20,7 @@ export async function saveClinic(userId: string, input: ClinicInput, existing?: 
     if (error) throw error;
     kbId = data.id;
   }
-  const scenario = { user_id: userId, label: `${clean.name} receptionist`, prompt: clinicPrompt(clean.name, clean.doctors), sample: CLINIC_SAMPLE, kb_ids: [kbId], updated_at: new Date().toISOString() };
+  const scenario = { user_id: userId, label: `${clean.name} assistant`, prompt: clinicPrompt(clean.name, clean.doctors), sample: CLINIC_SAMPLE, kb_ids: [kbId], updated_at: new Date().toISOString() };
   let scenarioId = existing?.scenario_id ?? null;
   if (scenarioId) {
     const { error } = await supabase.from("custom_scenarios").update(scenario).eq("id", scenarioId);

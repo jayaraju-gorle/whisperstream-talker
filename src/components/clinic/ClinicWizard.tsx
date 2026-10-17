@@ -27,7 +27,7 @@ import { LIBRARY_KEY } from "@/hooks/use-library";
 import { ClinicTestCall } from "./ClinicTestCall";
 import { cn } from "@/lib/utils";
 
-const STEPS = ["Clinic details", "Opening hours", "Doctors & fees", "Try receptionist"];
+const STEPS = ["Business details", "Opening hours", "Team & fees", "Try assistant"];
 
 export function ClinicWizard({ userId, initial, existing }: { userId: string; initial: ClinicInput; existing?: ClinicRow }) {
   const [c, setC] = useState(initial);
@@ -59,7 +59,7 @@ export function ClinicWizard({ userId, initial, existing }: { userId: string; in
         const { error } = await supabase.from("clinics").update({ test_code: code }).eq("id", id);
         if (error) {
           setStep(0);
-          return void toast.error(error.code === "23505" ? `Receptionist code ${code} is already used by another clinic.` : "Couldn't save the receptionist code.");
+          return void toast.error(error.code === "23505" ? `Assistant code ${code} is already used by another business.` : "Couldn't save the assistant code.");
         }
       }
       await qc.invalidateQueries({ queryKey: LIBRARY_KEY });
@@ -68,9 +68,9 @@ export function ClinicWizard({ userId, initial, existing }: { userId: string; in
       if (error) throw error;
       setSaved({ id, code: data.test_code, scenario_id: data.scenario_id, kb_id: data.kb_id });
       if (!saveNow) setStep(3);
-      toast.success("Clinic saved");
+      toast.success("Business saved");
     } catch {
-      toast.error("Couldn't save the clinic. Please try again.");
+      toast.error("Couldn't save the business. Please try again.");
     } finally {
       setSaving(false);
     }
@@ -94,7 +94,7 @@ export function ClinicWizard({ userId, initial, existing }: { userId: string; in
       {step === 0 && !existing && (
         <div className="space-y-2 rounded-lg border border-border bg-muted/40 px-3 py-2.5">
           <p className="text-sm text-muted-foreground">
-            Setting up one of these clinics? Fill in its details with one click, then review before saving.
+            Setting up one of these businesses? Fill in its details with one click, then review before saving.
           </p>
           <div className="flex flex-wrap gap-2">
             {([
@@ -134,14 +134,14 @@ export function ClinicWizard({ userId, initial, existing }: { userId: string; in
 
       {step === 0 && (
         <div className="grid gap-4 sm:grid-cols-2">
-          <Field label="Clinic name *"><Input value={c.name} onChange={(e) => set("name", e.target.value)} placeholder="Sunrise Family Clinic" /></Field>
+          <Field label="Business name *"><Input value={c.name} onChange={(e) => set("name", e.target.value)} placeholder="Sunrise Family Clinic" /></Field>
           <Field label="Appointments phone *"><Input value={c.phone} onChange={(e) => set("phone", e.target.value)} placeholder="+91 80 1234 5678" /></Field>
           <Field label="Emergency phone"><Input value={c.emergency_phone} onChange={(e) => set("emergency_phone", e.target.value)} /></Field>
           <Field label="Email"><Input type="email" value={c.email} onChange={(e) => set("email", e.target.value)} /></Field>
           <div className="sm:col-span-2"><Field label="Address"><Input value={c.address} onChange={(e) => set("address", e.target.value)} /></Field></div>
           <div className="sm:col-span-2"><Field label="Google Maps link"><Input type="url" value={c.map_url} onChange={(e) => set("map_url", e.target.value)} placeholder="https://maps.app.goo.gl/…" /></Field></div>
           {existing && (
-            <Field label="WhatsApp receptionist code (3–10 letters or numbers)">
+            <Field label="WhatsApp assistant code (3–10 letters or numbers)">
               <Input value={code} maxLength={10} className="font-mono uppercase" placeholder="IVY"
                 onChange={(e) => setCode(e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, ""))} />
             </Field>
@@ -206,7 +206,7 @@ export function ClinicWizard({ userId, initial, existing }: { userId: string; in
 
       {step === 3 && saved && (
         <div className="space-y-4">
-          <p className="text-sm text-muted-foreground">The receptionist now knows {c.name}'s hours, doctors and fees. Try it as a patient would.</p>
+          <p className="text-sm text-muted-foreground">The assistant now knows {c.name}'s hours, team and fees. Try it as a caller would.</p>
           <ClinicTestCall clinicId={saved.id} code={saved.code} />
         </div>
       )}

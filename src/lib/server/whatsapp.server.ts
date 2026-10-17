@@ -153,9 +153,9 @@ async function routeMessage(db: Db, phone: string, body: string): Promise<{ text
   const cmd = parseClinicCommand(body);
   if (cmd?.kind === "try") {
     const { data } = await db.from("clinics").select("id,name,doctors").eq("test_code", cmd.code).maybeSingle();
-    if (!data) return { text: "That receptionist code wasn't found. Check the code and try again." };
+    if (!data) return { text: "That assistant code wasn't found. Check the code and try again." };
     await db.from("clinic_whatsapp_sessions").upsert({ phone, clinic_id: data.id, started_at: new Date().toISOString() });
-    return { text: `You're now chatting with the *${data.name}* receptionist. Ask anything a ${receptionistAudience(data.name, toClinicInput(data).doctors)} would. Send EXIT to go back to Flo.` };
+    return { text: `You're now chatting with the *${data.name}* assistant. Ask anything a ${receptionistAudience(data.name, toClinicInput(data).doctors)} would. Send EXIT to go back to Flo.` };
   }
   if (cmd?.kind === "exit") {
     const { data } = await db.from("clinic_whatsapp_sessions").delete().eq("phone", phone).select("phone");

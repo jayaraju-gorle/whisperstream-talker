@@ -1,7 +1,7 @@
 import { CurrencySelect } from "@/components/CurrencySelect";
 import { createFileRoute, Link, Outlet, redirect, useNavigate } from "@tanstack/react-router";
 import { supabase } from "@/integrations/supabase/client";
-import { BookOpen, Home, History, Inbox, LogOut, Stethoscope } from "lucide-react";
+import { BookOpen, Building2, Home, History, Inbox, LogOut } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Logo } from "@/components/Logo";
@@ -75,7 +75,7 @@ function Layout() {
               className="flex items-center gap-1.5 rounded px-2.5 py-2.5 sm:py-1 text-muted-foreground hover:text-foreground"
               activeProps={{ className: "flex items-center gap-1.5 rounded px-2.5 py-2.5 sm:py-1 bg-secondary text-foreground" }}
             >
-              <Stethoscope className="h-3.5 w-3.5" /> Clinics
+              <Building2 className="h-3.5 w-3.5" /> Businesses
             </Link>
           )}
           {isAdmin && (
