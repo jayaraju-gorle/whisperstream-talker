@@ -1,13 +1,14 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { canManageBusinessPhone } from "@/lib/business-phone";
 
 export const getBusinessPhoneSetup = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator(d => z.object({ businessId: z.string().uuid() }).parse(d))
   .handler(async ({ data, context }) => {
     const { data: business, error } = await context.supabase.from("clinics").select("id,owner_id,call_settings").eq("id", data.businessId).single();
-    if (error || business?.owner_id !== context.userId) throw new Error("Only the business owner can manage its phone number.");
+    if (error || !canManageBusinessPhone(business?.owner_id, context.userId)) throw new Error("Only the business owner can manage its phone number.");
     const key = process.env["TWILIO_API_KEY"];
     const appKey = process.env["LOVABLE_API_KEY"];
     if (!key || !appKey) return { connected: false, numbers: [] as { sid: string; number: string; name: string }[] };
