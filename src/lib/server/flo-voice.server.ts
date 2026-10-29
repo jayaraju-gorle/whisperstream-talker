@@ -35,6 +35,9 @@ Do not delegate to the backend when: Giving a brief greeting, listening, or aski
     async persist(fragments: VoiceFragment[]) {
       if (!fragments.length) return;
       const messages = [...initial, ...voiceMessages(fragments, runId)];
+      const tools = history.slice(initial.length).flatMap((m) => m.parts.filter((p) => p.type.startsWith("tool-")));
+      const lastAssistant = messages.filter((m) => m.role === "assistant").at(-1);
+      if (lastAssistant) lastAssistant.parts.push(...tools);
       const { error } = await db.from("assistant_conversations").upsert({ visitor_id: visitorId,
         messages: messages as never, updated_at: new Date().toISOString() }, { onConflict: "visitor_id" });
       if (error) throw new Error("Couldn't save the voice conversation.");

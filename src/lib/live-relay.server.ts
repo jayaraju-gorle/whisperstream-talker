@@ -376,7 +376,7 @@ export function bindLiveConnection(
     task?.abort();
   }
 
-  function finish() {
+  function finish(finalEvent?: string) {
     if (finished) return;
     finished = closing = true;
     clearTimeout(startTimer);
@@ -390,8 +390,14 @@ export function bindLiveConnection(
     if (flo) {
       execution.waitUntil(flo.persist(transcripts).catch((error) => {
         emit({ type: "app.error", error: { message: error instanceof Error ? error.message : "Couldn't save the call." } });
-      }).finally(() => close(browser)));
-    } else close(browser);
+      }).finally(() => {
+        if (finalEvent && browser.readyState === 1) browser.send(finalEvent);
+        close(browser);
+      }));
+    } else {
+      if (finalEvent && browser.readyState === 1) browser.send(finalEvent);
+      close(browser);
+    }
     finishDrain?.();
   }
 
@@ -505,8 +511,8 @@ export function bindLiveConnection(
     try {
       if (typeof data !== "string" || data.length > 1024 * 1024) throw new Error("Invalid voice event");
       const event: ProviderEvent = JSON.parse(data);
+      if (event.type === "session.closed") return finish(data);
       if (browser.readyState === 1) browser.send(data);
-      if (event.type === "session.closed") return finish();
       if (event.type === "gateway.session.closing" || event.type === "gateway.error" || event.type === "app.error") {
         return stop();
       }
@@ -627,6 +633,9 @@ export function bindLiveConnection(
           instructions: flo ? flo.persona : conversationInstructions(config.persona ?? "", startOptions.language),
           audio: { output: { voice: startOptions.voice } },
           delegation: { type: "client" },
+          ...(flo ? { input: flo.history.slice(-6).map((m) => ({ role: m.role === "assistant" ? "assistant" : "user",
+            content: [{ type: m.role === "assistant" ? "output_text" : "input_text",
+              text: m.parts.map((p) => p.type === "text" ? p.text : "").join("").slice(0, 800) }] })).filter((m) => m.content[0]?.text) } : {}),
         },
         transport: { type: "webrtc", sdp },
       }),

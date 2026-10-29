@@ -15,8 +15,8 @@
 - [x] Prefill built-in scenarios and sample knowledge from the original playground
 
 ## Business roadmap (internal only)
-- [ ] Add visitor chat-bubble voice conversations with shared Flo/business knowledge, TRY/EXIT switching, transcript persistence and call cleanup; verify real speech and chat continuity.
-- [ ] Add a website Chat on WhatsApp entry point for the existing universal assistant.
+- [ ] Verify audible Flo bubble voice calls — implemented shared Flo/business relay, captions, mute/end, transcript persistence; blocked: sandbox ICE gathering times out before connecting. Text TRY SSK → fee reply → EXIT and mic-error recovery verified; 19 tests pass.
+- [x] Add website Chat on WhatsApp entry points on homepage and Flo bubble; desktop/mobile checked.
 - [ ] Add live test-number connection and call flow using business call settings — Twilio connected and owner-only number lookup added; blocked on a voice-capable number and approval to securely store Twilio Auth Token for incoming-call verification. Live routing/calls not yet implemented.
 - [x] Add saved business call switch, forwarding number, voice greeting and working-hours settings; signed-in save/reload and mobile verified, 26 tests passed. Configuration only; phone service remains unconnected.
 - [x] Comparison-first demo/playground, Home navigation, clearer homepage value and cost-currency label; 7 tests passed, demo sample/currency flow and signed-in Home → demo verified on desktop and mobile.
@@ -30,7 +30,7 @@
 - [x] Homepage copy refresh: all providers listed, demo mode and comparison described, feature cards polished
 - [ ] Industry PM Playbooks (/playbooks + /playbooks/$slug, Article JSON-LD, "Simulate in Studio" links) — drafts approved in chat
 - [x] Flo on WhatsApp (webhook inbox, replies, leads, email alerts) — needs publish + Incoming messages destination set to this project
-- [ ] On-site WhatsApp QR / "Chat on WhatsApp" button
+- [x] On-site "Chat on WhatsApp" button
 - [ ] Telephony / SIP inbound voice (future)
 
 - [x] Verify and optimize studio layouts for mobile, including demo, library and history.
