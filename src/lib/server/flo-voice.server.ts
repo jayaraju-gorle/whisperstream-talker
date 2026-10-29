@@ -1,5 +1,5 @@
 import { DefaultChatTransport, readUIMessageStream, type UIMessage } from "ai";
-import { handleAssistantPost } from "@/routes/api/public/assistant";
+import { handleAssistantPost } from "@/lib/server/assistant-handler.server";
 import { ASSISTANT_INSTRUCTIONS } from "@/lib/assistant-knowledge";
 import { activeClinicCommand, loadClinicSession } from "@/lib/server/clinic-mode.server";
 import { validFloVisitor, voiceMessages, type VoiceFragment } from "@/lib/flo-voice";
