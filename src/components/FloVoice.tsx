@@ -14,9 +14,9 @@ export function FloVoice({ visitorId, onActive, onMessages }: {
     startPayload: async () => ({ visitorId }),
     onEvent: async (event) => {
       if (event.type === "session.input_transcript.delta" || event.type === "session.output_transcript.delta") {
-        if (typeof event.delta !== "string") return;
+        if (typeof event["delta"] !== "string") return;
         const fragment: VoiceFragment = { role: event.type === "session.input_transcript.delta" ? "user" : "assistant",
-          text: event.delta, start_ms: Number(event.start_ms) || 0, end_ms: Number(event.end_ms) || 0 };
+          text: event["delta"], start_ms: Number(event["start_ms"]) || 0, end_ms: Number(event["end_ms"]) || 0 };
         setFragments((previous) => [...previous, fragment]);
       }
       if (event.type === "app.closed") {

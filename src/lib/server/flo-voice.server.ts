@@ -49,7 +49,7 @@ Do not delegate to the backend when: Giving a brief greeting, listening, or aski
           return handleAssistantPost({ request });
         },
       });
-      const stream = await transport.sendMessages({ trigger: "submit-message", chatId: visitorId, messages: [...history], abortSignal: signal });
+      const stream = await transport.sendMessages({ trigger: "submit-message", chatId: visitorId, messageId: undefined, messages: [...history], abortSignal: signal });
       let reply: UIMessage | undefined;
       for await (const message of readUIMessageStream({ stream, terminateOnError: true })) reply = message;
       signal.throwIfAborted();

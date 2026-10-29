@@ -5,7 +5,6 @@ import { z } from "zod";
 import { createClient } from "@supabase/supabase-js";
 import { SCENARIOS } from "./catalog";
 import { createFloVoice } from "./server/flo-voice.server";
-import { voiceMessages, type VoiceFragment } from "./flo-voice";
 
 export type LiveConfig = {
   baseURL: string;
