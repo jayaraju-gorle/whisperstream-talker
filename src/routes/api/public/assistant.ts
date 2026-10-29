@@ -45,7 +45,13 @@ export const Route = createFileRoute("/api/public/assistant")({
         if (error) return json({ error: "Couldn't load the conversation" }, 500);
         return json({ messages: data?.messages ?? [] });
       },
-      POST: async ({ request }) => {
+      POST: handleAssistantPost,
+    },
+  },
+});
+
+
+export async function handleAssistantPost({ request }: { request: Request }): Promise<Response> {
         const parsed = Body.safeParse(await request.json().catch(() => null));
         if (!parsed.success) return json({ error: "Invalid request" }, 400);
         const { visitorId } = parsed.data;
@@ -140,7 +146,4 @@ export const Route = createFileRoute("/api/public/assistant")({
           }),
           runIdFetch,
         );
-      },
-    },
-  },
-});
+}

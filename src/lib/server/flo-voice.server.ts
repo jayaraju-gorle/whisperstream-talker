@@ -1,5 +1,5 @@
 import { DefaultChatTransport, readUIMessageStream, type UIMessage } from "ai";
-import { Route } from "@/routes/api/public/assistant";
+import { handleAssistantPost } from "@/routes/api/public/assistant";
 import { ASSISTANT_INSTRUCTIONS } from "@/lib/assistant-knowledge";
 import { activeClinicCommand, loadClinicSession } from "@/lib/server/clinic-mode.server";
 import { validFloVisitor, voiceMessages, type VoiceFragment } from "@/lib/flo-voice";
@@ -39,9 +39,6 @@ Do not delegate to the backend when: Giving a brief greeting, listening, or aski
       const previous = history.findIndex((m) => m.id === latest.id);
       if (previous >= 0) history.splice(previous);
       history.push(latest);
-      const handlers = Route.options.server?.handlers;
-      const post = handlers?.POST;
-      if (typeof post !== "function") throw new Error("Assistant unavailable.");
       const transport = new DefaultChatTransport({
         api: "/api/public/assistant",
         body: { visitorId },
@@ -49,7 +46,7 @@ Do not delegate to the backend when: Giving a brief greeting, listening, or aski
           const request = new Request("https://assistant.internal/api/public/assistant", { ...init, signal,
             headers: { "Content-Type": "application/json", "X-Lovable-AIG-Run-ID": runId,
               "X-Lovable-AIG-Metadata": JSON.stringify({ delegation_id: delegationId }) } });
-          return post({ request } as never) as Promise<Response>;
+          return handleAssistantPost({ request });
         },
       });
       const stream = await transport.sendMessages({ trigger: "submit-message", chatId: visitorId, messages: [...history], abortSignal: signal });
