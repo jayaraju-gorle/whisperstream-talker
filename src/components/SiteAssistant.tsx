@@ -13,6 +13,8 @@ import { ContactSummary } from "@/components/ContactSummary";
 import { contactDetails, contactUpdateMessage } from "@/lib/assistant-contact";
 import { Shimmer } from "@/components/ai-elements/shimmer";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
+import { FloVoice } from "@/components/FloVoice";
+import { WHATSAPP_ASSISTANT_URL } from "@/lib/flo-voice";
 
 const KEY = "flo-visitor-id";
 const SUGGESTIONS = ["What can I test here?", "Can I try voice calls?", "I'd like a custom agent for my business"];
@@ -57,7 +59,7 @@ export function SiteAssistant() {
             <Logo className="h-6 w-6" />
             <div className="min-w-0 flex-1">
               <div className="text-sm font-semibold">Flo · Studio guide</div>
-              <div className="text-xs text-muted-foreground">Ask about the studio or get in touch</div>
+              <div className="text-xs text-muted-foreground">Chat or talk with your assistant</div>
             </div>
             <AlertDialog>
               <AlertDialogTrigger asChild>
@@ -106,7 +108,7 @@ function ChatBody({ visitorId, initial, onBusyChange }: { visitorId: string; ini
     () => new DefaultChatTransport({ api: "/api/public/assistant", body: { visitorId } }),
     [visitorId],
   );
-  const { messages, sendMessage, status, stop } = useChat({
+  const { messages, setMessages, sendMessage, status, stop } = useChat({
     id: `flo-${visitorId}`,
     messages: initial,
     transport,
@@ -120,7 +122,8 @@ function ChatBody({ visitorId, initial, onBusyChange }: { visitorId: string; ini
       toast.error(msg || "The assistant couldn't reply. Please try again.");
     },
   });
-  const busy = status === "submitted" || status === "streaming";
+  const [voiceActive, setVoiceActive] = useState(false);
+  const busy = voiceActive || status === "submitted" || status === "streaming";
   useEffect(() => { onBusyChange(busy); }, [busy, onBusyChange]);
   const [text, setText] = useState("");
   const latestContactCall = messages.flatMap((m) => m.parts)
@@ -137,16 +140,17 @@ function ChatBody({ visitorId, initial, onBusyChange }: { visitorId: string; ini
 
   return (
     <>
+      {status !== "submitted" && status !== "streaming" && <FloVoice visitorId={visitorId} onActive={setVoiceActive} onMessages={setMessages} />}
       <Conversation className="flex-1">
         <ConversationContent className="gap-4 p-4">
           {messages.length === 0 && (
             <div className="space-y-3 text-sm">
               <p className="text-muted-foreground">
-                Hi! I'm Flo. I can explain what the studio does or help you contact us.
+                Hi! I'm Flo. How can I help today?
               </p>
               <div className="flex flex-wrap gap-2">
                 {SUGGESTIONS.map((s) => (
-                  <Button key={s} variant="outline" size="sm" onClick={() => send(s)}>
+                  <Button key={s} variant="outline" size="sm" disabled={busy} onClick={() => send(s)}>
                     {s}
                   </Button>
                 ))}
@@ -206,14 +210,16 @@ function ChatBody({ visitorId, initial, onBusyChange }: { visitorId: string; ini
             onChange={(e) => setText(e.target.value)}
             placeholder="Ask about the studio…"
             maxLength={2000}
+            disabled={voiceActive}
           />
           <PromptInputFooter className="justify-between">
             <span className="flex items-center gap-1 text-[11px] text-muted-foreground">
               <UserCheck className="h-3 w-3" /> Your details are only shared if you ask.
             </span>
-            <PromptInputSubmit status={status} onStop={stop} disabled={!busy && !text.trim()} />
+            <PromptInputSubmit status={status} onStop={stop} disabled={voiceActive || (!busy && !text.trim())} />
           </PromptInputFooter>
         </PromptInput>
+        <Button asChild variant="link" size="sm" className="mt-1 h-auto px-0 text-xs"><a href={WHATSAPP_ASSISTANT_URL} target="_blank" rel="noopener noreferrer"><MessageCircle className="h-3 w-3" />Chat on WhatsApp</a></Button>
       </div>
     </>
   );
