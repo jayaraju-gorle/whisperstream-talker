@@ -4,6 +4,7 @@ import process from "node:process";
 import { z } from "zod";
 import { createClient } from "@supabase/supabase-js";
 import { SCENARIOS } from "./catalog";
+import { createFloVoice } from "./server/flo-voice.server";
 
 export type LiveConfig = {
   baseURL: string;
@@ -12,6 +13,7 @@ export type LiveConfig = {
   backendModel: string;
   openingInstructions?: string;
   persona?: string;
+  flo?: boolean;
 };
 
 // Fill from co-loaded knowledge: the gateway URL, the Live model and the resolved chat model.
@@ -111,10 +113,11 @@ function workerSocket(socket: WorkerSocket): LiveSocket {
   };
 }
 
-export function handleLiveRequest(request: Request): Response {
+export function handleLiveRequest(request: Request, flo = false): Response {
   const waitUntil = (request as Request & Partial<LiveExecutionContext>).waitUntil;
   if (!waitUntil) return new Response("Live runtime unavailable", { status: 503 });
   const config = getLiveConfig();
+  config.flo = flo;
   const rejected = validateLiveUpgrade(request);
   if (rejected) return rejected;
   const pair = new WebSocketPair();
@@ -291,6 +294,8 @@ export function bindLiveConnection(
   let starting = false;
   let closing = false;
   let finished = false;
+  let flo: Awaited<ReturnType<typeof createFloVoice>> | undefined;
+  let visitor: unknown;
   let revision = 0;
   let task: AbortController | undefined;
   const pendingDelegations: Array<{
@@ -371,7 +376,7 @@ export function bindLiveConnection(
     task?.abort();
   }
 
-  function finish() {
+  function finish(finalEvent?: string) {
     if (finished) return;
     finished = closing = true;
     clearTimeout(startTimer);
@@ -382,7 +387,17 @@ export function bindLiveConnection(
     discardPendingWork();
     setupAbort.abort();
     close(gateway);
-    close(browser);
+    if (flo) {
+      execution.waitUntil(flo.persist(transcripts).catch((error) => {
+        emit({ type: "app.error", error: { message: error instanceof Error ? error.message : "Couldn't save the call." } });
+      }).finally(() => {
+        if (finalEvent && browser.readyState === 1) browser.send(finalEvent);
+        close(browser);
+      }));
+    } else {
+      if (finalEvent && browser.readyState === 1) browser.send(finalEvent);
+      close(browser);
+    }
     finishDrain?.();
   }
 
@@ -447,7 +462,7 @@ export function bindLiveConnection(
     task = controller;
     let taskRevision = revision;
     try {
-      const answer = await answerQuestion(
+      const answer = flo ? await flo.answer(transcripts, controller.signal, id) : await answerQuestion(
         backendMessages,
         config,
         { runID, sessionID, delegationID: id },
@@ -466,8 +481,13 @@ export function bindLiveConnection(
       if (closing || controller.signal.aborted) return;
       if (taskRevision !== revision) return;
       deliverResult(id, answer.trim(), pending.plan);
-    } catch {
+    } catch (error) {
       if (closing || controller.signal.aborted) return;
+      if (flo) {
+        emit({ type: "app.error", error: { message: error instanceof Error ? error.message : "The assistant could not reply." } });
+        stop();
+        return;
+      }
       backendMessages.push({
         role: "assistant",
         content:
@@ -491,8 +511,8 @@ export function bindLiveConnection(
     try {
       if (typeof data !== "string" || data.length > 1024 * 1024) throw new Error("Invalid voice event");
       const event: ProviderEvent = JSON.parse(data);
+      if (event.type === "session.closed") return finish(data);
       if (browser.readyState === 1) browser.send(data);
-      if (event.type === "session.closed") return finish();
       if (event.type === "gateway.session.closing" || event.type === "gateway.error" || event.type === "app.error") {
         return stop();
       }
@@ -527,7 +547,7 @@ export function bindLiveConnection(
       }
       if (event.type === "session.input_transcript.delta" || event.type === "session.output_transcript.delta") {
         const role = event.type === "session.input_transcript.delta" ? "user" : "assistant";
-        if (!event.delta?.trim()) return;
+        if (!event.delta) return;
         const listeningSound = role === "user" && Boolean(task) && isListeningSound(event.delta);
         transcripts.push({
           role,
@@ -575,7 +595,10 @@ export function bindLiveConnection(
 
   async function startSession(sdp: string) {
     if (closing || browser.readyState !== 1) return;
-    if (!(await verifyToken(startOptions.token))) throw new Error("Please sign in to start a live call.");
+    if (config.flo) {
+      flo = await createFloVoice(visitor, runID);
+      config = { ...config, persona: flo.persona, openingInstructions: flo.openingInstructions };
+    } else if (!(await verifyToken(startOptions.token))) throw new Error("Please sign in to start a live call.");
     if (closing || browser.readyState !== 1) return;
     clearTimeout(startTimer);
     startupTimer = setTimeout(() => {
@@ -607,9 +630,12 @@ export function bindLiveConnection(
         type: "session.start",
         session: {
           model: config.liveModel,
-          instructions: conversationInstructions(config.persona ?? "", startOptions.language),
+          instructions: flo ? flo.persona : conversationInstructions(config.persona ?? "", startOptions.language),
           audio: { output: { voice: startOptions.voice } },
           delegation: { type: "client" },
+          ...(flo ? { input: flo.history.slice(-6).map((m) => ({ role: m.role === "assistant" ? "assistant" : "user",
+            content: [{ type: m.role === "assistant" ? "output_text" : "input_text",
+              text: m.parts.map((p) => p.type === "text" ? p.text : "").join("").slice(0, 800) }] })).filter((m) => m.content[0]?.text) } : {}),
         },
         transport: { type: "webrtc", sdp },
       }),
@@ -627,14 +653,15 @@ export function bindLiveConnection(
           throw new Error("Voice startup message required");
         }
         starting = true;
-        const scenario = SCENARIOS.find((x) => x.id === event.scenario) ?? SCENARIOS[0]!;
+        visitor = event.visitorId;
+        const scenario = SCENARIOS.find((x) => x.id === event.scenario) ?? SCENARIOS[0];
         const persona =
-          typeof event.persona === "string" && event.persona.trim() ? event.persona.slice(0, 50000) : scenario.prompt;
+          typeof event.persona === "string" && event.persona.trim() ? event.persona.slice(0, 50000) : scenario?.prompt ?? "";
         config = { ...config, persona: persona.replace(/Reply in the user's language\./, "") };
         startOptions = {
           token: typeof event.token === "string" ? event.token : "",
           voice: LIVE_VOICES.includes(event.voice) ? event.voice : "marin",
-          language: typeof event.language === "string" ? event.language.slice(0, 8) : "auto",
+          language: config.flo ? "en" : typeof event.language === "string" ? event.language.slice(0, 8) : "auto",
         };
         execution.waitUntil(
           startSession(event.sdp).catch((error) => {

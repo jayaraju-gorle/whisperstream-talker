@@ -51,6 +51,9 @@ export default {
       if (new URL(request.url).pathname === "/api/live") {
         return handleLiveRequest(request);
       }
+      if (new URL(request.url).pathname === "/api/public/assistant/voice") {
+        return handleLiveRequest(request, true);
+      }
       const handler = await getServerEntry();
       const response = await handler.fetch(request, env, ctx);
       return await normalizeCatastrophicSsrResponse(response);

@@ -113,7 +113,8 @@ export function liveVoiceDev(): Plugin {
       const sockets = new WebSocketServer({ noServer: true, maxPayload: 2 * 1024 * 1024 });
       let disposed = false;
       const upgrade = (request: IncomingMessage, socket: Duplex, head: Buffer) => {
-        if (request.url?.split("?", 1)[0] !== "/api/live") return;
+        const path = request.url?.split("?", 1)[0];
+        if (path !== "/api/live" && path !== "/api/public/assistant/voice") return;
         socket.on("error", () => {});
         const timer = setTimeout(() => socket.destroy(), 10_000);
         timer.unref();
@@ -123,6 +124,7 @@ export function liveVoiceDev(): Plugin {
               "/src/lib/live-relay.server.ts",
             )) as typeof import("./src/lib/live-relay.server");
             const config = relay.getLiveConfig();
+            config.flo = path === "/api/public/assistant/voice";
             const rejection = relay.validateLiveUpgrade(upgradeRequest(request), { allowMissingOrigin: true });
             if (rejection) return rejectUpgrade(socket, rejection.status);
             if (socket.destroyed) return;
