@@ -387,7 +387,11 @@ export function bindLiveConnection(
     discardPendingWork();
     setupAbort.abort();
     close(gateway);
-    close(browser);
+    if (flo) {
+      execution.waitUntil(flo.persist(transcripts).catch((error) => {
+        emit({ type: "app.error", error: { message: error instanceof Error ? error.message : "Couldn't save the call." } });
+      }).finally(() => close(browser)));
+    } else close(browser);
     finishDrain?.();
   }
 

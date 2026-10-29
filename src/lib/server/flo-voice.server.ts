@@ -10,6 +10,8 @@ export async function createFloVoice(visitorId: unknown, runId: string) {
   const { data, error } = await db.from("assistant_conversations").select("messages").eq("visitor_id", visitorId).maybeSingle();
   if (error) throw new Error("Couldn't load your conversation.");
   const history = (Array.isArray(data?.messages) ? data.messages : []) as unknown as UIMessage[];
+  const initial = [...history];
+  const answered = new Map<string, { text: string; answer: string }>();
   const command = activeClinicCommand(history);
   let instructions = ASSISTANT_INSTRUCTIONS;
   if (command.code) {
@@ -30,15 +32,27 @@ Do not delegate to the backend when: Giving a brief greeting, listening, or aski
     persona,
     openingInstructions: "Briefly greet the caller in the current assistant role, ask how you can help, then listen. Do not mention tests or the playground.",
     history,
+    async persist(fragments: VoiceFragment[]) {
+      if (!fragments.length) return;
+      const messages = [...initial, ...voiceMessages(fragments, runId)];
+      const { error } = await db.from("assistant_conversations").upsert({ visitor_id: visitorId,
+        messages: messages as never, updated_at: new Date().toISOString() }, { onConflict: "visitor_id" });
+      if (error) throw new Error("Couldn't save the voice conversation.");
+    },
     async answer(fragments: VoiceFragment[], signal: AbortSignal, delegationId: string) {
       const turns = voiceMessages(fragments, runId);
       // Only the latest caller context goes to the normal chat pipeline. Its own
       // saved replies/tool results remain intact for consent and business switching.
       const latest = turns.at(-1)?.role === "user" ? turns.at(-1) : turns.filter((m) => m.role === "user").at(-1);
       if (!latest) throw new Error("Please repeat your question.");
+      const latestText = latest.parts.map((p) => p.type === "text" ? p.text : "").join("");
+      const cached = answered.get(latest.id);
+      if (cached?.text === latestText) return cached.answer;
       const previous = history.findIndex((m) => m.id === latest.id);
-      if (previous >= 0) history.splice(previous);
-      history.push(latest);
+      // A late correction retains completed tool results rather than replaying
+      // the original action after truncating its result from history.
+      if (previous >= 0) history.push({ ...latest, id: `${latest.id}-correction-${crypto.randomUUID()}` });
+      else history.push(latest);
       const transport = new DefaultChatTransport({
         api: "/api/public/assistant",
         body: { visitorId },
@@ -46,7 +60,7 @@ Do not delegate to the backend when: Giving a brief greeting, listening, or aski
           const request = new Request("https://assistant.internal/api/public/assistant", { ...init, signal,
             headers: { "Content-Type": "application/json", "X-Lovable-AIG-Run-ID": runId,
               "X-Lovable-AIG-Metadata": JSON.stringify({ delegation_id: delegationId }) } });
-          return handleAssistantPost({ request });
+          return handleAssistantPost({ request, voice: true });
         },
       });
       const stream = await transport.sendMessages({ trigger: "submit-message", chatId: visitorId, messageId: undefined, messages: [...history], abortSignal: signal });
@@ -57,6 +71,7 @@ Do not delegate to the backend when: Giving a brief greeting, listening, or aski
       history.push(reply);
       const text = reply.parts.map((p) => p.type === "text" ? p.text : "").join("");
       if (!text.trim()) throw new Error("The assistant returned no reply.");
+      answered.set(latest.id, { text: latestText, answer: text });
       return text;
     },
   };

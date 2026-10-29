@@ -27,7 +27,7 @@ const Body = z.object({
   messages: z.array(z.any()).min(1).max(200),
 });
 
-export async function handleAssistantPost({ request }: { request: Request }): Promise<Response> {
+export async function handleAssistantPost({ request, voice = false }: { request: Request; voice?: boolean }): Promise<Response> {
         const parsed = Body.safeParse(await request.json().catch(() => null));
         if (!parsed.success) return json({ error: "Invalid request" }, 400);
         const { visitorId } = parsed.data;
@@ -58,7 +58,7 @@ export async function handleAssistantPost({ request }: { request: Request }): Pr
           if (error) console.error("conversation save failed", error);
         };
 
-        // Clinic test mode: TRY <code> switches to that clinic's receptionist, EXIT returns to Flo.
+        // Business mode: TRY <code> switches assistants, EXIT returns to Flo.
         const cmd = activeClinicCommand(messages);
         let clinic: Awaited<ReturnType<typeof loadClinicSession>> = null;
         let notice: string | null = null;
@@ -68,7 +68,7 @@ export async function handleAssistantPost({ request }: { request: Request }): Pr
           if (!clinic && cmd.index === messages.length - 1)
             notice = "That assistant code wasn't found. Check the code and try again.";
           else if (clinic && cmd.index === messages.length - 1)
-            notice = `You're now chatting with the **${clinic.name}** assistant. Ask anything a ${clinic.audience} would. Type EXIT to go back to Flo.`;
+            notice = `You're now chatting with the **${clinic.name}** assistant. Ask anything a ${clinic.audience} would. ${voice ? "Say" : "Type"} EXIT to go back to Flo.`;
         } else if (cmd.index === messages.length - 1) {
           notice = "You're back with Flo. How can I help with the studio?";
         }
@@ -99,7 +99,7 @@ export async function handleAssistantPost({ request }: { request: Request }): Pr
 
         const result = streamText({
           model,
-          instructions: clinic ? clinic.instructions : ASSISTANT_INSTRUCTIONS,
+          instructions: (clinic ? clinic.instructions : ASSISTANT_INSTRUCTIONS) + (voice ? "\nVOICE: Respond in English unless the caller explicitly speaks another language. Keep answers to one or two sentences, asking one question at a time. Do not read markdown aloud. Require explicit confirmation of the exact details before saving any appointment request or contact details. An appointment is a request for the team to confirm, not a confirmed booking. Preserve completed tool results and never repeat a completed action for late transcript fragments." : ""),
           messages: await convertToModelMessages(history),
           abortSignal: request.signal,
           stopWhen: isStepCount(4),
@@ -118,6 +118,7 @@ export async function handleAssistantPost({ request }: { request: Request }): Pr
           result.toUIMessageStreamResponse({
             originalMessages: messages,
             sendReasoning: false,
+            onError: (error) => error instanceof Error ? error.message : "The assistant could not reply.",
             onFinish: async ({ messages: all }) => save(all),
           }),
           runIdFetch,
