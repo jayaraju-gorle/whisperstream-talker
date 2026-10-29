@@ -15,6 +15,7 @@
 - [x] Prefill built-in scenarios and sample knowledge from the original playground
 
 ## Business roadmap (internal only)
+- [ ] Add visitor chat-bubble voice conversations with shared Flo/business knowledge, TRY/EXIT switching, transcript persistence and call cleanup; verify real speech and chat continuity.
 - [ ] Add live test-number connection and call flow using business call settings — Twilio connected and owner-only number lookup added; blocked on a voice-capable number and approval to securely store Twilio Auth Token for incoming-call verification. Live routing/calls not yet implemented.
 - [x] Add saved business call switch, forwarding number, voice greeting and working-hours settings; signed-in save/reload and mobile verified, 26 tests passed. Configuration only; phone service remains unconnected.
 - [x] Comparison-first demo/playground, Home navigation, clearer homepage value and cost-currency label; 7 tests passed, demo sample/currency flow and signed-in Home → demo verified on desktop and mobile.
