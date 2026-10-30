@@ -16,7 +16,7 @@ describe("visitor contact updates", () => {
     vi.stubEnv("LOVABLE_API_KEY", "test-key");
     const chain = { upsert: vi.fn().mockReturnThis(), select: vi.fn().mockReturnThis(), single: vi.fn().mockResolvedValue({ data: { id: "demo" } }) };
     mocks.from.mockReturnValue(chain);
-    await handleAssistantPost({ channel, request: new Request("https://example.com", { method: "POST", body: JSON.stringify({ visitorId: channel ? "bolna_1234567890123456" : "visitor_secret_123456", messages: [{ role: "user", parts: [{ type: "text", text: "TRY IVY" }] }] }) }) });
+    await handleAssistantPost({ ...(channel ? { channel } : {}), request: new Request("https://example.com", { method: "POST", body: JSON.stringify({ visitorId: channel ? "bolna_1234567890123456" : "visitor_secret_123456", messages: [{ role: "user", parts: [{ type: "text", text: "TRY IVY" }] }] }) }) });
     expect(mocks.from).toHaveBeenCalledTimes(1);
     expect(mocks.from).toHaveBeenCalledWith("assistant_conversations");
     expect(mocks.stream).not.toHaveBeenCalled();
