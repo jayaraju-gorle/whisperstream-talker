@@ -2,7 +2,7 @@ import { z } from "zod";
 import { tool } from "ai";
 import { contactDetails } from "@/lib/assistant-contact";
 
-// Shared Flo behaviour for the website chat and WhatsApp: lead tool + new-lead email alert.
+// Shared Mira behaviour for the website chat and WhatsApp: lead tool + new-lead email alert.
 type Db = Awaited<typeof import("@/integrations/supabase/client.server")>["supabaseAdmin"];
 
 const LEAD_ALERT_TO = "gorlej2015@email.iimcal.ac.in";
@@ -20,7 +20,7 @@ export async function notifyNewLead(lead: {
   const row = (label: string, value: string | null | undefined) =>
     value ? `<tr><td style="padding:4px 12px 4px 0;color:#666;vertical-align:top">${label}</td><td>${esc(value)}</td></tr>` : "";
   const html = `<div style="font-family:Arial,sans-serif;max-width:520px">
-    <h2 style="margin:0 0 12px">New lead from Flo</h2>
+    <h2 style="margin:0 0 12px">New lead from Mira</h2>
     <table style="border-collapse:collapse;font-size:14px">
       ${row("Name", lead.name)}${row("Email", lead.email)}${row("Phone", lead.phone)}${row("Company", lead.company)}${row("Channel", lead.channel ?? "Website")}
     </table>

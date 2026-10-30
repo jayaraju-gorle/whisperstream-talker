@@ -89,7 +89,7 @@ export async function handleBolnaChat(request: Request): Promise<Response> {
   let stream: Awaited<ReturnType<typeof transport.sendMessages>>;
   try {
     stream = await transport.sendMessages({ trigger: "submit-message", chatId: visitorId, messageId: undefined, messages, abortSignal: request.signal });
-  } catch { return apiError("Flo could not start the reply", 502, "server_error"); }
+  } catch { return apiError("Mira could not start the reply", 502, "server_error"); }
   const id = `chatcmpl-${crypto.randomUUID()}`;
   const created = Math.floor(Date.now() / 1000);
   const base = { id, created, model: BOLNA_MODEL };
@@ -99,9 +99,9 @@ export async function handleBolnaChat(request: Request): Promise<Response> {
       for await (const reply of readUIMessageStream({ stream, terminateOnError: true })) {
         text = reply.parts.map((p) => p.type === "text" ? p.text : "").join("");
       }
-      if (!text.trim()) return apiError("Flo returned no reply", 502, "server_error");
+      if (!text.trim()) return apiError("Mira returned no reply", 502, "server_error");
       return Response.json({ ...base, object: "chat.completion", choices: [{ index: 0, message: { role: "assistant", content: text }, finish_reason: "stop" }] });
-    } catch { return apiError("Flo could not finish the reply", 502, "server_error"); }
+    } catch { return apiError("Mira could not finish the reply", 502, "server_error"); }
   }
   const encoder = new TextEncoder();
   const iterator = readUIMessageStream({ stream, terminateOnError: true })[Symbol.asyncIterator]();
@@ -121,7 +121,7 @@ export async function handleBolnaChat(request: Request): Promise<Response> {
           if (delta) { send({ content: delta }); return; }
         }
       } catch {
-        controller.enqueue(encoder.encode(`data: ${JSON.stringify({ error: { message: "Flo could not finish the reply", type: "server_error" } })}\n\ndata: [DONE]\n\n`));
+        controller.enqueue(encoder.encode(`data: ${JSON.stringify({ error: { message: "Mira could not finish the reply", type: "server_error" } })}\n\ndata: [DONE]\n\n`));
         controller.close();
       }
     },

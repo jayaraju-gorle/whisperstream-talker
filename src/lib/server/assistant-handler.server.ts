@@ -59,7 +59,7 @@ export async function handleAssistantPost({ request, voice = false, channel }: {
           if (error) console.error("conversation save failed", error);
         };
 
-        // Business mode: TRY <code> switches assistants, EXIT returns to Flo.
+        // Business mode: TRY <code> switches assistants, EXIT returns to Mira.
         const cmd = activeClinicCommand(messages);
         let clinic: Awaited<ReturnType<typeof loadClinicSession>> = null;
         let notice: string | null = null;
@@ -69,9 +69,9 @@ export async function handleAssistantPost({ request, voice = false, channel }: {
           if (!clinic && cmd.index === messages.length - 1)
             notice = "That assistant code wasn't found. Check the code and try again.";
           else if (clinic && cmd.index === messages.length - 1)
-            notice = `You're now chatting with the **${clinic.name}** assistant. Ask anything a ${clinic.audience} would. ${voice ? "Say" : "Type"} EXIT to go back to Flo.`;
+            notice = `You're now chatting with the **${clinic.name}** assistant. Ask anything a ${clinic.audience} would. ${voice ? "Say" : "Type"} EXIT to go back to Mira.`;
         } else if (cmd.index === messages.length - 1) {
-          notice = "You're back with Flo. How can I help with the studio?";
+          notice = "You're back with Mira. How can I help with the studio?";
         }
         if (notice) {
           const text = notice;

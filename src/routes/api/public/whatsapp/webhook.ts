@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { verifyWebhookRequest } from "@lovable.dev/webhooks-js";
 
-// Signed WhatsApp callbacks from the connector. Stores each delivery durably, then Flo processing
+// Signed WhatsApp callbacks from the connector. Stores each delivery durably, then Mira processing
 // runs after the response (src/server.ts schedules drainWhatsApp) to stay within the 5s budget.
 export const Route = createFileRoute("/api/public/whatsapp/webhook")({
   staticData: { sitemap: false },
@@ -32,7 +32,7 @@ export const Route = createFileRoute("/api/public/whatsapp/webhook")({
           return new Response("Storage failed", { status: 500 });
         }
         // The gateway drops the connection after ~5s, which cancels any work still awaited here.
-        // So acknowledge right away and let Flo reply in the background via the runtime's waitUntil.
+        // So acknowledge right away and let Mira reply in the background via the runtime's waitUntil.
         // Without waitUntil, fall back to awaiting briefly; the next delivery recovers unfinished work.
         const work = wa.drainWhatsApp().catch((e: unknown) => console.error("whatsapp drain failed", e));
         const waitUntil = (request as Request & { waitUntil?: (p: Promise<unknown>) => void }).waitUntil;

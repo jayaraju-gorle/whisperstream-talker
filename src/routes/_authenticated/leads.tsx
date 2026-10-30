@@ -15,9 +15,9 @@ export const Route = createFileRoute("/_authenticated/leads")({
   head: () => ({
     meta: [
       { title: "Assistant — Conversational AI Flows Studio" },
-      { name: "description", content: "Manage Flo's leads, web conversations, WhatsApp messages and AI model." },
+      { name: "description", content: "Manage Mira's leads, web conversations, WhatsApp messages and AI model." },
       { property: "og:title", content: "Assistant — Conversational AI Flows Studio" },
-      { property: "og:description", content: "Manage Flo's leads, web conversations, WhatsApp messages and AI model." },
+      { property: "og:description", content: "Manage Mira's leads, web conversations, WhatsApp messages and AI model." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
       { name: "robots", content: "noindex" },
@@ -67,13 +67,13 @@ function Leads() {
     <main className="mx-auto w-full max-w-5xl px-4 py-8">
       <h1 className="text-2xl font-semibold">Assistant</h1>
       <p className="mt-1 text-sm text-muted-foreground">
-        Flo's conversations, leads and model settings.
+        Mira's conversations, leads and model settings.
       </p>
       <div className="mt-4 flex flex-wrap gap-2" role="tablist" aria-label="Assistant views">
         <Button size="sm" role="tab" aria-selected={tab === "leads"} variant={tab === "leads" ? "default" : "outline"} onClick={() => setTab("leads")}>Leads</Button>
         <Button size="sm" role="tab" aria-selected={tab === "web"} variant={tab === "web" ? "default" : "outline"} onClick={() => setTab("web")}>Web conversations</Button>
         <Button size="sm" role="tab" aria-selected={tab === "whatsapp"} variant={tab === "whatsapp" ? "default" : "outline"} onClick={() => setTab("whatsapp")}>WhatsApp</Button>
-        <Button size="sm" role="tab" aria-selected={tab === "model"} variant={tab === "model" ? "default" : "outline"} onClick={() => setTab("model")}>Flo model</Button>
+        <Button size="sm" role="tab" aria-selected={tab === "model"} variant={tab === "model" ? "default" : "outline"} onClick={() => setTab("model")}>Mira model</Button>
       </div>
       {tab === "model" ? <FloModelSettings /> : tab === "whatsapp" ? <WhatsAppMessages /> : tab === "web" ? <WebConversations leads={data ?? []} /> : <>
       {isLoading && <div className="mt-8"><LoadingIndicator label="Loading leads…" /></div>}
@@ -204,7 +204,7 @@ function Transcript({ id }: { id: string }) {
   });
   if (isLoading) return <div className="mt-3"><LoadingIndicator label="Loading chat…" /></div>;
   if (isError) return <p className="mt-3 text-sm text-destructive">This conversation couldn't load.</p>;
-  // Timing is logged per Flo reply; older replies from before logging started have none.
+  // Timing is logged per Mira reply; older replies from before logging started have none.
   const replies = data?.messages.filter((m) => m.role !== "user").length ?? 0;
   const offset = replies - (data?.logs.length ?? 0);
   let replyIndex = -1;
@@ -220,7 +220,7 @@ function Transcript({ id }: { id: string }) {
         if (!text) return null;
         return (
           <div key={m.id}>
-            <span className="font-mono text-[11px] uppercase text-muted-foreground">{isFlo ? "Flo" : "Visitor"}</span>
+            <span className="font-mono text-[11px] uppercase text-muted-foreground">{isFlo ? "Mira" : "Visitor"}</span>
             <p className="whitespace-pre-wrap">{text}</p>
             {log && (
               <p className="mt-1 font-mono text-[11px] text-muted-foreground">
@@ -268,7 +268,7 @@ function WaThread({ msgs }: { msgs: WaMessage[] }) {
         return (
           <div key={m.id} className={isFlo ? "pl-6" : "pr-6"}>
             <div className="flex flex-wrap gap-x-2 font-mono text-[11px] uppercase text-muted-foreground">
-              <span>{isFlo ? "Flo" : "Visitor"}</span>
+              <span>{isFlo ? "Mira" : "Visitor"}</span>
               <span>{new Date(m.created_at).toLocaleString()}</span>
               <span className={m.status === "failed" || m.reply_state === "failed" ? "text-destructive" : ""}>
                 {isFlo ? m.status : m.reply_state ? REPLY_LABEL[m.reply_state] ?? m.reply_state : ""}
@@ -364,7 +364,7 @@ function FloModelSettings() {
     const { error } = await supabase.from("app_settings").upsert({ key: FLO_MODEL_SETTING_KEY, value: { model }, updated_at: new Date().toISOString() });
     setSaving(false);
     if (error) { toast.error("Couldn't save the model."); return; }
-    toast.success(`Flo now uses ${modelLabel(model)}.`);
+    toast.success(`Mira now uses ${modelLabel(model)}.`);
     qc.invalidateQueries({ queryKey: ["app-settings"] });
   };
   const vendors = [...new Set(FLO_MODELS.map((m) => m.vendor))];
@@ -374,14 +374,14 @@ function FloModelSettings() {
   return (
     <div className="mt-6 space-y-6">
       <section className="rounded-lg border border-border bg-card p-4">
-        <h2 className="font-medium">AI model for Flo</h2>
+        <h2 className="font-medium">AI model for Mira</h2>
         <p className="mt-1 text-sm text-muted-foreground">Used for both the website chat and WhatsApp. Changes apply to the next message.</p>
         {setting.isLoading ? <div className="mt-3"><LoadingIndicator label="Loading…" /></div> : setting.isError ? (
           <p className="mt-3 text-sm text-destructive">Couldn't load the current setting.</p>
         ) : (
           <div className="mt-3 max-w-xs">
             <Select value={setting.data ?? ""} onValueChange={save} disabled={saving}>
-              <SelectTrigger aria-label="Flo model"><SelectValue /></SelectTrigger>
+              <SelectTrigger aria-label="Mira model"><SelectValue /></SelectTrigger>
               <SelectContent>
                 {vendors.map((v) => (
                   <SelectGroup key={v}>
@@ -397,7 +397,7 @@ function FloModelSettings() {
 
       <section className="rounded-lg border border-border bg-card p-4">
         <h2 className="font-medium">Performance by model</h2>
-        <p className="mt-1 text-sm text-muted-foreground">Median times from the last 500 replies. "First words" is how long until Flo starts writing. Costs are estimates from list prices.</p>
+        <p className="mt-1 text-sm text-muted-foreground">Median times from the last 500 replies. "First words" is how long until Mira starts writing. Costs are estimates from list prices.</p>
         {logs.isLoading && <div className="mt-3"><LoadingIndicator label="Loading…" /></div>}
         {logs.data && logs.data.length === 0 && <p className="mt-3 text-sm text-muted-foreground">No replies recorded yet.</p>}
         {byModel.size > 0 && (
