@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "@tanstack/react-router";
-import { useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useServerFn } from "@tanstack/react-start";
 import { Plus, Sparkles, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import {
@@ -20,7 +21,7 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { stepError, testCodeError, type ClinicInput } from "@/lib/clinic";
-import { IVY_PRESET, IVY_PRESET_LABEL, IYASHI_PRESET, IYASHI_PRESET_LABEL, SSK_PRESET, SSK_PRESET_LABEL } from "@/lib/clinic-presets";
+import { getClinicPresets } from "@/lib/clinic-presets.functions";
 import { supabase } from "@/integrations/supabase/client";
 import { saveClinic, type ClinicRow } from "@/lib/clinic-store";
 import { LIBRARY_KEY } from "@/hooks/use-library";
@@ -39,6 +40,13 @@ export function ClinicWizard({ userId, initial, existing }: { userId: string; in
   const [code, setCode] = useState(existing?.test_code ?? "");
   const navigate = useNavigate();
   const qc = useQueryClient();
+  const fetchPresets = useServerFn(getClinicPresets);
+  const { data: presets = [] } = useQuery({
+    queryKey: ["admin-business-presets", userId],
+    enabled: !existing,
+    retry: false,
+    queryFn: () => fetchPresets(),
+  });
   const set = <K extends keyof ClinicInput>(k: K, v: ClinicInput[K]) => setC((p) => ({ ...p, [k]: v }));
   function loadPreset(preset: ClinicInput, label: string) {
     setC(preset);
@@ -91,17 +99,13 @@ export function ClinicWizard({ userId, initial, existing }: { userId: string; in
       </ol>
       <h2 className="text-xl font-semibold">{STEPS[step]}</h2>
 
-      {step === 0 && !existing && (
+      {step === 0 && !existing && presets.length > 0 && (
         <div className="space-y-2 rounded-lg border border-border bg-muted/40 px-3 py-2.5">
           <p className="text-sm text-muted-foreground">
             Setting up one of these businesses? Fill in its details with one click, then review before saving.
           </p>
           <div className="flex flex-wrap gap-2">
-            {([
-              { preset: IVY_PRESET, label: IVY_PRESET_LABEL },
-              { preset: IYASHI_PRESET, label: IYASHI_PRESET_LABEL },
-              { preset: SSK_PRESET, label: SSK_PRESET_LABEL },
-            ] as const).map(({ preset, label }) =>
+            {presets.map(({ preset, label }) =>
               c.name.trim() ? (
                 <AlertDialog key={label}>
                   <AlertDialogTrigger asChild>
