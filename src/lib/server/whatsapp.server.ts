@@ -224,6 +224,7 @@ async function replyTo(db: Db, msgId: string) {
     }).eq("id", claimed.id);
   };
   try {
+    if (!claimed.wa_message_id) throw new Error("Incoming WhatsApp message id is missing");
     const routed = await routeMessage(db, claimed.phone, claimed.body);
     const visitorId = routed.clinic ? clinicVisitorId(routed.clinic.id, claimed.phone) : `whatsapp_${claimed.phone}`;
     const { data: convo, error: cErr } = await db.from("assistant_conversations")
