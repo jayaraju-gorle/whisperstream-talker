@@ -17,6 +17,7 @@ import {
   Globe,
 } from "lucide-react";
 import { Logo } from "@/components/Logo";
+import { LeadForm } from "@/components/LeadForm";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/use-auth";
 import { PHONE_ASSISTANT_NUMBER, PHONE_ASSISTANT_URL, WHATSAPP_ASSISTANT_URL } from "@/lib/flo-voice";
@@ -162,30 +163,20 @@ function Index() {
         </Button>
       </header>
       <main className="mx-auto max-w-6xl px-4 pb-24 pt-8 sm:px-6 sm:pt-12">
-        <p className="font-mono text-xs uppercase tracking-[0.2em] text-primary">For health clinics and healthcare practices</p>
+        <p className="font-mono text-xs uppercase tracking-[0.2em] text-primary">Phone · WhatsApp · Web</p>
         <h1 className="mt-4 w-full text-4xl font-semibold leading-[1.1] sm:text-5xl md:text-6xl">
-          Meet Mira, your clinic’s 24/7 virtual front desk.
+          A done-for-you 24/7 front desk for your business.
         </h1>
         <p className="mt-6 w-full text-lg text-muted-foreground">
-          Mira answers patient calls, WhatsApp messages and website chats — during the busiest clinic hours and
-          long after your staff go home — so no patient inquiry or appointment request goes unanswered.
+          Mira answers your calls, WhatsApp messages and website inquiries — through peak rush hours and long after
+          your team goes home — so no customer question or appointment request goes unanswered.
         </p>
         <p className="mt-3 text-base text-muted-foreground">
-          Done for you: we set Mira up with your doctors, timings, fees and location. No technical skills, no new software to learn.
+          We set everything up for you with your services, timings, fees and location. No technical skills, no new software to learn.
         </p>
 
-        <section aria-labelledby="try" className="mt-8 rounded-lg border border-primary/40 bg-card/70 p-4 sm:p-6">
-          <h2 id="try" className="text-lg font-semibold">Talk to Mira right now</h2>
-          <p className="mt-1 text-sm text-muted-foreground">Meet Aura Health Clinic, a fictional sample with made-up doctors, hours and fees — not a real clinic. Try it by phone, WhatsApp or here; we can set up Mira for your own clinic.</p>
-          <div className="mt-4 flex flex-wrap gap-3">
-            <Button asChild size="lg"><a href={PHONE_ASSISTANT_URL}><Phone className="h-4 w-4" />Call {PHONE_ASSISTANT_NUMBER}</a></Button>
-            <Button asChild variant="outline" size="lg"><a href={WHATSAPP_ASSISTANT_URL} target="_blank" rel="noopener noreferrer"><MessageCircle className="h-4 w-4" />Chat on WhatsApp</a></Button>
-            <Button variant="outline" size="lg" onClick={() => document.querySelector<HTMLButtonElement>('[data-site-assistant-toggle]')?.click()}><Mic className="h-4 w-4" />Chat or talk on this site</Button>
-          </div>
-        </section>
-
         <section aria-labelledby="pains" className="mt-16">
-          <h2 id="pains" className="text-2xl font-semibold sm:text-3xl">The calls your reception can’t always take</h2>
+          <h2 id="pains" className="text-2xl font-semibold sm:text-3xl">The calls your front desk can’t always take</h2>
           <div className="mt-6 grid gap-6 md:grid-cols-3">
             {PAINS.map(({ icon: Icon, t, d }) => (
               <div key={t} className="border-t border-border pt-4">
@@ -198,7 +189,7 @@ function Index() {
         </section>
 
         <section aria-labelledby="channels" className="mt-16">
-          <h2 id="channels" className="text-2xl font-semibold sm:text-3xl">One assistant, every channel patients use</h2>
+          <h2 id="channels" className="text-2xl font-semibold sm:text-3xl">One assistant, every channel your customers use</h2>
           <div className="mt-6 grid gap-4 md:grid-cols-3">
             {CHANNELS.map(({ icon: Icon, t, d }) => (
               <div key={t} className="rounded-lg border border-border bg-card/60 p-5">
@@ -210,12 +201,22 @@ function Index() {
           </div>
         </section>
 
-        <section aria-labelledby="done" className="mt-16">
-          <div>
-            <h2 id="done" className="text-2xl font-semibold sm:text-3xl">Done for you, start to finish</h2>
-            <p className="mt-3 text-muted-foreground">Share your clinic details once. We configure Mira, connect your phone line and WhatsApp, add the website bubble, and keep everything updated. Your team simply receives the appointment requests.</p>
+        <section aria-labelledby="try" className="mt-16 rounded-lg border border-primary/40 bg-card/70 p-4 sm:p-6">
+          <p className="font-mono text-xs uppercase tracking-[0.2em] text-primary">Live sample setup</p>
+          <h2 id="try" className="mt-2 text-2xl font-semibold sm:text-3xl">Experience Aura Health Clinic</h2>
+          <p className="mt-2 text-sm text-muted-foreground">Aura Health Clinic is a hypothetical clinic we run as a live demo of what we build — its doctors, hours and fees are made up. Call, message on WhatsApp, or chat and talk right here, and ask Mira anything a patient would.</p>
+          <div className="mt-4 flex flex-wrap gap-3">
+            <Button asChild size="lg"><a href={PHONE_ASSISTANT_URL}><Phone className="h-4 w-4" />Call {PHONE_ASSISTANT_NUMBER}</a></Button>
+            <Button asChild variant="outline" size="lg"><a href={WHATSAPP_ASSISTANT_URL} target="_blank" rel="noopener noreferrer"><MessageCircle className="h-4 w-4" />Chat on WhatsApp</a></Button>
+            <Button variant="outline" size="lg" onClick={() => document.querySelector<HTMLButtonElement>('[data-site-assistant-toggle]')?.click()}><Mic className="h-4 w-4" />Chat or talk on this site</Button>
+          </div>
+          <div className="mt-8 border-t border-border pt-6">
+            <h3 className="text-lg font-semibold">Want one for your business?</h3>
+            <p className="mt-1 mb-4 text-sm text-muted-foreground">Tell us a little about you and we’ll configure a custom front desk with your details.</p>
+            <LeadForm />
           </div>
         </section>
+
 
         <section aria-labelledby="lab" className="mt-24 border-t border-border pt-10">
           <p className="font-mono text-xs uppercase tracking-[0.2em] text-muted-foreground">For technical teams</p>
