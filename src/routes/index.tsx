@@ -178,7 +178,7 @@ function Index() {
 
         <section aria-labelledby="try" className="mt-8 rounded-lg border border-primary/40 bg-card/70 p-4 sm:p-6">
           <h2 id="try" className="text-lg font-semibold">Talk to Mira right now</h2>
-          <p className="mt-1 text-sm text-muted-foreground">Try a sample clinic: type or say <span className="font-mono text-foreground">TRY IVY</span> on WhatsApp or in the chat bubble.</p>
+          <p className="mt-1 text-sm text-muted-foreground">Meet Aura Health Clinic, a fictional sample with made-up doctors, hours and fees — not a real clinic. Try it by phone, WhatsApp or here; we can set up Mira for your own clinic.</p>
           <div className="mt-4 flex flex-wrap gap-3">
             <Button asChild size="lg"><a href={PHONE_ASSISTANT_URL}><Phone className="h-4 w-4" />Call {PHONE_ASSISTANT_NUMBER}</a></Button>
             <Button asChild variant="outline" size="lg"><a href={WHATSAPP_ASSISTANT_URL} target="_blank" rel="noopener noreferrer"><MessageCircle className="h-4 w-4" />Chat on WhatsApp</a></Button>

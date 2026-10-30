@@ -1,6 +1,7 @@
+import { PUBLIC_CLINIC_CODE, PUBLIC_CLINIC_GREETING, PUBLIC_CLINIC_NOTICE, publicTrialHistory } from "@/lib/public-clinic-demo";
 import { z } from "zod";
 import { convertToModelMessages, createUIMessageStream, createUIMessageStreamResponse, isStepCount, streamText, type UIMessage } from "ai";
-import { activeClinicCommand, clinicAppointmentTools, loadClinicSession } from "@/lib/server/clinic-mode.server";
+import { activeClinicCommand } from "@/lib/server/clinic-mode.server";
 import { ASSISTANT_INSTRUCTIONS } from "@/lib/assistant-knowledge";
 import { floTools } from "@/lib/server/flo.server";
 import { floLanguageModel, loadFloModel, logFloTurn } from "@/lib/server/flo-model.server";
@@ -32,7 +33,7 @@ export async function handleAssistantPost({ request, voice = false, channel }: {
         if (!parsed.success) return json({ error: "Invalid request" }, 400);
         const { visitorId } = parsed.data;
         if (visitorId.startsWith("bolna_") && channel !== "Bolna") return json({ error: "Invalid request" }, 400);
-        const messages = parsed.data.messages as UIMessage[];
+        const messages = publicTrialHistory(parsed.data.messages as UIMessage[]);
         const userTurns = messages.filter((m) => m.role === "user").length;
         if (userTurns > MAX_USER_TURNS)
           return json({ error: "This chat has reached its limit. Please leave your email and we'll reach out." }, 429);
@@ -59,19 +60,12 @@ export async function handleAssistantPost({ request, voice = false, channel }: {
           if (error) console.error("conversation save failed", error);
         };
 
-        // Business mode: TRY <code> switches assistants, EXIT returns to Mira.
+        // No public path may resolve real business codes or appointment tools.
         const cmd = activeClinicCommand(messages);
-        let clinic: Awaited<ReturnType<typeof loadClinicSession>> = null;
         let notice: string | null = null;
-        if (cmd.code) {
-          const { data } = await db.from("clinics").select("id").eq("test_code", cmd.code).maybeSingle();
-          clinic = data ? await loadClinicSession(db, data.id, "Website") : null;
-          if (!clinic && cmd.index === messages.length - 1)
-            notice = "That assistant code wasn't found. Check the code and try again.";
-          else if (clinic && cmd.index === messages.length - 1)
-            notice = `You're now chatting with the **${clinic.name}** assistant. Ask anything a ${clinic.audience} would. ${voice ? "Say" : "Type"} EXIT to go back to Mira.`;
-        } else if (cmd.index === messages.length - 1) {
-          notice = "You're back with Mira. How can I help with the studio?";
+        if (cmd.index === messages.length - 1) {
+          notice = cmd.code === PUBLIC_CLINIC_CODE ? PUBLIC_CLINIC_GREETING : cmd.code
+            ? PUBLIC_CLINIC_NOTICE : "You're with Mira. Would you like an assistant set up for your own clinic?";
         }
         if (notice) {
           const text = notice;
@@ -89,22 +83,22 @@ export async function handleAssistantPost({ request, voice = false, channel }: {
           });
           return createUIMessageStreamResponse({ stream });
         }
-        const history = clinic ? messages.slice(cmd.index + 1) : messages;
+        const history = cmd.index >= 0 ? messages.slice(cmd.index + 1) : messages;
 
         const runIdFetch = createLovableAiGatewayRunIdFetch(getLovableAiGatewayRunId(request));
         const choice = await loadFloModel(db);
         const { model, providerOptions } = floLanguageModel(choice, apiKey, runIdFetch.fetch);
         const started = Date.now();
         let firstToken: number | null = null;
-        const log = { conversation_id: convo.id, channel: channel ?? (clinic ? "Website clinic test" : "Website"), model: choice.id, started };
+        const log = { conversation_id: convo.id, channel: channel ?? "Website", model: choice.id, started };
 
         const result = streamText({
           model,
-          instructions: (clinic ? clinic.instructions : ASSISTANT_INSTRUCTIONS) + (voice ? "\nVOICE: Respond in English unless the caller explicitly speaks another language. Keep answers to one or two sentences, asking one question at a time. Do not read markdown aloud. Require explicit confirmation of the exact details before saving any appointment request or contact details. An appointment is a request for the team to confirm, not a confirmed booking. Preserve completed tool results and never repeat a completed action for late transcript fragments." : ""),
+          instructions: ASSISTANT_INSTRUCTIONS + (voice ? "\nVOICE: Respond in English unless the caller explicitly speaks another language. Keep answers to one or two sentences, asking one question at a time. Do not read markdown aloud. Require explicit confirmation of the exact details before saving any appointment request or contact details. An appointment is a request for the team to confirm, not a confirmed booking. Preserve completed tool results and never repeat a completed action for late transcript fragments." : ""),
           messages: await convertToModelMessages(history),
           abortSignal: request.signal,
           stopWhen: isStepCount(4),
-          tools: clinic ? clinicAppointmentTools(db, clinic.id, "Website") : floTools(db, convo.id),
+          tools: floTools(db, convo.id, channel),
           providerOptions,
           onChunk: ({ chunk }) => { if (firstToken == null && chunk.type === "text-delta") firstToken = Date.now(); },
           onFinish: async ({ totalUsage, steps }) => {
@@ -136,5 +130,6 @@ export async function handleAssistantGet({ request }: { request: Request }) {
           .eq("visitor_id", id.data)
           .maybeSingle();
         if (error) return json({ error: "Couldn't load the conversation" }, 500);
-        return json({ messages: data?.messages ?? [] });
+        const history = (Array.isArray(data?.messages) ? data.messages : []) as unknown as UIMessage[];
+        return json({ messages: publicTrialHistory(history).length === history.length ? history : [] });
 }

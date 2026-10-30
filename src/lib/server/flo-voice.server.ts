@@ -1,7 +1,7 @@
 import { DefaultChatTransport, readUIMessageStream, type UIMessage } from "ai";
 import { handleAssistantPost } from "@/lib/server/assistant-handler.server";
 import { ASSISTANT_INSTRUCTIONS } from "@/lib/assistant-knowledge";
-import { activeClinicCommand, loadClinicSession } from "@/lib/server/clinic-mode.server";
+import { PUBLIC_CLINIC_GREETING, publicTrialHistory } from "@/lib/public-clinic-demo";
 import { validFloVisitor, voiceMessages, type VoiceFragment } from "@/lib/flo-voice";
 
 export async function createFloVoice(visitorId: unknown, runId: string) {
@@ -9,28 +9,22 @@ export async function createFloVoice(visitorId: unknown, runId: string) {
   const { supabaseAdmin: db } = await import("@/integrations/supabase/client.server");
   const { data, error } = await db.from("assistant_conversations").select("messages").eq("visitor_id", visitorId).maybeSingle();
   if (error) throw new Error("Couldn't load your conversation.");
-  const history = (Array.isArray(data?.messages) ? data.messages : []) as unknown as UIMessage[];
+  const history = publicTrialHistory((Array.isArray(data?.messages) ? data.messages : []) as unknown as UIMessage[]);
   const initial = [...history];
   const answered = new Map<string, { text: string; answer: string }>();
-  const command = activeClinicCommand(history);
-  let instructions = ASSISTANT_INSTRUCTIONS;
-  if (command.code) {
-    const { data: business } = await db.from("clinics").select("id").eq("test_code", command.code).maybeSingle();
-    const session = business ? await loadClinicSession(db, business.id, "Website") : null;
-    if (session) instructions = session.instructions;
-  }
+  const instructions = ASSISTANT_INSTRUCTIONS;
   const persona = `${instructions}
 VOICE CHANNEL: Speak in English unless the caller explicitly speaks another language. Keep spoken replies to one or two sentences. Do not read markdown or URLs aloud.
 Backchannel policy: Moderate listening sounds without taking over.
 Interruption policy: Stop speaking and listen when interrupted; keep completed actions.
 Delegation policy:
 Backend tools: Shared Mira knowledge, business switching, consent-based contact capture and appointment requests.
-Delegate to the backend when: The caller asks any product or business question, says TRY followed by a business code (SSK, IVY, IYASHI), says EXIT, shares contact details, requests an appointment, or corrects details. Always use the backend's current assistant and verified result. Never claim an action succeeded without it. After TRY, continue as the business selected by the backend; EXIT restores Mira.
+Delegate to the backend when: The caller asks any product or business question, says TRY followed by the sample code AURA, says EXIT, shares contact details, requests an appointment, or corrects details. Always use the backend's current assistant and verified result. Never claim an action succeeded without it. After TRY, continue as the business selected by the backend; EXIT restores Mira.
 Do not delegate to the backend when: Giving a brief greeting, listening, or asking the caller to repeat unclear speech.`;
 
   return {
     persona,
-    openingInstructions: "Briefly greet the caller in the current assistant role, ask how you can help, then listen. Do not mention tests or the playground.",
+    openingInstructions: PUBLIC_CLINIC_GREETING + " Say clearly that this is a fictional sample clinic, then listen.",
     history,
     async persist(fragments: VoiceFragment[]) {
       if (!fragments.length) return;

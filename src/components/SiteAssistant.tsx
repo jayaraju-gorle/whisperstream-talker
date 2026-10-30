@@ -1,3 +1,4 @@
+import { PUBLIC_CLINIC_GREETING } from "@/lib/public-clinic-demo";
 import { useEffect, useMemo, useState } from "react";
 import { useChat } from "@ai-sdk/react";
 import { DefaultChatTransport, type UIMessage } from "ai";
@@ -17,7 +18,7 @@ import { FloVoice } from "@/components/FloVoice";
 import { PHONE_ASSISTANT_NUMBER, PHONE_ASSISTANT_URL, WHATSAPP_ASSISTANT_URL } from "@/lib/flo-voice";
 
 const KEY = "flo-visitor-id";
-const SUGGESTIONS = ["What can I test here?", "Can I try voice calls?", "I'd like a custom agent for my business"];
+const SUGGESTIONS = ["What are the sample clinic hours?", "Try an appointment request", "I’d like Mira for my clinic"];
 
 function visitorId() {
   let id = localStorage.getItem(KEY);
@@ -59,7 +60,7 @@ export function SiteAssistant() {
             <Logo className="h-6 w-6" />
             <div className="min-w-0 flex-1">
               <div className="text-sm font-semibold">Mira · Clinic front desk</div>
-              <div className="text-xs text-muted-foreground">Chat or talk with your assistant</div>
+              <div className="text-xs text-muted-foreground">Aura Health Clinic · Fictional sample</div>
             </div>
             <AlertDialog>
               <AlertDialogTrigger asChild>
@@ -146,7 +147,7 @@ function ChatBody({ visitorId, initial, onBusyChange }: { visitorId: string; ini
           {messages.length === 0 && (
             <div className="space-y-3 text-sm">
               <p className="text-muted-foreground">
-                Hi! I'm Mira. How can I help today?
+                {PUBLIC_CLINIC_GREETING}
               </p>
               <div className="flex flex-wrap gap-2">
                 {SUGGESTIONS.map((s) => (

@@ -3,8 +3,9 @@ import { ASSISTANT_INSTRUCTIONS } from "@/lib/assistant-knowledge";
 import { floTools } from "@/lib/server/flo.server";
 import { floLanguageModel, loadFloModel, logFloTurn } from "@/lib/server/flo-model.server";
 import { createLovableAiGatewayRunIdFetch } from "@/lib/server/run-id";
-import { clinicVisitorId, parseClinicCommand, receptionistAudience, toClinicInput } from "@/lib/clinic";
-import { clinicAppointmentTools, loadClinicSession, type ClinicSession } from "@/lib/server/clinic-mode.server";
+import { parseClinicCommand } from "@/lib/clinic";
+import { PUBLIC_CLINIC_CODE, PUBLIC_CLINIC_GREETING, PUBLIC_CLINIC_NOTICE, publicTrialHistory } from "@/lib/public-clinic-demo";
+
 
 // Mira over WhatsApp: durable inbox processing, reply sending and delivery-status reconciliation.
 type Db = Awaited<typeof import("@/integrations/supabase/client.server")>["supabaseAdmin"];
@@ -155,49 +156,30 @@ async function processEvent(db: Db, ev: { id: string; event: string; payload: un
   }
 }
 
-type ClinicCtx = ClinicSession & { phone: string };
-
-async function loadClinic(db: Db, id: string, phone: string): Promise<ClinicCtx | null> {
-  const c = await loadClinicSession(db, id, "WhatsApp");
-  return c ? { ...c, phone } : null;
-}
-
-function clinicTools(db: Db, clinic: ClinicCtx) {
-  return clinicAppointmentTools(db, clinic.id, "WhatsApp", `+${clinic.phone}`);
-}
-
-/** Handles TRY <code> / EXIT and finds the clinic a phone is currently testing, if any. */
-async function routeMessage(db: Db, phone: string, body: string): Promise<{ text?: string; clinic?: ClinicCtx | null }> {
+/** Public WhatsApp never starts or resumes real-business sessions. */
+export async function routeMessage(db: Db, phone: string, body: string): Promise<{ text?: string }> {
+  await db.from("clinic_whatsapp_sessions").delete().eq("phone", phone);
   const cmd = parseClinicCommand(body);
-  if (cmd?.kind === "try") {
-    const { data } = await db.from("clinics").select("id,name,doctors").eq("test_code", cmd.code).maybeSingle();
-    if (!data) return { text: "That assistant code wasn't found. Check the code and try again." };
-    await db.from("clinic_whatsapp_sessions").upsert({ phone, clinic_id: data.id, started_at: new Date().toISOString() });
-    return { text: `You're now chatting with the *${data.name}* assistant. Ask anything a ${receptionistAudience(data.name, toClinicInput(data).doctors)} would. Send EXIT to go back to Mira.` };
-  }
-  if (cmd?.kind === "exit") {
-    const { data } = await db.from("clinic_whatsapp_sessions").delete().eq("phone", phone).select("phone");
-    if (data?.length) return { text: "You're back with Mira from Conversational AI Flows Studio. How can I help?" };
-  }
-  const { data: session } = await db.from("clinic_whatsapp_sessions").select("clinic_id").eq("phone", phone).maybeSingle();
-  return { clinic: session ? await loadClinic(db, session.clinic_id, phone) : null };
+  if (cmd?.kind === "try") return { text: cmd.code === PUBLIC_CLINIC_CODE ? PUBLIC_CLINIC_GREETING : PUBLIC_CLINIC_NOTICE };
+  if (cmd?.kind === "exit") return { text: "You're with Mira. Would you like an assistant set up for your own clinic?" };
+  return {};
 }
 
-async function generateReply(db: Db, conversationId: string, history: UIMessage[], clinic?: ClinicCtx | null) {
+async function generateReply(db: Db, conversationId: string, history: UIMessage[]) {
   const { lovable } = keys();
   const runIdFetch = createLovableAiGatewayRunIdFetch();
   const choice = await loadFloModel(db);
   const { model, providerOptions } = floLanguageModel(choice, lovable, runIdFetch.fetch);
   const started = Date.now();
   let firstToken: number | null = null;
-  const log = { conversation_id: conversationId, channel: clinic ? "WhatsApp clinic test" : "WhatsApp", model: choice.id, started };
+  const log = { conversation_id: conversationId, channel: "WhatsApp", model: choice.id, started };
   try {
     const result = streamText({
       model,
-      instructions: clinic?.instructions ?? WHATSAPP_INSTRUCTIONS,
+      instructions: WHATSAPP_INSTRUCTIONS,
       messages: await convertToModelMessages(history.slice(-HISTORY_LIMIT)),
       stopWhen: isStepCount(4),
-      tools: clinic ? clinicTools(db, clinic) : floTools(db, conversationId, "WhatsApp"),
+      tools: floTools(db, conversationId, "WhatsApp"),
       providerOptions,
       onChunk: ({ chunk }) => { if (firstToken == null && chunk.type === "text-delta") firstToken = Date.now(); },
     });
@@ -226,18 +208,18 @@ async function replyTo(db: Db, msgId: string) {
   try {
     if (!claimed.wa_message_id) throw new Error("Incoming WhatsApp message id is missing");
     const routed = await routeMessage(db, claimed.phone, claimed.body);
-    const visitorId = routed.clinic ? clinicVisitorId(routed.clinic.id, claimed.phone) : `whatsapp_${claimed.phone}`;
+    const visitorId = `whatsapp_${claimed.phone}`;
     const { data: convo, error: cErr } = await db.from("assistant_conversations")
       .upsert({ visitor_id: visitorId, updated_at: new Date().toISOString() }, { onConflict: "visitor_id" })
       .select("id,messages").single();
     if (cErr || !convo) throw new Error(`conversation failed: ${cErr?.message}`);
-    const prior = (Array.isArray(convo.messages) ? convo.messages : []) as unknown as UIMessage[];
+    const prior = publicTrialHistory((Array.isArray(convo.messages) ? convo.messages : []) as unknown as UIMessage[]);
     const userId = `wa-${claimed.wa_message_id}`;
     const history = prior.some((m) => m.id === userId) ? prior
       : [...prior, { id: userId, role: "user" as const, parts: [{ type: "text" as const, text: claimed.body }] }];
     // Keep typing through model/tool work and sending, including first attempts and recovery.
     const sent = await withWhatsAppTyping(claimed.wa_message_id, async () => {
-      const text = routed.text ?? await generateReply(db, convo.id, history, routed.clinic);
+      const text = routed.text ?? await generateReply(db, convo.id, history);
       if (!text) return { ok: false as const, error: "Empty reply" };
       return { ...await sendWhatsAppText(claimed.phone, text), text };
     });
