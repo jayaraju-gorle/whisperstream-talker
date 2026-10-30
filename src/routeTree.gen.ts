@@ -30,7 +30,11 @@ import { Route as ApiPublicAssistantRouteImport } from './routes/api/public/assi
 import { Route as ApiPublicRatesRouteImport } from './routes/api/public/rates'
 import { Route as AuthenticatedClinicsIdIndexRouteImport } from './routes/_authenticated/clinics.$id.index'
 import { Route as AuthenticatedClinicsIdEditRouteImport } from './routes/_authenticated/clinics.$id.edit'
+import { Route as ApiBolnaV1ModelsRouteImport } from './routes/api/bolna/v1/models'
 import { Route as ApiPublicWhatsappWebhookRouteImport } from './routes/api/public/whatsapp/webhook'
+import { Route as ApiBolnaV1ChatCompletionsRouteImport } from './routes/api/bolna/v1/chat/completions'
+import { Route as ApiPublicBolnaV1ModelsRouteImport } from './routes/api/public/bolna/v1/models'
+import { Route as ApiPublicBolnaV1ChatCompletionsRouteImport } from './routes/api/public/bolna/v1/chat/completions'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -139,10 +143,32 @@ const AuthenticatedClinicsIdEditRoute =
     path: '/clinics/$id/edit',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const ApiBolnaV1ModelsRoute = ApiBolnaV1ModelsRouteImport.update({
+  id: '/api/bolna/v1/models',
+  path: '/api/bolna/v1/models',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPublicWhatsappWebhookRoute =
   ApiPublicWhatsappWebhookRouteImport.update({
     id: '/api/public/whatsapp/webhook',
     path: '/api/public/whatsapp/webhook',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiBolnaV1ChatCompletionsRoute =
+  ApiBolnaV1ChatCompletionsRouteImport.update({
+    id: '/api/bolna/v1/chat/completions',
+    path: '/api/bolna/v1/chat/completions',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicBolnaV1ModelsRoute = ApiPublicBolnaV1ModelsRouteImport.update({
+  id: '/api/public/bolna/v1/models',
+  path: '/api/public/bolna/v1/models',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPublicBolnaV1ChatCompletionsRoute =
+  ApiPublicBolnaV1ChatCompletionsRouteImport.update({
+    id: '/api/public/bolna/v1/chat/completions',
+    path: '/api/public/bolna/v1/chat/completions',
     getParentRoute: () => rootRouteImport,
   } as any)
 
@@ -166,8 +192,12 @@ export interface FileRoutesByFullPath {
   '/api/public/rates': typeof ApiPublicRatesRoute
   '/clinics/': typeof AuthenticatedClinicsIndexRoute
   '/clinics/$id/edit': typeof AuthenticatedClinicsIdEditRoute
+  '/api/bolna/v1/models': typeof ApiBolnaV1ModelsRoute
   '/api/public/whatsapp/webhook': typeof ApiPublicWhatsappWebhookRoute
   '/clinics/$id/': typeof AuthenticatedClinicsIdIndexRoute
+  '/api/bolna/v1/chat/completions': typeof ApiBolnaV1ChatCompletionsRoute
+  '/api/public/bolna/v1/models': typeof ApiPublicBolnaV1ModelsRoute
+  '/api/public/bolna/v1/chat/completions': typeof ApiPublicBolnaV1ChatCompletionsRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -189,8 +219,12 @@ export interface FileRoutesByTo {
   '/api/public/rates': typeof ApiPublicRatesRoute
   '/clinics': typeof AuthenticatedClinicsIndexRoute
   '/clinics/$id/edit': typeof AuthenticatedClinicsIdEditRoute
+  '/api/bolna/v1/models': typeof ApiBolnaV1ModelsRoute
   '/api/public/whatsapp/webhook': typeof ApiPublicWhatsappWebhookRoute
   '/clinics/$id': typeof AuthenticatedClinicsIdIndexRoute
+  '/api/bolna/v1/chat/completions': typeof ApiBolnaV1ChatCompletionsRoute
+  '/api/public/bolna/v1/models': typeof ApiPublicBolnaV1ModelsRoute
+  '/api/public/bolna/v1/chat/completions': typeof ApiPublicBolnaV1ChatCompletionsRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -214,8 +248,12 @@ export interface FileRoutesById {
   '/api/public/rates': typeof ApiPublicRatesRoute
   '/_authenticated/clinics/': typeof AuthenticatedClinicsIndexRoute
   '/_authenticated/clinics/$id/edit': typeof AuthenticatedClinicsIdEditRoute
+  '/api/bolna/v1/models': typeof ApiBolnaV1ModelsRoute
   '/api/public/whatsapp/webhook': typeof ApiPublicWhatsappWebhookRoute
   '/_authenticated/clinics/$id/': typeof AuthenticatedClinicsIdIndexRoute
+  '/api/bolna/v1/chat/completions': typeof ApiBolnaV1ChatCompletionsRoute
+  '/api/public/bolna/v1/models': typeof ApiPublicBolnaV1ModelsRoute
+  '/api/public/bolna/v1/chat/completions': typeof ApiPublicBolnaV1ChatCompletionsRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -239,8 +277,12 @@ export interface FileRouteTypes {
     | '/api/public/rates'
     | '/clinics/'
     | '/clinics/$id/edit'
+    | '/api/bolna/v1/models'
     | '/api/public/whatsapp/webhook'
     | '/clinics/$id/'
+    | '/api/bolna/v1/chat/completions'
+    | '/api/public/bolna/v1/models'
+    | '/api/public/bolna/v1/chat/completions'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -262,8 +304,12 @@ export interface FileRouteTypes {
     | '/api/public/rates'
     | '/clinics'
     | '/clinics/$id/edit'
+    | '/api/bolna/v1/models'
     | '/api/public/whatsapp/webhook'
     | '/clinics/$id'
+    | '/api/bolna/v1/chat/completions'
+    | '/api/public/bolna/v1/models'
+    | '/api/public/bolna/v1/chat/completions'
   id:
     | '__root__'
     | '/'
@@ -286,8 +332,12 @@ export interface FileRouteTypes {
     | '/api/public/rates'
     | '/_authenticated/clinics/'
     | '/_authenticated/clinics/$id/edit'
+    | '/api/bolna/v1/models'
     | '/api/public/whatsapp/webhook'
     | '/_authenticated/clinics/$id/'
+    | '/api/bolna/v1/chat/completions'
+    | '/api/public/bolna/v1/models'
+    | '/api/public/bolna/v1/chat/completions'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -303,7 +353,11 @@ export interface RootRouteChildren {
   PortalTokenRoute: typeof PortalTokenRoute
   ApiPublicAssistantRoute: typeof ApiPublicAssistantRoute
   ApiPublicRatesRoute: typeof ApiPublicRatesRoute
+  ApiBolnaV1ModelsRoute: typeof ApiBolnaV1ModelsRoute
   ApiPublicWhatsappWebhookRoute: typeof ApiPublicWhatsappWebhookRoute
+  ApiBolnaV1ChatCompletionsRoute: typeof ApiBolnaV1ChatCompletionsRoute
+  ApiPublicBolnaV1ModelsRoute: typeof ApiPublicBolnaV1ModelsRoute
+  ApiPublicBolnaV1ChatCompletionsRoute: typeof ApiPublicBolnaV1ChatCompletionsRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -455,11 +509,39 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedClinicsIdEditRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/api/bolna/v1/models': {
+      id: '/api/bolna/v1/models'
+      path: '/api/bolna/v1/models'
+      fullPath: '/api/bolna/v1/models'
+      preLoaderRoute: typeof ApiBolnaV1ModelsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/whatsapp/webhook': {
       id: '/api/public/whatsapp/webhook'
       path: '/api/public/whatsapp/webhook'
       fullPath: '/api/public/whatsapp/webhook'
       preLoaderRoute: typeof ApiPublicWhatsappWebhookRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/bolna/v1/chat/completions': {
+      id: '/api/bolna/v1/chat/completions'
+      path: '/api/bolna/v1/chat/completions'
+      fullPath: '/api/bolna/v1/chat/completions'
+      preLoaderRoute: typeof ApiBolnaV1ChatCompletionsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/bolna/v1/models': {
+      id: '/api/public/bolna/v1/models'
+      path: '/api/public/bolna/v1/models'
+      fullPath: '/api/public/bolna/v1/models'
+      preLoaderRoute: typeof ApiPublicBolnaV1ModelsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/bolna/v1/chat/completions': {
+      id: '/api/public/bolna/v1/chat/completions'
+      path: '/api/public/bolna/v1/chat/completions'
+      fullPath: '/api/public/bolna/v1/chat/completions'
+      preLoaderRoute: typeof ApiPublicBolnaV1ChatCompletionsRouteImport
       parentRoute: typeof rootRouteImport
     }
   }
@@ -514,7 +596,11 @@ const rootRouteChildren: RootRouteChildren = {
   PortalTokenRoute: PortalTokenRoute,
   ApiPublicAssistantRoute: ApiPublicAssistantRoute,
   ApiPublicRatesRoute: ApiPublicRatesRoute,
+  ApiBolnaV1ModelsRoute: ApiBolnaV1ModelsRoute,
   ApiPublicWhatsappWebhookRoute: ApiPublicWhatsappWebhookRoute,
+  ApiBolnaV1ChatCompletionsRoute: ApiBolnaV1ChatCompletionsRoute,
+  ApiPublicBolnaV1ModelsRoute: ApiPublicBolnaV1ModelsRoute,
+  ApiPublicBolnaV1ChatCompletionsRoute: ApiPublicBolnaV1ChatCompletionsRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
