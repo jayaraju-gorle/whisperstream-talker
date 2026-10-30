@@ -381,6 +381,8 @@ function createLiveVoice(options: LiveOptions) {
             event.type === "app.error"
           ) {
             if (event.type === "gateway.session.closing") reportUnexpectedClosure(event.reason);
+            // Errors after a deliberate hang-up are teardown noise, not failures.
+            if (event.type !== "gateway.session.closing" && (state === "stopping" || state === "closed")) return;
             options.onEvent(event);
             return stop();
           }
