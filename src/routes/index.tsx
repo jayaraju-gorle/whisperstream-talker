@@ -149,8 +149,6 @@ const CHANNELS = [
   { icon: Globe, t: "Website chat & voice", d: "A chat bubble on your website where patients can type or talk." },
 ];
 
-const NEXT = ["Chartered accountants", "Law firms", "Automobile dealerships"];
-
 function Index() {
   const { user } = useAuth();
   return (
@@ -212,17 +210,10 @@ function Index() {
           </div>
         </section>
 
-        <section aria-labelledby="done" className="mt-16 grid gap-6 md:grid-cols-2">
+        <section aria-labelledby="done" className="mt-16">
           <div>
             <h2 id="done" className="text-2xl font-semibold sm:text-3xl">Done for you, start to finish</h2>
             <p className="mt-3 text-muted-foreground">Share your clinic details once. We configure Mira, connect your phone line and WhatsApp, add the website bubble, and keep everything updated. Your team simply receives the appointment requests.</p>
-          </div>
-          <div>
-            <h2 className="text-2xl font-semibold sm:text-3xl">Coming next</h2>
-            <p className="mt-3 text-muted-foreground">The same always-on front desk for professional services:</p>
-            <ul className="mt-3 flex flex-wrap gap-2">
-              {NEXT.map((n) => <li key={n} className="rounded-full border border-border px-3 py-1 text-sm">{n}</li>)}
-            </ul>
           </div>
         </section>
 
