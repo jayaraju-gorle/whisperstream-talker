@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useChat } from "@ai-sdk/react";
 import { DefaultChatTransport, type UIMessage } from "ai";
-import { MessageCircle, RotateCcw, UserCheck, X } from "lucide-react";
+import { MessageCircle, Phone, RotateCcw, UserCheck, X } from "lucide-react";
 import { toast } from "sonner";
 import { Logo } from "@/components/Logo";
 import { Button } from "@/components/ui/button";
@@ -14,7 +14,7 @@ import { contactDetails, contactUpdateMessage } from "@/lib/assistant-contact";
 import { Shimmer } from "@/components/ai-elements/shimmer";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { FloVoice } from "@/components/FloVoice";
-import { WHATSAPP_ASSISTANT_URL } from "@/lib/flo-voice";
+import { PHONE_ASSISTANT_NUMBER, PHONE_ASSISTANT_URL, WHATSAPP_ASSISTANT_URL } from "@/lib/flo-voice";
 
 const KEY = "flo-visitor-id";
 const SUGGESTIONS = ["What can I test here?", "Can I try voice calls?", "I'd like a custom agent for my business"];
@@ -219,7 +219,10 @@ function ChatBody({ visitorId, initial, onBusyChange }: { visitorId: string; ini
             <PromptInputSubmit status={status} onStop={stop} disabled={voiceActive || (!busy && !text.trim())} />
           </PromptInputFooter>
         </PromptInput>
-        <Button asChild variant="link" size="sm" className="mt-1 h-auto px-0 text-xs"><a href={WHATSAPP_ASSISTANT_URL} target="_blank" rel="noopener noreferrer"><MessageCircle className="h-3 w-3" />Chat on WhatsApp</a></Button>
+        <div className="mt-1 flex flex-wrap gap-x-4 gap-y-1">
+          <Button asChild variant="link" size="sm" className="h-auto px-0 text-xs"><a href={WHATSAPP_ASSISTANT_URL} target="_blank" rel="noopener noreferrer"><MessageCircle className="h-3 w-3" />Chat on WhatsApp</a></Button>
+          <Button asChild variant="link" size="sm" className="h-auto px-0 text-xs"><a href={PHONE_ASSISTANT_URL}><Phone className="h-3 w-3" />Call {PHONE_ASSISTANT_NUMBER}</a></Button>
+        </div>
       </div>
     </>
   );
