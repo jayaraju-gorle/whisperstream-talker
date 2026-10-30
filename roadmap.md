@@ -15,6 +15,8 @@
 - [x] Prefill built-in scenarios and sample knowledge from the original playground
 
 ## Business roadmap (internal only)
+- [ ] Restore WhatsApp typing feedback from inbound receipt through reply generation and verify provider acceptance.
+- [ ] Present the telephone assistant on the homepage and Flo bubble at 7965481796.
 - [x] Add Bolna-compatible chat completions/models, shared Flo engine, bearer verification and external-call aliases; missing-token rejection, authorized models, SSK activation → streamed ₹500 reply → EXIT verified locally. Publish and Bolna configuration still required for external calls.
 - [ ] Verify audible Flo bubble voice calls — implemented shared Flo/business relay, captions, mute/end, transcript persistence; blocked: sandbox ICE gathering times out before connecting. Text TRY SSK → fee reply → EXIT and mic-error recovery verified; 19 tests pass.
 - [x] Add website Chat on WhatsApp entry points on homepage and Flo bubble; desktop/mobile checked.
