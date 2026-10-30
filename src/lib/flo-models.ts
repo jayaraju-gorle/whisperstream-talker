@@ -1,4 +1,4 @@
-// Models the site owner can choose to power Flo (web chat + WhatsApp). Browser-safe list.
+// Models the site owner can choose to power Mira (web chat + WhatsApp). Browser-safe list.
 export type FloModelOption = { id: string; label: string; vendor: "OpenAI" | "Google Gemini" | "Anthropic"; api: "responses" | "chat" | "messages"; usdPerMInput: number; usdPerMOutput: number };
 
 export const FLO_MODELS: FloModelOption[] = [
@@ -19,7 +19,7 @@ export function resolveFloModel(stored: unknown): FloModelOption {
   return FLO_MODELS.find((m) => m.id === id) ?? FLO_MODELS.find((m) => m.id === DEFAULT_FLO_MODEL)!;
 }
 
-/** Estimated USD cost of one Flo turn from list prices; null when the model or token counts are unknown. */
+/** Estimated USD cost of one Mira turn from list prices; null when the model or token counts are unknown. */
 export function floTurnCostUsd(model: string, inputTokens: number | null, outputTokens: number | null) {
   const m = FLO_MODELS.find((x) => x.id === model);
   if (!m || inputTokens == null || outputTokens == null) return null;

@@ -58,7 +58,7 @@ export function SiteAssistant() {
           <div className="flex items-center gap-2 border-b border-border px-4 py-3">
             <Logo className="h-6 w-6" />
             <div className="min-w-0 flex-1">
-              <div className="text-sm font-semibold">Flo · Studio guide</div>
+              <div className="text-sm font-semibold">Mira · Clinic front desk</div>
               <div className="text-xs text-muted-foreground">Chat or talk with your assistant</div>
             </div>
             <AlertDialog>
@@ -92,12 +92,12 @@ export function SiteAssistant() {
         </div>
       )}
       <Button
-        aria-label={open ? "Close chat" : "Chat with us"}
+        data-site-assistant-toggle aria-label={open ? "Close chat" : "Chat with us"}
         onClick={() => setOpen((o) => !o)}
         className="fixed bottom-5 right-5 z-50 h-12 rounded-full px-4 shadow-lg"
       >
         {open ? <X /> : <MessageCircle />}
-        <span className="hidden sm:inline">{open ? "Close" : "Ask Flo"}</span>
+        <span className="hidden sm:inline">{open ? "Close" : "Ask Mira"}</span>
       </Button>
     </>
   );
@@ -146,7 +146,7 @@ function ChatBody({ visitorId, initial, onBusyChange }: { visitorId: string; ini
           {messages.length === 0 && (
             <div className="space-y-3 text-sm">
               <p className="text-muted-foreground">
-                Hi! I'm Flo. How can I help today?
+                Hi! I'm Mira. How can I help today?
               </p>
               <div className="flex flex-wrap gap-2">
                 {SUGGESTIONS.map((s) => (

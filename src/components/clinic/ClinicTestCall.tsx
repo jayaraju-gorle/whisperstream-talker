@@ -19,7 +19,7 @@ export function ClinicTestCall({ clinicId, code }: { clinicId: string; code: str
       <div className="rounded-lg border border-border bg-card p-4">
         <div className="flex items-center gap-2 font-medium"><MessageCircle className="h-4 w-4 text-primary" /> WhatsApp</div>
         <p className="mt-1 text-sm text-muted-foreground">
-          Send <span className="font-mono text-foreground">{testCommand(code)}</span> to +91 63023 92274. Send <span className="font-mono text-foreground">EXIT</span> to go back to Flo.
+          Send <span className="font-mono text-foreground">{testCommand(code)}</span> to +91 63023 92274. Send <span className="font-mono text-foreground">EXIT</span> to go back to Mira.
         </p>
         <Button asChild variant="secondary" className="mt-3 w-full">
           <a href={wa} target="_blank" rel="noreferrer">Open WhatsApp</a>

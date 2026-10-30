@@ -34,7 +34,7 @@ export function FloVoice({ visitorId, onActive, onMessages }: {
     <div className="flex items-center gap-2">
       <Button size="sm" variant={active ? "destructive" : "outline"} disabled={call.status === "stopping"}
         onClick={() => { if (active) call.stop(); else { setFragments([]); onActive(true); call.start(); } }}>
-        {active ? <PhoneOff /> : <Phone />}{call.status === "connecting" ? "Cancel call" : call.status === "stopping" ? "Ending…" : active ? "End call" : "Talk to Flo"}
+        {active ? <PhoneOff /> : <Phone />}{call.status === "connecting" ? "Cancel call" : call.status === "stopping" ? "Ending…" : active ? "End call" : "Talk to Mira"}
       </Button>
       {call.status === "connected" && <Button size="icon" variant="ghost" aria-label={call.muted ? "Unmute microphone" : "Mute microphone"}
         title={call.muted ? "Unmute microphone" : "Mute microphone"} onClick={() => call.setMuted(!call.muted)}>{call.muted ? <MicOff /> : <Mic />}</Button>}

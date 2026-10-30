@@ -12,7 +12,7 @@ export async function loadFloModel(db: Db): Promise<FloModelOption> {
   return resolveFloModel(data?.value);
 }
 
-/** Build the language model + provider options for the chosen Flo model, all through the AI gateway. */
+/** Build the language model + provider options for the chosen Mira model, all through the AI gateway. */
 export function floLanguageModel(opt: FloModelOption, apiKey: string, fetch: typeof globalThis.fetch) {
   const headers = { "Lovable-API-Key": apiKey, "X-Lovable-AIG-SDK": "vercel-ai-sdk" };
   if (opt.api === "messages") {

@@ -6,7 +6,7 @@ import { createLovableAiGatewayRunIdFetch } from "@/lib/server/run-id";
 import { clinicVisitorId, parseClinicCommand, receptionistAudience, toClinicInput } from "@/lib/clinic";
 import { clinicAppointmentTools, loadClinicSession, type ClinicSession } from "@/lib/server/clinic-mode.server";
 
-// Flo over WhatsApp: durable inbox processing, reply sending and delivery-status reconciliation.
+// Mira over WhatsApp: durable inbox processing, reply sending and delivery-status reconciliation.
 type Db = Awaited<typeof import("@/integrations/supabase/client.server")>["supabaseAdmin"];
 type Json = Record<string, unknown>;
 
@@ -173,11 +173,11 @@ async function routeMessage(db: Db, phone: string, body: string): Promise<{ text
     const { data } = await db.from("clinics").select("id,name,doctors").eq("test_code", cmd.code).maybeSingle();
     if (!data) return { text: "That assistant code wasn't found. Check the code and try again." };
     await db.from("clinic_whatsapp_sessions").upsert({ phone, clinic_id: data.id, started_at: new Date().toISOString() });
-    return { text: `You're now chatting with the *${data.name}* assistant. Ask anything a ${receptionistAudience(data.name, toClinicInput(data).doctors)} would. Send EXIT to go back to Flo.` };
+    return { text: `You're now chatting with the *${data.name}* assistant. Ask anything a ${receptionistAudience(data.name, toClinicInput(data).doctors)} would. Send EXIT to go back to Mira.` };
   }
   if (cmd?.kind === "exit") {
     const { data } = await db.from("clinic_whatsapp_sessions").delete().eq("phone", phone).select("phone");
-    if (data?.length) return { text: "You're back with Flo from Conversational AI Flows Studio. How can I help?" };
+    if (data?.length) return { text: "You're back with Mira from Conversational AI Flows Studio. How can I help?" };
   }
   const { data: session } = await db.from("clinic_whatsapp_sessions").select("clinic_id").eq("phone", phone).maybeSingle();
   return { clinic: session ? await loadClinic(db, session.clinic_id, phone) : null };

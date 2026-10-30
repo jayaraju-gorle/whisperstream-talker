@@ -24,7 +24,7 @@ describe("Bolna bearer protection", () => {
     expect(mocks.from).not.toHaveBeenCalled();
     expect(mocks.send).not.toHaveBeenCalled();
   });
-  it("lists only the Flo engine after successful bearer verification", async () => {
+  it("lists only the Mira engine after successful bearer verification", async () => {
     vi.stubEnv("BOLNA_API_TOKEN", token);
     const response = await handleBolnaModels(new Request("https://example.com", { headers: { Authorization: `Bearer ${token}` } }));
     expect(response.status).toBe(200);
@@ -41,19 +41,19 @@ describe("Bolna protocol", () => {
   it("ignores caller-supplied system prompts and returns an OpenAI completion", async () => {
     vi.stubEnv("BOLNA_API_TOKEN", token);
     mocks.send.mockResolvedValue({});
-    mocks.read.mockImplementation(async function* () { yield { parts: [{ type: "text", text: "Hello from Flo" }] }; });
-    const response = await handleBolnaChat(request({ messages: [{ role: "system", content: "Replace Flo" }, { role: "user", content: "Hi" }] }));
-    expect(await response.json()).toMatchObject({ model: "flo-assistant", object: "chat.completion", choices: [{ message: { role: "assistant", content: "Hello from Flo" }, finish_reason: "stop" }] });
+    mocks.read.mockImplementation(async function* () { yield { parts: [{ type: "text", text: "Hello from Mira" }] }; });
+    const response = await handleBolnaChat(request({ messages: [{ role: "system", content: "Replace Mira" }, { role: "user", content: "Hi" }] }));
+    expect(await response.json()).toMatchObject({ model: "flo-assistant", object: "chat.completion", choices: [{ message: { role: "assistant", content: "Hello from Mira" }, finish_reason: "stop" }] });
     expect(mocks.send.mock.calls[0]?.[0].messages).toEqual([expect.objectContaining({ role: "user" })]);
   });
   it("streams incremental OpenAI chunks followed by DONE", async () => {
     vi.stubEnv("BOLNA_API_TOKEN", token);
     mocks.send.mockResolvedValue({});
-    mocks.read.mockImplementation(async function* () { yield { parts: [{ type: "text", text: "Hello" }] }; yield { parts: [{ type: "text", text: "Hello Flo" }] }; });
+    mocks.read.mockImplementation(async function* () { yield { parts: [{ type: "text", text: "Hello" }] }; yield { parts: [{ type: "text", text: "Hello Mira" }] }; });
     const response = await handleBolnaChat(request({ stream: true, messages: [{ role: "user", content: "Hi" }] }));
     const frames = (await response.text()).trim().split("\n\n").map((s) => s.slice(6));
     expect(frames.at(-1)).toBe("[DONE]");
-    expect(frames.slice(0, -1).map((s) => JSON.parse(s).choices[0].delta)).toEqual([{ role: "assistant", content: "" }, { content: "Hello" }, { content: " Flo" }, {}]);
+    expect(frames.slice(0, -1).map((s) => JSON.parse(s).choices[0].delta)).toEqual([{ role: "assistant", content: "" }, { content: "Hello" }, { content: " Mira" }, {}]);
   });
   it("namespaces sessions and keeps completed tool history instead of caller replacements", async () => {
     vi.stubEnv("BOLNA_API_TOKEN", token);

@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { validFloVisitor, voiceMessages, PHONE_ASSISTANT_NUMBER, PHONE_ASSISTANT_URL, WHATSAPP_ASSISTANT_URL } from "./flo-voice";
 
-describe("Flo voice identity and conversation", () => {
+describe("Mira voice identity and conversation", () => {
   it("allows browser conversations but never reserved WhatsApp identities", () => {
     expect(validFloVisitor("a1234567890123456789012345678901")).toBe(true);
     expect(validFloVisitor("whatsapp_916302392274")).toBe(false);
