@@ -15,6 +15,7 @@
 - [x] Prefill built-in scenarios and sample knowledge from the original playground
 
 ## Business roadmap (internal only)
+- [ ] Default every public trial to fictional Aura Health Clinic, disclose sample status, retain lead capture, and restrict real clinic examples to authenticated admins.
 - [x] Reassert WhatsApp typing on every reply, refresh during long responses, and forward runtime waitUntil; provider accepted native typing (HTTP 200), 7 WhatsApp regression tests passed.
 - [ ] Confirm restored typing visibly on a real WhatsApp conversation — blocked: publish updated receiver, then send a fresh message from a phone; provider acceptance alone does not verify the phone display.
 - [x] Present the telephone assistant on the homepage and Flo bubble at 7965481796; tel:+917965481796 verified on desktop/mobile, 4 shared-channel tests passed. Telephone audio was not tested.
