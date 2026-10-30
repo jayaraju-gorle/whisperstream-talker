@@ -602,6 +602,10 @@ export type Database = {
         }
         Returns: boolean
       }
+      is_business_library_record: {
+        Args: { record_id: string; record_kind: string }
+        Returns: boolean
+      }
     }
     Enums: {
       app_role: "admin" | "user"
