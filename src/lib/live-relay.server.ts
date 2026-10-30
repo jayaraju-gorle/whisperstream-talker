@@ -622,6 +622,8 @@ export function bindLiveConnection(
     gateway.onMessage(receiveGateway);
     gateway.onClose(finish);
     gateway.onError(() => {
+      // A deliberate hang-up closes the gateway socket; that is not a failure.
+      if (closing) return;
       emit({ type: "app.error", error: { message: "Voice gateway connection failed" } });
       stop();
     });
