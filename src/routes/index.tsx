@@ -10,11 +10,12 @@ import {
   Radio,
   Shuffle,
   MessageCircle,
+  Phone,
 } from "lucide-react";
 import { Logo } from "@/components/Logo";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/use-auth";
-import { WHATSAPP_ASSISTANT_URL } from "@/lib/flo-voice";
+import { PHONE_ASSISTANT_NUMBER, PHONE_ASSISTANT_URL, WHATSAPP_ASSISTANT_URL } from "@/lib/flo-voice";
 
 export const Route = createFileRoute("/")({
   staticData: { sitemap: true },
@@ -160,6 +161,7 @@ function Index() {
           <Button asChild size="lg"><Link to="/playground">Open the playground <ArrowRight className="h-4 w-4" /></Link></Button>
           <Button asChild variant="outline" size="lg"><Link to="/demo">Try the free demo</Link></Button>
           <Button asChild variant="outline" size="lg"><a href={WHATSAPP_ASSISTANT_URL} target="_blank" rel="noopener noreferrer"><MessageCircle className="h-4 w-4" />Chat on WhatsApp</a></Button>
+          <Button asChild variant="outline" size="lg"><a href={PHONE_ASSISTANT_URL}><Phone className="h-4 w-4" />Call {PHONE_ASSISTANT_NUMBER}</a></Button>
         </div>
 
         <p className="mt-3 text-sm text-muted-foreground">Free demo: illustrative sample replies and metrics. Playground: real AI conversations after sign-in.</p>
