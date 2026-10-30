@@ -182,7 +182,7 @@ function Index() {
           <div className="mt-4 flex flex-wrap gap-3">
             <Button asChild size="lg"><a href={PHONE_ASSISTANT_URL}><Phone className="h-4 w-4" />Call {PHONE_ASSISTANT_NUMBER}</a></Button>
             <Button asChild variant="outline" size="lg"><a href={WHATSAPP_ASSISTANT_URL} target="_blank" rel="noopener noreferrer"><MessageCircle className="h-4 w-4" />Chat on WhatsApp</a></Button>
-            <Button variant="outline" size="lg" onClick={() => document.querySelector<HTMLButtonElement>('[aria-label*="Mira"], [data-site-assistant-toggle]')?.click()}><Mic className="h-4 w-4" />Chat or talk on this site</Button>
+            <Button variant="outline" size="lg" onClick={() => document.querySelector<HTMLButtonElement>('[data-site-assistant-toggle]')?.click()}><Mic className="h-4 w-4" />Chat or talk on this site</Button>
           </div>
         </section>
 

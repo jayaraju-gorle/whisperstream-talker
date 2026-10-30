@@ -92,7 +92,7 @@ export function SiteAssistant() {
         </div>
       )}
       <Button
-        aria-label={open ? "Close chat" : "Chat with us"}
+        data-site-assistant-toggle aria-label={open ? "Close chat" : "Chat with us"}
         onClick={() => setOpen((o) => !o)}
         className="fixed bottom-5 right-5 z-50 h-12 rounded-full px-4 shadow-lg"
       >
