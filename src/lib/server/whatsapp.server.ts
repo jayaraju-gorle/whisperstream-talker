@@ -62,10 +62,28 @@ export async function sendTypingIndicator(messageId: string) {
       method: "POST",
       headers: { Authorization: `Bearer ${lovable}`, "X-Connection-Api-Key": wa, "Content-Type": "application/json" },
       body: JSON.stringify({ messaging_product: "whatsapp", status: "read", message_id: messageId, typing_indicator: { type: "text" } }),
+      signal: AbortSignal.timeout(3000),
     });
     if (!res.ok) console.error("whatsapp typing indicator failed", res.status, (await res.text()).slice(0, 500));
   } catch (e) {
     console.error("whatsapp typing indicator failed", e);
+  }
+}
+
+/** Reassert typing when claimed work starts, then refresh before Meta's 25s expiry.
+ * The receipt-time indicator alone can expire while the message waits for processing. */
+export async function withWhatsAppTyping<T>(messageId: string, work: () => Promise<T>): Promise<T> {
+  await sendTypingIndicator(messageId);
+  let refreshing = false;
+  const timer = setInterval(() => {
+    if (refreshing) return;
+    refreshing = true;
+    void sendTypingIndicator(messageId).finally(() => { refreshing = false; });
+  }, 20_000);
+  try {
+    return await work();
+  } finally {
+    clearInterval(timer);
   }
 }
 
@@ -206,6 +224,7 @@ async function replyTo(db: Db, msgId: string) {
     }).eq("id", claimed.id);
   };
   try {
+    if (!claimed.wa_message_id) throw new Error("Incoming WhatsApp message id is missing");
     const routed = await routeMessage(db, claimed.phone, claimed.body);
     const visitorId = routed.clinic ? clinicVisitorId(routed.clinic.id, claimed.phone) : `whatsapp_${claimed.phone}`;
     const { data: convo, error: cErr } = await db.from("assistant_conversations")
@@ -216,12 +235,14 @@ async function replyTo(db: Db, msgId: string) {
     const userId = `wa-${claimed.wa_message_id}`;
     const history = prior.some((m) => m.id === userId) ? prior
       : [...prior, { id: userId, role: "user" as const, parts: [{ type: "text" as const, text: claimed.body }] }];
-    // Retries refresh the indicator; first attempts already showed it when the message was saved.
-    if (claimed.reply_attempts > 0 && claimed.wa_message_id) await sendTypingIndicator(claimed.wa_message_id);
-    const text = routed.text ?? await generateReply(db, convo.id, history, routed.clinic);
-    if (!text) return await fail("failed", "Empty reply");
-    const sent = await sendWhatsAppText(claimed.phone, text);
+    // Keep typing through model/tool work and sending, including first attempts and recovery.
+    const sent = await withWhatsAppTyping(claimed.wa_message_id, async () => {
+      const text = routed.text ?? await generateReply(db, convo.id, history, routed.clinic);
+      if (!text) return { ok: false as const, error: "Empty reply" };
+      return { ...await sendWhatsAppText(claimed.phone, text), text };
+    });
     if (!sent.ok) return await fail("failed", sent.error);
+    const text = sent.text;
     const { data: out } = await db.from("whatsapp_messages").insert({
       wa_message_id: sent.id, direction: "out", phone: claimed.phone, body: text, status: "accepted",
       conversation_id: convo.id, in_reply_to: claimed.id,
