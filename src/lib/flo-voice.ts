@@ -2,7 +2,7 @@ import type { UIMessage } from "ai";
 
 export const FLO_VOICE_PATH = "/api/public/assistant/voice";
 export function validFloVisitor(id: unknown): id is string {
-  return typeof id === "string" && /^[A-Za-z0-9_-]{16,64}$/.test(id) && !id.startsWith("whatsapp_");
+  return typeof id === "string" && /^[A-Za-z0-9_-]{16,64}$/.test(id) && !id.startsWith("whatsapp_") && !id.startsWith("bolna_");
 }
 
 export type VoiceFragment = { role: "user" | "assistant"; text: string; start_ms: number; end_ms: number };

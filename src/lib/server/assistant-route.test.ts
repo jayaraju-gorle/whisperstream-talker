@@ -7,10 +7,23 @@ vi.mock("@ai-sdk/openai", () => ({ createOpenAI: () => ({ responses: () => "test
 vi.mock("ai", () => ({ convertToModelMessages: async () => [], isStepCount: () => 4, tool: (options: unknown) => options, streamText: mocks.stream }));
 vi.mock("@/lib/server/run-id", () => ({ createLovableAiGatewayRunIdFetch: () => ({}), getLovableAiGatewayRunId: () => undefined, withLovableAiGatewayRunIdHeader: (response: Response) => response }));
 import { Route } from "@/routes/api/public/assistant";
+import { handleAssistantGet, handleAssistantPost } from "./assistant-handler.server";
 const handler = (Route as unknown as { server: { handlers: { POST: (args: { request: Request }) => Promise<Response> } } }).server.handlers.POST;
 afterEach(() => { vi.unstubAllEnvs(); vi.clearAllMocks(); });
 
 describe("visitor contact updates", () => {
+  it("does not expose Bolna conversations to the public browser history reader", async () => {
+    const response = await handleAssistantGet({ request: new Request("https://example.com/api/public/assistant?visitorId=bolna_1234567890123456") });
+    expect(await response.json()).toEqual({ messages: [] });
+    expect(mocks.from).not.toHaveBeenCalled();
+  });
+  it("rejects browser writes to the Bolna conversation namespace", async () => {
+    const response = await handleAssistantPost({ request: new Request("https://example.com/api/public/assistant", {
+      method: "POST", body: JSON.stringify({ visitorId: "bolna_1234567890123456", messages: [{ role: "user", parts: [{ type: "text", text: "Hello" }] }] }),
+    }) });
+    expect(response.status).toBe(400);
+    expect(mocks.from).not.toHaveBeenCalled();
+  });
   it("updates the existing lead only within the server-resolved conversation", async () => {
     vi.stubEnv("LOVABLE_API_KEY", "test-key");
     const update = vi.fn();
