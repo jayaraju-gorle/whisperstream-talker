@@ -5,6 +5,7 @@ describe("Flo voice identity and conversation", () => {
   it("allows browser conversations but never reserved WhatsApp identities", () => {
     expect(validFloVisitor("a1234567890123456789012345678901")).toBe(true);
     expect(validFloVisitor("whatsapp_916302392274")).toBe(false);
+    expect(validFloVisitor("bolna_1234567890123456")).toBe(false);
     expect(validFloVisitor("short")).toBe(false);
   });
   it("preserves spaces and combines speech fragments into caller commands", () => {
