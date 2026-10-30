@@ -127,5 +127,5 @@ export async function handleBolnaChat(request: Request): Promise<Response> {
     },
     async cancel() { await iterator.return?.(); },
   });
-  return new Response(output, { headers: { "Content-Type": "text/event-stream", "Cache-Control": "no-cache" } });
+  return new Response(output, { headers: { "Content-Type": "text/event-stream; charset=utf-8", "Cache-Control": "no-cache" } });
 }

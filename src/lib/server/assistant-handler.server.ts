@@ -31,6 +31,7 @@ export async function handleAssistantPost({ request, voice = false, channel }: {
         const parsed = Body.safeParse(await request.json().catch(() => null));
         if (!parsed.success) return json({ error: "Invalid request" }, 400);
         const { visitorId } = parsed.data;
+        if (visitorId.startsWith("bolna_") && channel !== "Bolna") return json({ error: "Invalid request" }, 400);
         const messages = parsed.data.messages as UIMessage[];
         const userTurns = messages.filter((m) => m.role === "user").length;
         if (userTurns > MAX_USER_TURNS)
@@ -127,7 +128,7 @@ export async function handleAssistantPost({ request, voice = false, channel }: {
 
 export async function handleAssistantGet({ request }: { request: Request }) {
         const id = VisitorId.safeParse(new URL(request.url).searchParams.get("visitorId"));
-        if (!id.success) return json({ messages: [] });
+        if (!id.success || id.data.startsWith("bolna_")) return json({ messages: [] });
         const db = await admin();
         const { data, error } = await db
           .from("assistant_conversations")
