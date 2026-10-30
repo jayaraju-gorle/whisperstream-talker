@@ -54,6 +54,14 @@ export default {
       if (new URL(request.url).pathname === "/api/public/assistant/voice") {
         return handleLiveRequest(request, true);
       }
+      // Expose the runtime lifetime hook to the signed receiver, rather than abandoning
+      // reply generation when its bounded acknowledgement fallback finishes.
+      if (new URL(request.url).pathname === "/api/public/whatsapp/webhook") {
+        const runtime = ctx as { waitUntil?: (work: Promise<unknown>) => void } | null;
+        if (typeof runtime?.waitUntil === "function") {
+          Object.defineProperty(request, "waitUntil", { configurable: true, value: runtime.waitUntil.bind(runtime) });
+        }
+      }
       const handler = await getServerEntry();
       const response = await handler.fetch(request, env, ctx);
       return await normalizeCatastrophicSsrResponse(response);
