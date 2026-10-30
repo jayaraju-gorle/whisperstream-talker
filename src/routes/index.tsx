@@ -17,6 +17,7 @@ import {
   Globe,
 } from "lucide-react";
 import { Logo } from "@/components/Logo";
+import { LeadForm } from "@/components/LeadForm";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/use-auth";
 import { PHONE_ASSISTANT_NUMBER, PHONE_ASSISTANT_URL, WHATSAPP_ASSISTANT_URL } from "@/lib/flo-voice";
