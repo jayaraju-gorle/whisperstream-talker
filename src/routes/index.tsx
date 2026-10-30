@@ -149,8 +149,6 @@ const CHANNELS = [
   { icon: Globe, t: "Website chat & voice", d: "A chat bubble on your website where patients can type or talk." },
 ];
 
-const NEXT = ["Chartered accountants", "Law firms", "Automobile dealerships"];
-
 function Index() {
   const { user } = useAuth();
   return (
@@ -178,7 +176,7 @@ function Index() {
 
         <section aria-labelledby="try" className="mt-8 rounded-lg border border-primary/40 bg-card/70 p-4 sm:p-6">
           <h2 id="try" className="text-lg font-semibold">Talk to Mira right now</h2>
-          <p className="mt-1 text-sm text-muted-foreground">Try a sample clinic: type or say <span className="font-mono text-foreground">TRY IVY</span> on WhatsApp or in the chat bubble.</p>
+          <p className="mt-1 text-sm text-muted-foreground">Meet Aura Health Clinic, a fictional sample with made-up doctors, hours and fees — not a real clinic. Try it by phone, WhatsApp or here; we can set up Mira for your own clinic.</p>
           <div className="mt-4 flex flex-wrap gap-3">
             <Button asChild size="lg"><a href={PHONE_ASSISTANT_URL}><Phone className="h-4 w-4" />Call {PHONE_ASSISTANT_NUMBER}</a></Button>
             <Button asChild variant="outline" size="lg"><a href={WHATSAPP_ASSISTANT_URL} target="_blank" rel="noopener noreferrer"><MessageCircle className="h-4 w-4" />Chat on WhatsApp</a></Button>
@@ -212,17 +210,10 @@ function Index() {
           </div>
         </section>
 
-        <section aria-labelledby="done" className="mt-16 grid gap-6 md:grid-cols-2">
+        <section aria-labelledby="done" className="mt-16">
           <div>
             <h2 id="done" className="text-2xl font-semibold sm:text-3xl">Done for you, start to finish</h2>
             <p className="mt-3 text-muted-foreground">Share your clinic details once. We configure Mira, connect your phone line and WhatsApp, add the website bubble, and keep everything updated. Your team simply receives the appointment requests.</p>
-          </div>
-          <div>
-            <h2 className="text-2xl font-semibold sm:text-3xl">Coming next</h2>
-            <p className="mt-3 text-muted-foreground">The same always-on front desk for professional services:</p>
-            <ul className="mt-3 flex flex-wrap gap-2">
-              {NEXT.map((n) => <li key={n} className="rounded-full border border-border px-3 py-1 text-sm">{n}</li>)}
-            </ul>
           </div>
         </section>
 

@@ -32,4 +32,5 @@
 - The assistant admin area retains /leads and reads web conversations through the authenticated browser client with paginated metadata and on-demand transcripts, excluding the reserved WhatsApp visitor prefix; this preserves public URLs and existing admin-only access policies without loading every transcript at once.
 - Legacy WhatsApp reply metrics match successful WhatsApp turn logs by conversation and nearest preceding completion timestamp, never array index; this keeps unlogged older replies and failed attempts from shifting metrics onto the wrong messages.
 - Business assistants share clinic rows and audience-aware prompts; owner-only phone setup reads Twilio numbers server-side, never marking unconfigured routing ready.
+- Public assistant channels use shared fictional content from public-clinic-demo.ts and never resolve clinic rows; real presets load only inside an admin-authorized server function, with admin-only access to linked business library content.
 - Agent configuration lists only the pipeline stages the active mode runs, so a typed flow never offers a transcription picker.
