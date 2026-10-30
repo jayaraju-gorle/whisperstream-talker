@@ -12,7 +12,7 @@ export const LeadFormSchema = z.object({
 
 /** Public homepage form: saves a setup lead and alerts the team. */
 export const submitLeadForm = createServerFn({ method: "POST" })
-  .inputValidator((input: unknown) => LeadFormSchema.parse(input))
+  .validator((input: unknown) => LeadFormSchema.parse(input))
   .handler(async ({ data }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { notifyNewLead } = await import("@/lib/server/flo.server");
