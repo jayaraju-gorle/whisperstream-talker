@@ -1,10 +1,10 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-const mocks = vi.hoisted(() => ({ stream: vi.fn(), from: vi.fn() }));
+const mocks = vi.hoisted(() => ({ stream: vi.fn(), from: vi.fn(), notice: vi.fn() }));
 vi.mock("@tanstack/react-router", () => ({ createFileRoute: () => (options: unknown) => options }));
 vi.mock("@/integrations/supabase/client.server", () => ({ supabaseAdmin: { from: mocks.from } }));
 vi.mock("@ai-sdk/openai", () => ({ createOpenAI: () => ({ responses: () => "test-model" }) }));
-vi.mock("ai", () => ({ convertToModelMessages: async () => [], isStepCount: () => 4, tool: (options: unknown) => options, streamText: mocks.stream }));
+vi.mock("ai", () => ({ createUIMessageStream: (options: unknown) => { mocks.notice(options); return {}; }, createUIMessageStreamResponse: () => new Response("notice"), convertToModelMessages: async () => [], isStepCount: () => 4, tool: (options: unknown) => options, streamText: mocks.stream }));
 vi.mock("@/lib/server/run-id", () => ({ createLovableAiGatewayRunIdFetch: () => ({}), getLovableAiGatewayRunId: () => undefined, withLovableAiGatewayRunIdHeader: (response: Response) => response }));
 import { Route } from "@/routes/api/public/assistant";
 import { handleAssistantGet, handleAssistantPost } from "./assistant-handler.server";
@@ -12,6 +12,16 @@ const handler = (Route as unknown as { server: { handlers: { POST: (args: { requ
 afterEach(() => { vi.unstubAllEnvs(); vi.clearAllMocks(); });
 
 describe("visitor contact updates", () => {
+  it.each([undefined, "Bolna"] as const)("blocks real clinic lookup for public channel %s", async (channel) => {
+    vi.stubEnv("LOVABLE_API_KEY", "test-key");
+    const chain = { upsert: vi.fn().mockReturnThis(), select: vi.fn().mockReturnThis(), single: vi.fn().mockResolvedValue({ data: { id: "demo" } }) };
+    mocks.from.mockReturnValue(chain);
+    await handleAssistantPost({ channel, request: new Request("https://example.com", { method: "POST", body: JSON.stringify({ visitorId: channel ? "bolna_1234567890123456" : "visitor_secret_123456", messages: [{ role: "user", parts: [{ type: "text", text: "TRY IVY" }] }] }) }) });
+    expect(mocks.from).toHaveBeenCalledTimes(1);
+    expect(mocks.from).toHaveBeenCalledWith("assistant_conversations");
+    expect(mocks.stream).not.toHaveBeenCalled();
+    expect(mocks.notice).toHaveBeenCalledTimes(1);
+  });
   it("does not expose Bolna conversations to the public browser history reader", async () => {
     const response = await handleAssistantGet({ request: new Request("https://example.com/api/public/assistant?visitorId=bolna_1234567890123456") });
     expect(await response.json()).toEqual({ messages: [] });
@@ -43,6 +53,7 @@ describe("visitor contact updates", () => {
     }) });
     const call = mocks.stream.mock.calls[0];
     if (!call) throw new Error("Assistant stream was not started");
+    expect(Object.keys(call[0].tools)).toEqual(["save_lead"]);
     const execute = call[0].tools.save_lead.execute;
     const result = await execute({ name: "Ram", email: "ram@example.com", phone: "+91 9876543210", company: null, interest: null });
     expect(result).toEqual({ saved: true, updated: true });

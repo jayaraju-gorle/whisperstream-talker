@@ -1,5 +1,19 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { nextStatus, typingForPayload, withWhatsAppTyping } from "./whatsapp.server";
+import { nextStatus, routeMessage, typingForPayload, withWhatsAppTyping } from "./whatsapp.server";
+
+describe("public WhatsApp demo isolation", () => {
+  it.each(["TRY IVY", "TRY IYASHI", "Hours?"])("never loads a real clinic for %s and clears old routing", async body => {
+    const eq = vi.fn().mockResolvedValue({});
+    const remove = vi.fn().mockReturnValue({ eq });
+    const from = vi.fn().mockReturnValue({ delete: remove });
+    const result = await routeMessage({ from } as unknown as Parameters<typeof routeMessage>[0], "919999999999", body);
+    expect(from).toHaveBeenCalledTimes(1);
+    expect(from).toHaveBeenCalledWith("clinic_whatsapp_sessions");
+    expect(remove).toHaveBeenCalledTimes(1);
+    expect(eq).toHaveBeenCalledWith("phone", "919999999999");
+    expect(result).not.toHaveProperty("clinic");
+  });
+});
 
 afterEach(() => {
   vi.useRealTimers();
