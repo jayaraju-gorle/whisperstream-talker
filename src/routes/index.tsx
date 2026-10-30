@@ -11,6 +11,10 @@ import {
   Shuffle,
   MessageCircle,
   Phone,
+  Users,
+  Moon,
+  CalendarCheck,
+  Globe,
 } from "lucide-react";
 import { Logo } from "@/components/Logo";
 import { Button } from "@/components/ui/button";
@@ -21,17 +25,17 @@ export const Route = createFileRoute("/")({
   staticData: { sitemap: true },
   head: () => ({
     meta: [
-      { title: "Conversational AI Flows Studio — Test voice and text AI stacks side by side" },
+      { title: "Mira — 24/7 virtual front desk for clinics | Phone, WhatsApp & web" },
       {
         name: "description",
         content:
-          "Talk or type to AI agents, swap speech-to-text, AI model and voice providers, and compare latency and cost live — in voice and text modes. Try a free demo before signing in.",
+          "Mira answers patient calls, WhatsApp messages and website chat around the clock, handles peak-hour surges and captures appointment requests. Done for you — no technical setup.",
       },
-      { property: "og:title", content: "Conversational AI Flows Studio — Test voice and text AI stacks side by side" },
+      { property: "og:title", content: "Mira — 24/7 virtual front desk for clinics | Phone, WhatsApp & web" },
       {
         property: "og:description",
         content:
-          "Swap speech, model and voice providers and compare latency and cost in real time — with voice and text conversations, in a free demo or the full playground.",
+          "A 24/7 conversational front desk for health clinics across phone, WhatsApp and website chat. Try Mira now.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
@@ -133,6 +137,20 @@ const FEATURES = [
   },
 ];
 
+const PAINS = [
+  { icon: Users, t: "Peak-hour surges", d: "Mornings and evening OPD rush bring more calls and WhatsApp messages than reception can answer. Mira picks up every one at once, so patients never hear a busy tone or wait on read receipts." },
+  { icon: Moon, t: "Nights and early mornings", d: "Patients message at 11 pm and call before you open. Mira replies 24/7 with hours, doctors, fees and directions, and records appointment requests for your team." },
+  { icon: CalendarCheck, t: "No request left unanswered", d: "Every inquiry and booking request is logged and shared with your front desk, ready to confirm when the clinic opens." },
+];
+
+const CHANNELS = [
+  { icon: Phone, t: "Phone calls", d: "A natural voice that answers your clinic line and speaks with callers in real time." },
+  { icon: MessageCircle, t: "WhatsApp", d: "Instant replies on the channel your patients already use, at any hour." },
+  { icon: Globe, t: "Website chat & voice", d: "A chat bubble on your website where patients can type or talk." },
+];
+
+const NEXT = ["Chartered accountants", "Law firms", "Automobile dealerships"];
+
 function Index() {
   const { user } = useAuth();
   return (
@@ -146,26 +164,76 @@ function Index() {
         </Button>
       </header>
       <main className="mx-auto max-w-6xl px-4 pb-24 pt-8 sm:px-6 sm:pt-12">
-        <p className="font-mono text-xs uppercase tracking-[0.2em] text-primary">For conversational AI builders</p>
+        <p className="font-mono text-xs uppercase tracking-[0.2em] text-primary">For health clinics and healthcare practices</p>
         <h1 className="mt-4 w-full text-4xl font-semibold leading-[1.1] sm:text-5xl md:text-6xl">
-          Compare conversational AI setups.
+          Meet Mira, your clinic’s 24/7 virtual front desk.
         </h1>
         <p className="mt-6 w-full text-lg text-muted-foreground">
-          Talk or type once. Experience two AI agents side by side. Mix language models, speech-to-text and
-          text-to-speech, then choose languages and voices to find the right setup for your product.
+          Mira answers patient calls, WhatsApp messages and website chats — during the busiest clinic hours and
+          long after your staff go home — so no patient inquiry or appointment request goes unanswered.
         </p>
         <p className="mt-3 text-base text-muted-foreground">
-          Judge the replies yourself. Compare response speed and estimated cost on every turn — not just a model’s specifications.
+          Done for you: we set Mira up with your doctors, timings, fees and location. No technical skills, no new software to learn.
         </p>
-        <div className="mt-8 flex flex-wrap gap-3">
-          <Button asChild size="lg"><Link to="/playground">Open the playground <ArrowRight className="h-4 w-4" /></Link></Button>
-          <Button asChild variant="outline" size="lg"><Link to="/demo">Try the free demo</Link></Button>
-          <Button asChild variant="outline" size="lg"><a href={WHATSAPP_ASSISTANT_URL} target="_blank" rel="noopener noreferrer"><MessageCircle className="h-4 w-4" />Chat on WhatsApp</a></Button>
-          <Button asChild variant="outline" size="lg"><a href={PHONE_ASSISTANT_URL}><Phone className="h-4 w-4" />Call {PHONE_ASSISTANT_NUMBER}</a></Button>
-        </div>
 
-        <p className="mt-3 text-sm text-muted-foreground">Free demo: illustrative sample replies and metrics. Playground: real AI conversations after sign-in.</p>
+        <section aria-labelledby="try" className="mt-8 rounded-lg border border-primary/40 bg-card/70 p-4 sm:p-6">
+          <h2 id="try" className="text-lg font-semibold">Talk to Mira right now</h2>
+          <p className="mt-1 text-sm text-muted-foreground">Try a sample clinic: type or say <span className="font-mono text-foreground">TRY IVY</span> on WhatsApp or in the chat bubble.</p>
+          <div className="mt-4 flex flex-wrap gap-3">
+            <Button asChild size="lg"><a href={PHONE_ASSISTANT_URL}><Phone className="h-4 w-4" />Call {PHONE_ASSISTANT_NUMBER}</a></Button>
+            <Button asChild variant="outline" size="lg"><a href={WHATSAPP_ASSISTANT_URL} target="_blank" rel="noopener noreferrer"><MessageCircle className="h-4 w-4" />Chat on WhatsApp</a></Button>
+            <Button variant="outline" size="lg" onClick={() => document.querySelector<HTMLButtonElement>('[aria-label*="Mira"], [data-site-assistant-toggle]')?.click()}><Mic className="h-4 w-4" />Chat or talk on this site</Button>
+          </div>
+        </section>
 
+        <section aria-labelledby="pains" className="mt-16">
+          <h2 id="pains" className="text-2xl font-semibold sm:text-3xl">The calls your reception can’t always take</h2>
+          <div className="mt-6 grid gap-6 md:grid-cols-3">
+            {PAINS.map(({ icon: Icon, t, d }) => (
+              <div key={t} className="border-t border-border pt-4">
+                <Icon className="h-5 w-5 text-primary" />
+                <h3 className="mt-3 font-medium">{t}</h3>
+                <p className="mt-1 text-sm text-muted-foreground">{d}</p>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        <section aria-labelledby="channels" className="mt-16">
+          <h2 id="channels" className="text-2xl font-semibold sm:text-3xl">One assistant, every channel patients use</h2>
+          <div className="mt-6 grid gap-4 md:grid-cols-3">
+            {CHANNELS.map(({ icon: Icon, t, d }) => (
+              <div key={t} className="rounded-lg border border-border bg-card/60 p-5">
+                <Icon className="h-5 w-5 text-primary" />
+                <h3 className="mt-3 font-medium">{t}</h3>
+                <p className="mt-1 text-sm text-muted-foreground">{d}</p>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        <section aria-labelledby="done" className="mt-16 grid gap-6 md:grid-cols-2">
+          <div>
+            <h2 id="done" className="text-2xl font-semibold sm:text-3xl">Done for you, start to finish</h2>
+            <p className="mt-3 text-muted-foreground">Share your clinic details once. We configure Mira, connect your phone line and WhatsApp, add the website bubble, and keep everything updated. Your team simply receives the appointment requests.</p>
+          </div>
+          <div>
+            <h2 className="text-2xl font-semibold sm:text-3xl">Coming next</h2>
+            <p className="mt-3 text-muted-foreground">The same always-on front desk for professional services:</p>
+            <ul className="mt-3 flex flex-wrap gap-2">
+              {NEXT.map((n) => <li key={n} className="rounded-full border border-border px-3 py-1 text-sm">{n}</li>)}
+            </ul>
+          </div>
+        </section>
+
+        <section aria-labelledby="lab" className="mt-24 border-t border-border pt-10">
+          <p className="font-mono text-xs uppercase tracking-[0.2em] text-muted-foreground">For technical teams</p>
+          <h2 id="lab" className="mt-2 text-2xl font-semibold">The studio: architecture, latency and voice benchmarking</h2>
+          <p className="mt-2 text-sm text-muted-foreground">Mira is built and tuned in our open lab. Compare speech, model and voice providers side by side and see speed and cost on every turn.</p>
+          <div className="mt-4 flex flex-wrap gap-3">
+            <Button asChild variant="outline"><Link to="/demo">Try the free demo</Link></Button>
+            <Button asChild variant="ghost"><Link to="/playground">Open the playground <ArrowRight className="h-4 w-4" /></Link></Button>
+          </div>
         <div className="mt-16 w-full rounded-lg border border-border bg-card/70 font-mono text-sm">
           <div className="p-4 sm:p-6">
             <div className="flex items-end justify-between gap-4">
@@ -217,6 +285,7 @@ function Index() {
             </div>
           ))}
         </div>
+        </section>
       </main>
     </div>
   );
