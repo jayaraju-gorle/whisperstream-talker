@@ -27,7 +27,7 @@ const Body = z.object({
   messages: z.array(z.any()).min(1).max(200),
 });
 
-export async function handleAssistantPost({ request, voice = false }: { request: Request; voice?: boolean }): Promise<Response> {
+export async function handleAssistantPost({ request, voice = false, channel }: { request: Request; voice?: boolean; channel?: "Bolna" }): Promise<Response> {
         const parsed = Body.safeParse(await request.json().catch(() => null));
         if (!parsed.success) return json({ error: "Invalid request" }, 400);
         const { visitorId } = parsed.data;
@@ -95,7 +95,7 @@ export async function handleAssistantPost({ request, voice = false }: { request:
         const { model, providerOptions } = floLanguageModel(choice, apiKey, runIdFetch.fetch);
         const started = Date.now();
         let firstToken: number | null = null;
-        const log = { conversation_id: convo.id, channel: clinic ? "Website clinic test" : "Website", model: choice.id, started };
+        const log = { conversation_id: convo.id, channel: channel ?? (clinic ? "Website clinic test" : "Website"), model: choice.id, started };
 
         const result = streamText({
           model,
