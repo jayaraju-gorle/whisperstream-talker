@@ -31,7 +31,7 @@ export async function notifyNewLead(lead: {
     method: "POST",
     headers: { "Content-Type": "application/json", Authorization: `Bearer ${apiKey}`, "X-Connection-Api-Key": resendKey },
     body: JSON.stringify({
-      from: "Conversational AI Flows Studio <onboarding@resend.dev>",
+      from: "Conversational Flow Studio <onboarding@resend.dev>",
       to: [LEAD_ALERT_TO],
       subject: `New lead${lead.channel ? ` (${lead.channel})` : ""}: ${lead.name} (${lead.email})`,
       html,
