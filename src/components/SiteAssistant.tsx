@@ -209,7 +209,7 @@ function ChatBody({ visitorId, initial, onBusyChange }: { visitorId: string; ini
             autoFocus
             value={text}
             onChange={(e) => setText(e.target.value)}
-            placeholder="Ask about the studio…"
+            placeholder="Ask Mira about Aura or your business…"
             maxLength={2000}
             disabled={voiceActive}
           />

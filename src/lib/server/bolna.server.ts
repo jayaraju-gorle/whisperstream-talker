@@ -128,6 +128,7 @@ export async function handleBolnaChat(request: Request): Promise<Response> {
   const iterator = readUIMessageStream({ stream, terminateOnError: true })[Symbol.asyncIterator]();
   let previous = "";
   let opened = false;
+  let cancelled = false;
   const output = new ReadableStream<Uint8Array>({
     async pull(controller) {
       const send = (delta: object, finish_reason: string | null = null) => controller.enqueue(encoder.encode(`data: ${JSON.stringify({ ...base, object: "chat.completion.chunk", choices: [{ index: 0, delta, finish_reason }] })}\n\n`));
@@ -142,13 +143,13 @@ export async function handleBolnaChat(request: Request): Promise<Response> {
           if (delta) { send({ content: delta }); return; }
         }
       } catch (error) {
-        if (generationSignal.aborted) return;
+        if (generationSignal.aborted) { if (!cancelled) controller.close(); return; }
         generation.abort();
         controller.enqueue(encoder.encode(`data: ${JSON.stringify({ error: { message: error instanceof Error ? error.message : "Mira could not finish the reply", type: "server_error" } })}\n\ndata: [DONE]\n\n`));
         controller.close();
       }
     },
-    async cancel() { generation.abort(); await iterator.return?.(); },
+    async cancel() { cancelled = true; generation.abort(); await iterator.return?.(); },
   });
   return new Response(output, { headers: { "Content-Type": "text/event-stream; charset=utf-8", "Cache-Control": "no-cache, no-transform" } });
 }
