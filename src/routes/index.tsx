@@ -53,13 +53,13 @@ export const Route = createFileRoute("/")({
               "@type": "WebSite",
               "@id": "https://conversationalaistudio.online/#website",
               url: "https://conversationalaistudio.online/",
-              name: "Conversational Flow Studio",
+              name: "Conversational Flows Studio",
               inLanguage: "en",
             },
             {
               "@type": "WebApplication",
               "@id": "https://conversationalaistudio.online/#app",
-              name: "Conversational Flow Studio",
+              name: "Conversational Flows Studio",
               url: "https://conversationalaistudio.online/",
               description:
                 "A done-for-you 24/7 assistant across phone, WhatsApp and web, with a live sample clinic and a secondary voice and text playground for comparing response speed and cost.",
@@ -156,7 +156,7 @@ function Index() {
     <div className="min-h-screen">
       <header className="mx-auto grid max-w-6xl grid-cols-[minmax(0,1fr)_auto] items-center gap-4 px-4 py-5 sm:px-6">
         <div className="flex min-w-0 items-center gap-2 font-semibold">
-          <Logo className="h-6 w-6 shrink-0" /> Conversational Flow Studio
+          <Logo className="h-6 w-6 shrink-0" /> Conversational Flows Studio
         </div>
         <Button asChild variant="ghost" size="sm">
           <Link to={user ? "/playground" : "/auth"}>{user ? "Playground" : "Sign in"}</Link>

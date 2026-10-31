@@ -10,9 +10,9 @@ export const Route = createFileRoute("/_authenticated/history")({
     meta: [
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
-      { title: "History — Conversational Flow Studio" },
+      { title: "History — Conversational Flows Studio" },
       { name: "description", content: "Past voice agent sessions with latency and cost per turn." },
-      { property: "og:title", content: "History — Conversational Flow Studio" },
+      { property: "og:title", content: "History — Conversational Flows Studio" },
       { property: "og:description", content: "Past voice agent sessions with latency and cost per turn." },
     ],
   }),

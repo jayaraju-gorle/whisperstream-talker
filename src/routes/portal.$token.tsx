@@ -14,9 +14,9 @@ export const Route = createFileRoute("/portal/$token")({
   ssr: false,
   head: () => ({
     meta: [
-      { title: "Assistant portal — Conversational Flow Studio" },
+      { title: "Assistant portal — Conversational Flows Studio" },
       { name: "description", content: "Review and confirm incoming appointment requests for your business." },
-      { property: "og:title", content: "Assistant portal — Conversational Flow Studio" },
+      { property: "og:title", content: "Assistant portal — Conversational Flows Studio" },
       { property: "og:description", content: "Review and confirm incoming appointment requests for your business." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },

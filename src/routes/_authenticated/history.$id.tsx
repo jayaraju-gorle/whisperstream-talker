@@ -15,9 +15,9 @@ export const Route = createFileRoute("/_authenticated/history/$id")({
     meta: [
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
-      { title: "Session — Conversational Flow Studio" },
+      { title: "Session — Conversational Flows Studio" },
       { name: "description", content: "Transcript and per-turn metrics for a saved session." },
-      { property: "og:title", content: "Session — Conversational Flow Studio" },
+      { property: "og:title", content: "Session — Conversational Flows Studio" },
       { property: "og:description", content: "Transcript and per-turn metrics for a saved session." },
       { name: "robots", content: "noindex" },
     ],
@@ -43,7 +43,7 @@ function SessionPage() {
 
   const sessionTitle = data?.conv.title;
   useEffect(() => {
-    if (sessionTitle) document.title = `${sessionTitle} — Session — Conversational Flow Studio`;
+    if (sessionTitle) document.title = `${sessionTitle} — Session — Conversational Flows Studio`;
   }, [sessionTitle]);
 
   if (isError) return <main className="p-8 text-destructive">Couldn't load this session. <Link to="/history" className="underline">Back to history</Link></main>;
