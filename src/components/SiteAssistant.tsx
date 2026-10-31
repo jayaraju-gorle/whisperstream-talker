@@ -15,7 +15,7 @@ import { contactDetails, contactUpdateMessage } from "@/lib/assistant-contact";
 import { Shimmer } from "@/components/ai-elements/shimmer";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { FloVoice } from "@/components/FloVoice";
-import { PHONE_ASSISTANT_NUMBER, PHONE_ASSISTANT_URL, WHATSAPP_ASSISTANT_URL } from "@/lib/flo-voice";
+import { PHONE_ASSISTANT_DISPLAY, PHONE_ASSISTANT_URL, WHATSAPP_ASSISTANT_URL } from "@/lib/flo-voice";
 
 const KEY = "flo-visitor-id";
 const SUGGESTIONS = ["What are the sample clinic hours?", "Try an appointment request", "I’d like Mira for my clinic"];
@@ -222,7 +222,7 @@ function ChatBody({ visitorId, initial, onBusyChange }: { visitorId: string; ini
         </PromptInput>
         <div className="mt-1 flex flex-wrap gap-x-4 gap-y-1">
           <Button asChild variant="link" size="sm" className="h-auto px-0 text-xs"><a href={WHATSAPP_ASSISTANT_URL} target="_blank" rel="noopener noreferrer"><MessageCircle className="h-3 w-3" />Chat on WhatsApp</a></Button>
-          <Button asChild variant="link" size="sm" className="h-auto px-0 text-xs"><a href={PHONE_ASSISTANT_URL}><Phone className="h-3 w-3" />Call {PHONE_ASSISTANT_NUMBER}</a></Button>
+          <Button asChild variant="link" size="sm" className="h-auto px-0 text-xs"><a href={PHONE_ASSISTANT_URL}><Phone className="h-3 w-3" />Call {PHONE_ASSISTANT_DISPLAY}</a></Button>
         </div>
       </div>
     </>
