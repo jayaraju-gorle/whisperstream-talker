@@ -13,6 +13,8 @@ import { TIMEZONES } from "@/lib/timezone";
 import { ASSISTANT_VOICE_MODEL, ASSISTANT_VOICE_NAME } from "@/lib/assistant-voice-config";
 import { CurrencySelect } from "@/components/CurrencySelect";
 import { matchWhatsAppMetrics } from "@/lib/whatsapp-metrics";
+import { Switch } from "@/components/ui/switch";
+import { isLikelyTestLead } from "@/lib/lead-filters";
 
 export const Route = createFileRoute("/_authenticated/leads")({
   staticData: { sitemap: false },
@@ -48,6 +50,7 @@ function Leads() {
   const [openId, setOpenId] = useState<string | null>(null);
   const [updating, setUpdating] = useState<string | null>(null);
   const [tab, setTab] = useState<"leads" | "web" | "whatsapp" | "phone" | "model">("leads");
+  const [hideTests, setHideTests] = useState(false);
   const { data, isLoading, isError } = useQuery({
     queryKey: ["leads", "list"],
     queryFn: async () => {
@@ -57,6 +60,8 @@ function Leads() {
     },
   });
 
+  const testCount = data?.filter(isLikelyTestLead).length ?? 0;
+  const visibleLeads = hideTests ? data?.filter(lead => !isLikelyTestLead(lead)) : data;
   const setStatus = async (id: string, status: string) => {
     setUpdating(id);
     const { error } = await supabase.from("leads").update({ status }).eq("id", id);
@@ -90,11 +95,15 @@ function Leads() {
         <Button size="sm" role="tab" aria-selected={tab === "model"} variant={tab === "model" ? "default" : "outline"} onClick={() => setTab("model")}>Mira model</Button>
       </div>
       {tab === "phone" ? <WebConversations leads={data ?? []} phone /> : tab === "model" ? <FloModelSettings /> : tab === "whatsapp" ? <WhatsAppMessages /> : tab === "web" ? <WebConversations leads={data ?? []} /> : <>
+      <div className="mt-5 flex flex-wrap items-center gap-3">
+        <label className="flex items-center gap-2 text-sm"><Switch checked={hideTests} onCheckedChange={setHideTests} />Hide likely test submissions</label>
+        {hideTests && data && <span className="text-xs text-muted-foreground">{testCount} hidden</span>}
+      </div>
       {isLoading && <div className="mt-8"><LoadingIndicator label="Loading leads…" /></div>}
       {isError && <p className="mt-8 text-sm text-destructive">You don't have access to leads, or they couldn't load.</p>}
-      {data && data.length === 0 && <p className="mt-8 text-sm text-muted-foreground">No leads yet.</p>}
+      {visibleLeads && visibleLeads.length === 0 && <p className="mt-8 text-sm text-muted-foreground">{data?.length ? "No leads match this view." : "No leads yet."}</p>}
       <div className="mt-6 space-y-3">
-        {data?.map((l) => (
+        {visibleLeads?.map((l) => (
           <div key={l.id} className="rounded-lg border border-border bg-card p-4">
             <div className="flex flex-wrap items-start justify-between gap-3">
               <div className="min-w-0">

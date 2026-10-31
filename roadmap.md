@@ -15,6 +15,7 @@
 - [x] Prefill built-in scenarios and sample knowledge from the original playground
 
 ## Business roadmap (internal only)
+- [x] Store an illustrative Hyderabad Google Maps link in Aura and its guide; Mira's website reply shares it with a fictional-location disclaimer. Add reversible Leads test-hiding toggle (2 existing submissions hidden/restored); 7 tests passed. Google Maps destination and phone/WhatsApp delivery remain unverified.
 - [x] Move History into Playground's Session History tab; remove top navigation entry, preserve separate session records and old links, and add saved IST-default timezone selection. Signed-in transcript/back navigation, UTC persistence/IST restoration and mobile verified; 11 regression checks passed.
 - [x] Replace Sample Clinic 1 with editable Aura and linked scenario/knowledge; public channels read only its fixed identity. Admin save → live website answer verified; phone/WhatsApp audible delivery awaits publishing.
 - [x] Show website live speech model/voice and delegated LLM; standalone Phone conversations lists existing Bolna transcripts, excluded from Web.
