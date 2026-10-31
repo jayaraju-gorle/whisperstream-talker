@@ -2,6 +2,7 @@ import { DefaultChatTransport, readUIMessageStream, type UIMessage } from "ai";
 import { handleAssistantPost } from "@/lib/server/assistant-handler.server";
 import { publicAssistantInstructions } from "@/lib/server/public-clinic.server";
 import { PUBLIC_CLINIC_GREETING, publicTrialHistory } from "@/lib/public-clinic-demo";
+import { ASSISTANT_SPEECH_RULES } from "@/lib/assistant-speech";
 import { validFloVisitor, voiceMessages, type VoiceFragment } from "@/lib/flo-voice";
 
 export async function createFloVoice(visitorId: unknown, runId: string) {
@@ -14,7 +15,7 @@ export async function createFloVoice(visitorId: unknown, runId: string) {
   const answered = new Map<string, { text: string; answer: string }>();
   const instructions = await publicAssistantInstructions(db);
   const persona = `${instructions}
-VOICE CHANNEL: Speak in English unless the caller explicitly speaks another language. Keep spoken replies to one or two sentences. Do not read markdown or URLs aloud.
+VOICE CHANNEL: Speak in English unless the caller explicitly speaks another language. Keep spoken replies to one or two sentences. ${ASSISTANT_SPEECH_RULES}
 Backchannel policy: Moderate listening sounds without taking over.
 Interruption policy: Stop speaking and listen when interrupted; keep completed actions.
 Delegation policy:
@@ -24,7 +25,7 @@ Do not delegate to the backend when: Giving a brief greeting, listening, or aski
 
   return {
     persona,
-    openingInstructions: PUBLIC_CLINIC_GREETING + " Say clearly that this is a fictional sample clinic, then listen.",
+    openingInstructions: PUBLIC_CLINIC_GREETING + " Give this brief fictional-demo disclosure once, then listen.",
     history,
     async persist(fragments: VoiceFragment[]) {
       if (!fragments.length) return;

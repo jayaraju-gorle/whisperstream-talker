@@ -4,6 +4,7 @@ import { convertToModelMessages, createUIMessageStream, createUIMessageStreamRes
 import { activeClinicCommand } from "@/lib/server/clinic-mode.server";
 import { publicAssistantInstructions } from "@/lib/server/public-clinic.server";
 import { floTools } from "@/lib/server/flo.server";
+import { ASSISTANT_SPEECH_RULES } from "@/lib/assistant-speech";
 import { floLanguageModel, loadFloModel, logFloTurn } from "@/lib/server/flo-model.server";
 import {
   createLovableAiGatewayRunIdFetch,
@@ -99,7 +100,7 @@ export async function handleAssistantPost({ request, voice = false, channel }: {
 
         const result = streamText({
           model,
-          instructions: instructions + (voice ? "\nVOICE: Respond in English unless the caller explicitly speaks another language. Keep answers to one or two short sentences, asking one question at a time. Start with the direct answer; avoid repeated introductions, filler and recaps. After the sample disclosure in the greeting, do not repeat the full introduction; briefly retain the sample disclaimer for fees, appointments and directions. If interrupted, address the caller's latest question without restarting your earlier answer. Do not read markdown aloud. Require explicit confirmation of the exact details before saving any appointment request or contact details. An appointment is a request for the team to confirm, not a confirmed booking. Preserve completed tool results and never repeat a completed action for late transcript fragments." : ""),
+          instructions: instructions + (voice ? `\nVOICE: Respond in English unless the caller explicitly speaks another language. Keep answers to one or two short sentences, asking one question at a time. Start with the direct answer; avoid repeated introductions, filler and recaps. After the fictional disclosure in the greeting, use Aura or the clinic; keep brief demo context for fees, appointments and illustrative directions. If interrupted, address the caller's latest question without restarting your earlier answer. ${ASSISTANT_SPEECH_RULES} Require explicit confirmation of the exact details before saving contact details. Appointments are simulated requests only, never saved or confirmed real bookings. Preserve completed tool results and never repeat a completed action for late transcript fragments.` : ""),
           messages: modelMessages,
           abortSignal: request.signal,
           stopWhen: isStepCount(4),
