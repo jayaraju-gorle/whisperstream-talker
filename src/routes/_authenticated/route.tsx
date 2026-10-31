@@ -1,7 +1,7 @@
 import { CurrencySelect } from "@/components/CurrencySelect";
 import { createFileRoute, Link, Outlet, redirect, useNavigate } from "@tanstack/react-router";
 import { supabase } from "@/integrations/supabase/client";
-import { BookOpen, Building2, Home, Inbox, LogOut } from "lucide-react";
+import { BookOpen, Building2, Home, Inbox, LogOut, Menu, X } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Logo } from "@/components/Logo";
