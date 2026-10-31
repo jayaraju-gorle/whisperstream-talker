@@ -6,6 +6,7 @@ import { LoadingIndicator } from "@/components/LoadingIndicator";
 import { supabase } from "@/integrations/supabase/client";
 import { toClinicInput } from "@/lib/clinic";
 import { CLINIC_COLUMNS, type ClinicRow } from "@/lib/clinic-store";
+import { PUBLIC_SAMPLE_BUSINESS_ID } from "@/lib/public-clinic-demo";
 
 export const Route = createFileRoute("/_authenticated/clinics/$id/edit")({
   staticData: { sitemap: false },
@@ -36,6 +37,7 @@ function EditClinic() {
   return (
     <main className="w-full space-y-8 p-4 sm:p-6">
       <h1 className="mx-auto mb-6 max-w-3xl text-2xl font-semibold">Business settings</h1>
+      {id === PUBLIC_SAMPLE_BUSINESS_ID && <p className="mx-auto max-w-3xl text-sm text-muted-foreground">Aura Health Clinic · Public fictional sample. Saved hours, doctors, fees and details apply to Mira's next website, WhatsApp and phone replies. Keep all sample information hypothetical.</p>}
       {isLoading && <LoadingIndicator />}
       {isError && <p className="text-center text-sm text-destructive">Couldn't load this clinic.</p>}
       {data && <ClinicWizard userId={user.id} initial={toClinicInput(data)} existing={data} />}

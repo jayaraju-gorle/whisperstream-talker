@@ -4,6 +4,7 @@ import { Plus } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { LoadingIndicator } from "@/components/LoadingIndicator";
+import { PUBLIC_SAMPLE_BUSINESS_ID } from "@/lib/public-clinic-demo";
 
 export const Route = createFileRoute("/_authenticated/clinics/")({
   staticData: { sitemap: false },
@@ -49,6 +50,7 @@ function Clinics() {
         {data?.map((c) => (
           <Link key={c.id} to="/clinics/$id" params={{ id: c.id }} className="rounded-lg border border-border bg-card p-4 hover:border-primary">
             <div className="font-medium">{c.name}</div>
+            {c.id === PUBLIC_SAMPLE_BUSINESS_ID && <p className="mt-1 text-xs text-primary">Public fictional sample · Mira across all channels</p>}
             <div className="mt-1 text-sm text-muted-foreground">{c.phone}{c.address ? ` · ${c.address}` : ""}</div>
           </Link>
         ))}

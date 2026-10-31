@@ -1,9 +1,9 @@
 import { toClinicInput, clinicKnowledge } from "@/lib/clinic";
-import { PUBLIC_CLINIC_KNOWLEDGE } from "@/lib/public-clinic-demo";
+import { PUBLIC_CLINIC_KNOWLEDGE, PUBLIC_SAMPLE_BUSINESS_ID } from "@/lib/public-clinic-demo";
 import { ASSISTANT_INSTRUCTIONS } from "@/lib/assistant-knowledge";
 
 // This immutable identity is the ONLY business row allowed into public trials.
-export const PUBLIC_SAMPLE_BUSINESS_ID = "ddba5e0f-a003-4d8b-9af6-339712f5564e";
+export { PUBLIC_SAMPLE_BUSINESS_ID } from "@/lib/public-clinic-demo";
 type Db = Awaited<typeof import("@/integrations/supabase/client.server")>["supabaseAdmin"];
 export async function publicAssistantInstructions(db: Db) {
   const { data, error } = await db.from("clinics")
