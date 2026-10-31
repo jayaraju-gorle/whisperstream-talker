@@ -1,5 +1,5 @@
 import { DEFAULT_COMPARE } from "@/lib/studio-defaults";
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import { LoaderCircle, Mic, MicOff, Play, RotateCcw, Send, Square } from "lucide-react";
@@ -17,6 +17,7 @@ import { Slider } from "@/components/ui/slider";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { SessionHistory } from "@/components/playground/SessionHistory";
 
 export const Route = createFileRoute("/_authenticated/playground")({
   staticData: { sitemap: false },
@@ -30,7 +31,10 @@ export const Route = createFileRoute("/_authenticated/playground")({
       { property: "og:description", content: "Compare voice and text agents using OpenAI, Google Gemini, Anthropic Claude, xAI Grok, Groq and Sarvam AI, with speech providers, response times and estimated costs." },
     ],
   }),
-  validateSearch: (s: Record<string, unknown>): { clinic?: string } => (typeof s["clinic"] === "string" ? { clinic: s["clinic"] } : {}),
+  validateSearch: (s: Record<string, unknown>): { clinic?: string; tab?: "history" } => ({
+    ...(typeof s["clinic"] === "string" ? { clinic: s["clinic"] } : {}),
+    ...(s["tab"] === "history" ? { tab: "history" as const } : {}),
+  }),
   component: Playground,
 });
 
@@ -40,6 +44,7 @@ const LABELS = ["A", "B"] as const;
 
 function Playground() {
   const { user } = Route.useRouteContext();
+  const navigate = useNavigate();
   const [mode, setMode] = useState<"voice" | "text" | "live">("voice");
   const [compare, setCompare] = useState(DEFAULT_COMPARE);
   const [configs, setConfigs] = useState<AgentConfig[]>([DEFAULT_AGENT_A, DEFAULT_AGENT_B]);
@@ -59,7 +64,7 @@ function Playground() {
   const [simulating, setSimulating] = useState(false);
   const simRef = useRef(false);
   const library = useLibrary();
-  const { clinic: clinicId } = Route.useSearch();
+  const { clinic: clinicId, tab } = Route.useSearch();
   const [clinicName, setClinicName] = useState<string | null>(null);
   const clinicRef = useRef<string | null>(null);
   useEffect(() => {
@@ -255,6 +260,21 @@ function Playground() {
 
   return (
     <div className="flex flex-1 flex-col">
+      <div className="flex gap-2 border-b border-border px-4 py-3" role="tablist" aria-label="Playground views">
+        <Button size="sm" role="tab" aria-selected={tab !== "history"} variant={tab !== "history" ? "default" : "outline"}
+          onClick={() => void navigate({ to: "/playground", search: clinicId ? { clinic: clinicId } : {}, replace: true })}>Playground</Button>
+        <Button size="sm" role="tab" aria-selected={tab === "history"} variant={tab === "history" ? "default" : "outline"}
+          onClick={() => {
+            stopAll();
+            mic.current?.stop();
+            mic.current = null;
+            setMicOn(false);
+            setLevel(0);
+            void navigate({ to: "/playground", search: { ...(clinicId ? { clinic: clinicId } : {}), tab: "history" }, replace: true });
+          }}>Session History</Button>
+      </div>
+      {tab === "history" && <div role="tabpanel" aria-label="Session History"><SessionHistory /></div>}
+      <div role="tabpanel" aria-label="Playground" className={tab === "history" ? "hidden" : "flex flex-1 flex-col"}>
       {clinicName && clinicId && (
         <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border bg-secondary/50 px-4 py-2 text-sm">
           <span>Practice call for <strong>{clinicName}</strong> — talk as a caller would. Calls are saved to the business dashboard.</span>
@@ -311,7 +331,7 @@ function Playground() {
         </Button>
       </div>
 
-      {mode === "live" ? <LivePanel available={available} library={library} /> : (<>
+      {mode === "live" ? (tab !== "history" && <LivePanel available={available} library={library} />) : (<>
       {/* Agents */}
       <div className={cn("grid flex-1 gap-px bg-border", compare ? "md:grid-cols-2" : "grid-cols-1")}>
         {activeIdx.map((i) => (
@@ -396,6 +416,7 @@ function Playground() {
         )}
       </div>
       </>)}
+      </div>
     </div>
   );
 }

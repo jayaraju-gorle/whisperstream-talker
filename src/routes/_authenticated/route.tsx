@@ -1,7 +1,7 @@
 import { CurrencySelect } from "@/components/CurrencySelect";
 import { createFileRoute, Link, Outlet, redirect, useNavigate } from "@tanstack/react-router";
 import { supabase } from "@/integrations/supabase/client";
-import { BookOpen, Building2, Home, History, Inbox, LogOut } from "lucide-react";
+import { BookOpen, Building2, Home, Inbox, LogOut } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Logo } from "@/components/Logo";
@@ -54,13 +54,6 @@ function Layout() {
             activeProps={{ className: "rounded px-2.5 py-2.5 sm:py-1 bg-secondary text-foreground" }}
           >
             Playground
-          </Link>
-          <Link
-            to="/history"
-            className="flex items-center gap-1.5 rounded px-2.5 py-2.5 sm:py-1 text-muted-foreground hover:text-foreground"
-            activeProps={{ className: "flex items-center gap-1.5 rounded px-2.5 py-2.5 sm:py-1 bg-secondary text-foreground" }}
-          >
-            <History className="h-3.5 w-3.5" /> History
           </Link>
           <Link
             to="/library"

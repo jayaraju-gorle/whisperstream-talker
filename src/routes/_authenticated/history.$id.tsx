@@ -8,6 +8,7 @@ import { findLlm, findStt, findTts } from "@/lib/catalog";
 import { TurnMetricLine } from "@/components/playground/MetricsStrip";
 import { Button } from "@/components/ui/button";
 import { LoadingIndicator } from "@/components/LoadingIndicator";
+import { useTimezone } from "@/hooks/use-timezone";
 
 export const Route = createFileRoute("/_authenticated/history/$id")({
   staticData: { sitemap: false },
@@ -27,6 +28,7 @@ export const Route = createFileRoute("/_authenticated/history/$id")({
 
 function SessionPage() {
   const { id } = Route.useParams();
+  const { format } = useTimezone();
   const navigate = useNavigate();
   const [deleting, setDeleting] = useState(false);
   const { data, isError } = useQuery({
@@ -46,14 +48,14 @@ function SessionPage() {
     if (sessionTitle) document.title = `${sessionTitle} — Session — Conversational Flows Studio`;
   }, [sessionTitle]);
 
-  if (isError) return <main className="p-8 text-destructive">Couldn't load this session. <Link to="/history" className="underline">Back to history</Link></main>;
+  if (isError) return <main className="p-8 text-destructive">Couldn't load this session. <Link to="/playground" search={{ tab: "history" }} className="underline">Back to Session History</Link></main>;
   if (!data) return <main className="p-8"><LoadingIndicator label="Loading session…" /></main>;
   const agents = data.conv.compare ? ["A", "B"] : ["A"];
 
   return (
     <main className="mx-auto w-full max-w-6xl px-4 py-8">
       <div className="grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-3">
-        <Link to="/history" aria-label="Back to history" className="flex h-11 w-11 shrink-0 items-center justify-center text-muted-foreground hover:text-foreground"><ArrowLeft className="h-4 w-4" /></Link>
+        <Button asChild variant="ghost" size="icon"><Link to="/playground" search={{ tab: "history" }} aria-label="Back to Session History"><ArrowLeft className="h-4 w-4" /></Link></Button>
         <h1 className="min-w-0 break-words text-xl font-semibold">{data.conv.title}</h1>
         <Button
           variant="ghost"
@@ -65,7 +67,7 @@ function SessionPage() {
             try {
               const { error } = await supabase.from("conversations").delete().eq("id", id);
               if (error) throw error;
-              await navigate({ to: "/history" });
+              await navigate({ to: "/playground", search: { tab: "history" } });
             } catch {
               toast.error("Couldn't delete this session. Please try again.");
             } finally {
@@ -76,6 +78,7 @@ function SessionPage() {
           <Trash2 className="mr-1.5 h-3.5 w-3.5" /> Delete
         </Button>
       </div>
+      <p className="mt-2 text-sm text-muted-foreground">{format(data.conv.created_at)}</p>
       <div className={`mt-6 grid gap-6 ${agents.length > 1 ? "md:grid-cols-2" : ""}`}>
         {agents.map((a) => {
           const list = data.turns.filter((t) => t.agent === a);
