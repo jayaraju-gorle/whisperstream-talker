@@ -15,6 +15,7 @@
 - [x] Prefill built-in scenarios and sample knowledge from the original playground
 
 ## Business roadmap (internal only)
+- [ ] Move playground History into a Session History tab, remove top navigation entry, retain separate session records, and add saved IST-default timezone selection.
 - [x] Replace Sample Clinic 1 with editable Aura and linked scenario/knowledge; public channels read only its fixed identity. Admin save → live website answer verified; phone/WhatsApp audible delivery awaits publishing.
 - [x] Show website live speech model/voice and delegated LLM; standalone Phone conversations lists existing Bolna transcripts, excluded from Web.
 - [x] Add recent-reply headings and profile-saved timezone choice (IST default); UTC save/reload and IST restoration verified. 123 tests passed; mobile has no page overflow.
