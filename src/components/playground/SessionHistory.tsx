@@ -1,6 +1,6 @@
 import { Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
+import { fetchPlaygroundSessions } from "@/lib/playground-sessions";
 import { useCurrency } from "@/hooks/use-currency";
 import { useTimezone } from "@/hooks/use-timezone";
 import { TIMEZONES } from "@/lib/timezone";
@@ -12,15 +12,7 @@ export function SessionHistory() {
   const { format, zone, setZone, saving } = useTimezone();
   const { data, isLoading, isError } = useQuery({
     queryKey: ["playground-sessions"],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("conversations")
-        .select("id,title,mode,compare,created_at,turns(metrics)")
-        .order("created_at", { ascending: false })
-        .limit(100);
-      if (error) throw error;
-      return data;
-    },
+    queryFn: fetchPlaygroundSessions,
   });
 
   return (
