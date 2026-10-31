@@ -88,6 +88,6 @@ export async function resolveTrial(db: Db, messages: UIMessage[], channel: Clini
   const { data } = await db.from("clinics").select("id").eq("test_code", cmd.code).maybeSingle();
   const session = data && data.id !== PUBLIC_SAMPLE_BUSINESS_ID ? await loadClinicSession(db, data.id, channel) : null;
   if (!session) return { notice: null, session: null, history: messages };
-  const notice = isCommand ? `Hi, you're now chatting with ${session.name}'s assistant. How can I help you today? Send EXIT anytime to return to Mira.` : null;
+  const notice = isCommand ? `Hi, you're now chatting with the assistant for ${session.name}. How can I help you today? Send EXIT anytime to return to Mira.` : null;
   return { notice, session, history: after };
 }
