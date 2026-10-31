@@ -55,6 +55,44 @@ describe("Bolna protocol", () => {
     expect(frames.at(-1)).toBe("[DONE]");
     expect(frames.slice(0, -1).map((s) => JSON.parse(s).choices[0].delta)).toEqual([{ role: "assistant", content: "" }, { content: "Hello" }, { content: " Mira" }, {}]);
   });
+  it("forwards the first text while the remaining response is still pending", async () => {
+    vi.stubEnv("BOLNA_API_TOKEN", token);
+    mocks.send.mockResolvedValue({});
+    let release: (() => void) | undefined;
+    const pending = new Promise<void>(resolve => { release = resolve; });
+    mocks.read.mockImplementation(async function* () {
+      yield { parts: [{ type: "text", text: "First sentence." }] };
+      await pending;
+      yield { parts: [{ type: "text", text: "First sentence. Next sentence." }] };
+    });
+    const response = await handleBolnaChat(request({ stream: true, messages: [{ role: "user", content: "Hi" }] }));
+    const reader = response.body?.getReader();
+    if (!reader) throw new Error("Missing response stream");
+    await reader.read(); // role frame is not generated text
+    const first = await reader.read();
+    expect(new TextDecoder().decode(first.value)).toContain('"content":"First sentence."');
+    release?.();
+    while (!(await reader.read()).done) { /* consume completion */ }
+  });
+  it("aborts upstream generation when the phone client cancels the response", async () => {
+    vi.stubEnv("BOLNA_API_TOKEN", token);
+    mocks.send.mockResolvedValue({});
+    mocks.read.mockImplementation(async function* () { yield { parts: [{ type: "text", text: "Hi" }] }; });
+    const response = await handleBolnaChat(request({ stream: true, messages: [{ role: "user", content: "Hi" }] }));
+    const signal = mocks.send.mock.calls[0]?.[0].abortSignal as AbortSignal;
+    expect(signal.aborted).toBe(false);
+    await response.body?.cancel();
+    expect(signal.aborted).toBe(true);
+  });
+  it("treats an already-ended call as cancellation without storage or AI work", async () => {
+    vi.stubEnv("BOLNA_API_TOKEN", token);
+    const controller = new AbortController();
+    controller.abort();
+    const ended = new Request(request({ messages: [{ role: "user", content: "Hi" }] }), { signal: controller.signal });
+    expect((await handleBolnaChat(ended)).status).toBe(499);
+    expect(mocks.from).not.toHaveBeenCalled();
+    expect(mocks.send).not.toHaveBeenCalled();
+  });
   it("namespaces sessions and keeps completed tool history instead of caller replacements", async () => {
     vi.stubEnv("BOLNA_API_TOKEN", token);
     const prior = { id: "prior", role: "assistant", parts: [{ type: "tool-save_lead", state: "output-available", output: { saved: true } }] };
