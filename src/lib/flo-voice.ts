@@ -18,4 +18,5 @@ export function voiceMessages(fragments: VoiceFragment[], prefix: string): UIMes
 
 export const WHATSAPP_ASSISTANT_URL = "https://wa.me/916302392274?text=TRY%20AURA";
 export const PHONE_ASSISTANT_NUMBER = "7965481796";
+export const PHONE_ASSISTANT_DISPLAY = "+91 7965481796";
 export const PHONE_ASSISTANT_URL = `tel:+91${PHONE_ASSISTANT_NUMBER}`;

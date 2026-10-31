@@ -20,7 +20,7 @@ import { Logo } from "@/components/Logo";
 import { LeadForm } from "@/components/LeadForm";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/use-auth";
-import { PHONE_ASSISTANT_NUMBER, PHONE_ASSISTANT_URL, WHATSAPP_ASSISTANT_URL } from "@/lib/flo-voice";
+import { PHONE_ASSISTANT_DISPLAY, PHONE_ASSISTANT_URL, WHATSAPP_ASSISTANT_URL } from "@/lib/flo-voice";
 
 export const Route = createFileRoute("/")({
   staticData: { sitemap: true },
@@ -53,13 +53,13 @@ export const Route = createFileRoute("/")({
               "@type": "WebSite",
               "@id": "https://conversationalaistudio.online/#website",
               url: "https://conversationalaistudio.online/",
-              name: "Conversational Flow Studio",
+              name: "Conversational Flows Studio",
               inLanguage: "en",
             },
             {
               "@type": "WebApplication",
               "@id": "https://conversationalaistudio.online/#app",
-              name: "Conversational Flow Studio",
+              name: "Conversational Flows Studio",
               url: "https://conversationalaistudio.online/",
               description:
                 "A done-for-you 24/7 assistant across phone, WhatsApp and web, with a live sample clinic and a secondary voice and text playground for comparing response speed and cost.",
@@ -156,7 +156,7 @@ function Index() {
     <div className="min-h-screen">
       <header className="mx-auto grid max-w-6xl grid-cols-[minmax(0,1fr)_auto] items-center gap-4 px-4 py-5 sm:px-6">
         <div className="flex min-w-0 items-center gap-2 font-semibold">
-          <Logo className="h-6 w-6 shrink-0" /> Conversational Flow Studio
+          <Logo className="h-6 w-6 shrink-0" /> Conversational Flows Studio
         </div>
         <Button asChild variant="ghost" size="sm">
           <Link to={user ? "/playground" : "/auth"}>{user ? "Playground" : "Sign in"}</Link>
@@ -206,7 +206,7 @@ function Index() {
           <h2 id="try" className="mt-2 text-2xl font-semibold sm:text-3xl">Experience Aura Health Clinic</h2>
           <p className="mt-2 text-sm text-muted-foreground">Aura Health Clinic is a hypothetical clinic we run as a live demo of what we build — its doctors, hours and fees are made up. Call, message on WhatsApp, or chat and talk right here, and ask Mira anything a patient would.</p>
           <div className="mt-4 flex flex-wrap gap-3">
-            <Button asChild size="lg"><a href={PHONE_ASSISTANT_URL}><Phone className="h-4 w-4" />Call {PHONE_ASSISTANT_NUMBER}</a></Button>
+            <Button asChild size="lg"><a href={PHONE_ASSISTANT_URL}><Phone className="h-4 w-4" />Call {PHONE_ASSISTANT_DISPLAY}</a></Button>
             <Button asChild variant="outline" size="lg"><a href={WHATSAPP_ASSISTANT_URL} target="_blank" rel="noopener noreferrer"><MessageCircle className="h-4 w-4" />Chat on WhatsApp</a></Button>
             <Button variant="outline" size="lg" onClick={() => document.querySelector<HTMLButtonElement>('[data-site-assistant-toggle]')?.click()}><Mic className="h-4 w-4" />Chat or talk on this site</Button>
           </div>

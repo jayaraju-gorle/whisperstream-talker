@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { validFloVisitor, voiceMessages, PHONE_ASSISTANT_NUMBER, PHONE_ASSISTANT_URL, WHATSAPP_ASSISTANT_URL } from "./flo-voice";
+import { validFloVisitor, voiceMessages, PHONE_ASSISTANT_NUMBER, PHONE_ASSISTANT_DISPLAY, PHONE_ASSISTANT_URL, WHATSAPP_ASSISTANT_URL } from "./flo-voice";
 
 describe("Mira voice identity and conversation", () => {
   it("allows browser conversations but never reserved WhatsApp identities", () => {
@@ -25,5 +25,6 @@ describe("Mira voice identity and conversation", () => {
   it("dials the public telephone assistant with India's country code", () => {
     expect(PHONE_ASSISTANT_NUMBER).toBe("7965481796");
     expect(PHONE_ASSISTANT_URL).toBe("tel:+917965481796");
+    expect(PHONE_ASSISTANT_DISPLAY).toBe("+91 7965481796");
   });
 });
