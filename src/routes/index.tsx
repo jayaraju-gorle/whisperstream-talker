@@ -15,13 +15,16 @@ import {
   Moon,
   CalendarCheck,
   Globe,
-  MapPin,
 } from "lucide-react";
 import { Logo } from "@/components/Logo";
 import { LeadForm } from "@/components/LeadForm";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/use-auth";
-import { PHONE_ASSISTANT_DISPLAY, PHONE_ASSISTANT_URL, WHATSAPP_ASSISTANT_URL } from "@/lib/flo-voice";
+import {
+  PHONE_ASSISTANT_DISPLAY,
+  PHONE_ASSISTANT_URL,
+  WHATSAPP_ASSISTANT_URL,
+} from "@/lib/flo-voice";
 
 export const Route = createFileRoute("/")({
   staticData: { sitemap: true },
@@ -33,7 +36,10 @@ export const Route = createFileRoute("/")({
         content:
           "Mira answers customer calls, WhatsApp messages and website inquiries around the clock, handles peak-hour surges and captures requests. Done for you — no technical setup.",
       },
-      { property: "og:title", content: "Mira — 24/7 assistant for your business | Phone, WhatsApp & web" },
+      {
+        property: "og:title",
+        content: "Mira — 24/7 assistant for your business | Phone, WhatsApp & web",
+      },
       {
         property: "og:description",
         content:
@@ -140,15 +146,39 @@ const FEATURES = [
 ];
 
 const PAINS = [
-  { icon: Users, t: "Peak-hour surges", d: "Busy mornings and evenings bring more calls and WhatsApp messages than your team can answer. Mira helps handle inquiries across channels so customers aren't left waiting." },
-  { icon: Moon, t: "Nights and early mornings", d: "Customers message at 11 pm and call before you open. Mira replies 24/7 with hours, services, fees and directions, and records requests for your team." },
-  { icon: CalendarCheck, t: "No request left unanswered", d: "Inquiries and booking requests are recorded for your team to review when your business opens." },
+  {
+    icon: Users,
+    t: "Peak-hour surges",
+    d: "Busy mornings and evenings bring more calls and WhatsApp messages than your team can answer. Mira helps handle inquiries across channels so customers aren't left waiting.",
+  },
+  {
+    icon: Moon,
+    t: "Nights and early mornings",
+    d: "Customers message at 11 pm and call before you open. Mira replies 24/7 with hours, services, fees and directions, and records requests for your team.",
+  },
+  {
+    icon: CalendarCheck,
+    t: "No request left unanswered",
+    d: "Inquiries and booking requests are recorded for your team to review when your business opens.",
+  },
 ];
 
 const CHANNELS = [
-  { icon: Phone, t: "Phone calls", d: "A voice assistant that answers your business line and speaks with callers." },
-  { icon: MessageCircle, t: "WhatsApp", d: "Replies on the channel your customers already use, at any hour." },
-  { icon: Globe, t: "Website chat & voice", d: "A chat bubble on your website where customers can type or talk." },
+  {
+    icon: Phone,
+    t: "Phone calls",
+    d: "A voice assistant that answers your business line and speaks with callers.",
+  },
+  {
+    icon: MessageCircle,
+    t: "WhatsApp",
+    d: "Replies on the channel your customers already use, at any hour.",
+  },
+  {
+    icon: Globe,
+    t: "Website chat & voice",
+    d: "A chat bubble on your website where customers can type or talk.",
+  },
 ];
 
 function Index() {
@@ -164,20 +194,26 @@ function Index() {
         </Button>
       </header>
       <main className="mx-auto max-w-6xl px-4 pb-24 pt-8 sm:px-6 sm:pt-12">
-        <p className="font-mono text-xs uppercase tracking-[0.2em] text-primary">Phone · WhatsApp · Web</p>
+        <p className="font-mono text-xs uppercase tracking-[0.2em] text-primary">
+          Phone · WhatsApp · Web
+        </p>
         <h1 className="mt-4 w-full text-4xl font-semibold leading-[1.1] sm:text-5xl md:text-6xl">
           A done-for-you 24/7 assistant for your business.
         </h1>
         <p className="mt-6 w-full text-lg text-muted-foreground">
-          Mira answers your calls, WhatsApp messages and website inquiries — through peak rush hours and long after
-          your team goes home — so no customer question or appointment request goes unanswered.
+          Mira answers your calls, WhatsApp messages and website inquiries — through peak rush hours
+          and long after your team goes home — so no customer question or appointment request goes
+          unanswered.
         </p>
         <p className="mt-3 text-base text-muted-foreground">
-          We set everything up for you with your services, timings, fees and location. No technical skills, no new software to learn.
+          We set everything up for you with your services, timings, fees and location. No technical
+          skills, no new software to learn.
         </p>
 
         <section aria-labelledby="pains" className="mt-16">
-          <h2 id="pains" className="text-2xl font-semibold sm:text-3xl">The calls your team can’t always take</h2>
+          <h2 id="pains" className="text-2xl font-semibold sm:text-3xl">
+            The calls your team can’t always take
+          </h2>
           <div className="mt-6 grid gap-6 md:grid-cols-3">
             {PAINS.map(({ icon: Icon, t, d }) => (
               <div key={t} className="border-t border-border pt-4">
@@ -190,7 +226,9 @@ function Index() {
         </section>
 
         <section aria-labelledby="channels" className="mt-16">
-          <h2 id="channels" className="text-2xl font-semibold sm:text-3xl">One assistant, every channel your customers use</h2>
+          <h2 id="channels" className="text-2xl font-semibold sm:text-3xl">
+            One assistant, every channel your customers use
+          </h2>
           <div className="mt-6 grid gap-4 md:grid-cols-3">
             {CHANNELS.map(({ icon: Icon, t, d }) => (
               <div key={t} className="rounded-lg border border-border bg-card/60 p-5">
@@ -203,83 +241,136 @@ function Index() {
         </section>
 
         <section aria-labelledby="try" className="mt-16 border-y border-primary/40 py-6">
-          <p className="font-mono text-xs uppercase tracking-[0.2em] text-primary">Live sample setup</p>
-          <h2 id="try" className="mt-2 text-2xl font-semibold sm:text-3xl">Experience Aura Health Clinic</h2>
-          <p className="mt-2 text-sm text-muted-foreground">Aura Health Clinic is a hypothetical clinic we run as a live demo of what we build — its doctors, hours and fees are made up. Call, message on WhatsApp, or chat and talk right here, and ask Mira anything a patient would.</p>
+          <p className="font-mono text-xs uppercase tracking-[0.2em] text-primary">
+            Live sample setup
+          </p>
+          <h2 id="try" className="mt-2 text-2xl font-semibold sm:text-3xl">
+            Experience Aura Health Clinic
+          </h2>
+          <p className="mt-2 text-sm text-muted-foreground">
+            Aura Health Clinic is a hypothetical clinic we run as a live demo of what we build — its
+            doctors, hours and fees are made up. Call, message on WhatsApp, or chat and talk right
+            here, and ask Mira anything a patient would.
+          </p>
           <div className="mt-4 flex flex-wrap gap-3">
-            <Button asChild size="lg"><a href={PHONE_ASSISTANT_URL}><Phone className="h-4 w-4" />Call {PHONE_ASSISTANT_DISPLAY}</a></Button>
-            <Button asChild variant="outline" size="lg"><a href={WHATSAPP_ASSISTANT_URL} target="_blank" rel="noopener noreferrer"><MessageCircle className="h-4 w-4" />Chat on WhatsApp</a></Button>
-            <Button variant="outline" size="lg" onClick={() => document.querySelector<HTMLButtonElement>('[data-site-assistant-toggle]')?.click()}><Mic className="h-4 w-4" />Chat or talk on this site</Button>
-            <Button asChild variant="ghost" size="lg"><a href="https://wa.me/916302392274?text=AURA%20MAP" target="_blank" rel="noopener noreferrer"><MapPin className="h-4 w-4" />Get location on WhatsApp</a></Button>
+            <Button asChild size="lg">
+              <a href={PHONE_ASSISTANT_URL}>
+                <Phone className="h-4 w-4" />
+                Call {PHONE_ASSISTANT_DISPLAY}
+              </a>
+            </Button>
+            <Button asChild variant="outline" size="lg">
+              <a href={WHATSAPP_ASSISTANT_URL} target="_blank" rel="noopener noreferrer">
+                <MessageCircle className="h-4 w-4" />
+                Chat on WhatsApp
+              </a>
+            </Button>
+            <Button
+              variant="outline"
+              size="lg"
+              onClick={() =>
+                document.querySelector<HTMLButtonElement>("[data-site-assistant-toggle]")?.click()
+              }
+            >
+              <Mic className="h-4 w-4" />
+              Chat or talk on this site
+            </Button>
           </div>
         </section>
 
         <section aria-labelledby="business-enquiry" className="mt-12">
-            <h2 id="business-enquiry" className="text-2xl font-semibold sm:text-3xl">Want one for your business?</h2>
-            <p className="mt-1 mb-4 text-sm text-muted-foreground">Tell us a little about you and we’ll configure a custom assistant with your details.</p>
-            <LeadForm />
+          <h2 id="business-enquiry" className="text-2xl font-semibold sm:text-3xl">
+            Want one for your business?
+          </h2>
+          <p className="mt-1 mb-4 text-sm text-muted-foreground">
+            Tell us a little about you and we’ll configure a custom assistant with your details.
+          </p>
+          <LeadForm />
         </section>
 
-
         <section aria-labelledby="lab" className="mt-24 border-t border-border pt-10">
-          <p className="font-mono text-xs uppercase tracking-[0.2em] text-muted-foreground">For technical teams</p>
-          <h2 id="lab" className="mt-2 text-2xl font-semibold">The studio: architecture, latency and voice benchmarking</h2>
-          <p className="mt-2 text-sm text-muted-foreground">Mira is built and tuned in our open lab. Compare speech, model and voice providers side by side and see speed and cost on every turn.</p>
+          <p className="font-mono text-xs uppercase tracking-[0.2em] text-muted-foreground">
+            For technical teams
+          </p>
+          <h2 id="lab" className="mt-2 text-2xl font-semibold">
+            The studio: architecture, latency and voice benchmarking
+          </h2>
+          <p className="mt-2 text-sm text-muted-foreground">
+            Mira is built and tuned in our open lab. Compare speech, model and voice providers side
+            by side and see speed and cost on every turn.
+          </p>
           <div className="mt-4 flex flex-wrap gap-3">
-            <Button asChild variant="outline"><Link to="/demo">Try the free demo</Link></Button>
-            <Button asChild variant="ghost"><Link to="/playground">Open the playground <ArrowRight className="h-4 w-4" /></Link></Button>
+            <Button asChild variant="outline">
+              <Link to="/demo">Try the free demo</Link>
+            </Button>
+            <Button asChild variant="ghost">
+              <Link to="/playground">
+                Open the playground <ArrowRight className="h-4 w-4" />
+              </Link>
+            </Button>
           </div>
-        <div className="mt-16 w-full rounded-lg border border-border bg-card/70 font-mono text-sm">
-          <div className="p-4 sm:p-6">
-            <div className="flex items-end justify-between gap-4">
-              <div className="min-w-0 text-[10px] uppercase tracking-widest text-muted-foreground sm:text-xs">
-                Voice latency benchmark
-              </div>
-              <div className="shrink-0 text-right">
-                <div className="text-2xl font-bold leading-none text-primary sm:text-3xl">
-                  710 <span className="text-lg font-medium sm:text-xl">ms</span>
+          <div className="mt-16 w-full rounded-lg border border-border bg-card/70 font-mono text-sm">
+            <div className="p-4 sm:p-6">
+              <div className="flex items-end justify-between gap-4">
+                <div className="min-w-0 text-[10px] uppercase tracking-widest text-muted-foreground sm:text-xs">
+                  Browser voice timing · illustrative example
                 </div>
-                <div className="mt-1 text-[9px] uppercase tracking-wider text-muted-foreground sm:text-[10px]">
-                  Total end-to-end response time
-                </div>
-              </div>
-            </div>
-            <div className="mt-6 grid grid-cols-1 overflow-hidden rounded border border-border sm:grid-cols-3">
-              {STAGES.map((s, i) => (
-                <div
-                  key={s.k}
-                  className={`min-w-0 bg-background/60 p-3 sm:p-4${
-                    i > 0 ? " border-t border-border sm:border-t-0 sm:border-l" : ""
-                  }`}
-                >
-                  <div className="text-[10px] font-medium uppercase tracking-tight text-muted-foreground">
-                    {s.k} · {s.stage}
+                <div className="shrink-0 text-right">
+                  <div className="text-2xl font-bold leading-none text-primary sm:text-3xl">
+                    710 <span className="text-lg font-medium sm:text-xl">ms</span>
                   </div>
-                  <div className="mt-1 whitespace-nowrap text-lg font-medium text-foreground sm:text-xl">
-                    {s.value} <span className="text-xs font-normal text-muted-foreground">ms</span>
+                  <div className="mt-1 text-[9px] uppercase tracking-wider text-muted-foreground sm:text-[10px]">
+                    Sample stage total · not measured
                   </div>
-                  <div className="mt-2 text-[10px] leading-relaxed text-muted-foreground sm:text-xs">{s.label}</div>
                 </div>
-              ))}
-            </div>
-            <div className="mt-4 text-center">
-              <div className="text-[10px] uppercase tracking-widest text-muted-foreground">180 + 320 + 210 = 710 ms</div>
-              <p className="mt-1 text-xs text-muted-foreground">
-                Measured from the moment you stop speaking to the agent's first spoken word.
-              </p>
+              </div>
+              <div className="mt-6 grid grid-cols-1 overflow-hidden rounded border border-border sm:grid-cols-3">
+                {STAGES.map((s, i) => (
+                  <div
+                    key={s.k}
+                    className={`min-w-0 bg-background/60 p-3 sm:p-4${
+                      i > 0 ? " border-t border-border sm:border-t-0 sm:border-l" : ""
+                    }`}
+                  >
+                    <div className="text-[10px] font-medium uppercase tracking-tight text-muted-foreground">
+                      {s.k} · {s.stage}
+                    </div>
+                    <div className="mt-1 whitespace-nowrap text-lg font-medium text-foreground sm:text-xl">
+                      {s.value}{" "}
+                      <span className="text-xs font-normal text-muted-foreground">ms</span>
+                    </div>
+                    <div className="mt-2 text-[10px] leading-relaxed text-muted-foreground sm:text-xs">
+                      {s.label}
+                    </div>
+                  </div>
+                ))}
+              </div>
+              <div className="mt-4 text-center">
+                <div className="text-[10px] uppercase tracking-widest text-muted-foreground">
+                  180 + 320 + 210 = 710 ms
+                </div>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  Illustrative figures, not a measured benchmark or speed guarantee. Telephone and
+                  Bolna timing are excluded.
+                </p>
+                <p className="mt-2 text-xs text-muted-foreground">
+                  The playground measures actual browser response times per turn. Website live voice
+                  uses a different speech-to-speech flow; phone calls also include telephony, Bolna
+                  processing and network delays.
+                </p>
+              </div>
             </div>
           </div>
-        </div>
 
-        <div className="mt-16 grid gap-6 sm:grid-cols-2 md:grid-cols-4">
-          {FEATURES.map(({ icon: Icon, t, d }) => (
-            <div key={t} className="border-t border-border pt-4">
-              <Icon className="h-5 w-5 text-primary" />
-              <h3 className="mt-3 font-medium">{t}</h3>
-              <p className="mt-1 text-sm text-muted-foreground">{d}</p>
-            </div>
-          ))}
-        </div>
+          <div className="mt-16 grid gap-6 sm:grid-cols-2 md:grid-cols-4">
+            {FEATURES.map(({ icon: Icon, t, d }) => (
+              <div key={t} className="border-t border-border pt-4">
+                <Icon className="h-5 w-5 text-primary" />
+                <h3 className="mt-3 font-medium">{t}</h3>
+                <p className="mt-1 text-sm text-muted-foreground">{d}</p>
+              </div>
+            ))}
+          </div>
         </section>
       </main>
     </div>
