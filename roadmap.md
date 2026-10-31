@@ -15,6 +15,7 @@
 - [x] Prefill built-in scenarios and sample knowledge from the original playground
 
 ## Business roadmap (internal only)
+- [ ] Unify Mira voice/chat transcript and automatic scrolling; remove fourth sample CTA; verify benchmark provenance and phone-to-WhatsApp map delivery requirements.
 - [x] Separate Aura trial and business enquiry; natural AM/PM knowledge and speech rules, shorter fictional greeting, AURA MAP customer-initiated WhatsApp handoff using the saved map and durable reply path. 52 regression checks passed; homepage sections/button visually verified. Reviewed official Bolna realtime tradeoffs; existing custom LLM is not the realtime engine.
 - [ ] Verify new spoken times/interruptions and WhatsApp AURA MAP delivery — blocked on publishing and real calls/messages; no Bolna controls available. Direct phone-triggered proactive WhatsApp sending is not enabled without approved-template/customer-window setup.
 - [x] Align homepage business/customer wording; parallelize fresh model/facts/history setup, tighten voice replies, propagate phone cancellation and discourage SSE buffering. 28 regression checks passed; real Bolna endpoint returned incremental text (first text 3.764s, full reply 5.291s); no claim of audible improvement.
