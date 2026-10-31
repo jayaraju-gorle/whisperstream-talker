@@ -1,7 +1,7 @@
-import { PUBLIC_CLINIC_CODE, PUBLIC_CLINIC_GREETING, PUBLIC_CLINIC_NOTICE, publicTrialHistory } from "@/lib/public-clinic-demo";
+import { publicTrialHistory } from "@/lib/public-clinic-demo";
 import { z } from "zod";
 import { convertToModelMessages, createUIMessageStream, createUIMessageStreamResponse, isStepCount, streamText, type UIMessage } from "ai";
-import { activeClinicCommand } from "@/lib/server/clinic-mode.server";
+import { clinicAppointmentTools, resolveTrial } from "@/lib/server/clinic-mode.server";
 import { publicAssistantInstructions } from "@/lib/server/public-clinic.server";
 import { floTools } from "@/lib/server/flo.server";
 import { ASSISTANT_SPEECH_RULES } from "@/lib/assistant-speech";
@@ -61,13 +61,9 @@ export async function handleAssistantPost({ request, voice = false, channel }: {
           if (error) console.error("conversation save failed", error);
         };
 
-        // No public path may resolve real business codes or appointment tools.
-        const cmd = activeClinicCommand(messages);
-        let notice: string | null = null;
-        if (cmd.index === messages.length - 1) {
-          notice = cmd.code === PUBLIC_CLINIC_CODE ? PUBLIC_CLINIC_GREETING : cmd.code
-            ? PUBLIC_CLINIC_NOTICE : "You're with Mira. Would you like an assistant set up for your own clinic?";
-        }
+        // TRY <code> switches to that saved business's assistant; AURA is the public sample.
+        const trial = await resolveTrial(db, messages, "Website");
+        const notice = trial.notice;
         if (notice) {
           const text = notice;
           const stream = createUIMessageStream({
@@ -84,13 +80,13 @@ export async function handleAssistantPost({ request, voice = false, channel }: {
           });
           return createUIMessageStreamResponse({ stream });
         }
-        const history = cmd.index >= 0 ? messages.slice(cmd.index + 1) : messages;
+        const history = trial.history;
 
         const runIdFetch = createLovableAiGatewayRunIdFetch(getLovableAiGatewayRunId(request));
         // Independent, fresh per-turn reads run together; never cache editable Aura facts.
         const [choice, instructions, modelMessages] = await Promise.all([
           loadFloModel(db),
-          publicAssistantInstructions(db),
+          trial.session ? Promise.resolve(trial.session.instructions) : publicAssistantInstructions(db),
           convertToModelMessages(history),
         ]);
         const { model, providerOptions } = floLanguageModel(choice, apiKey, runIdFetch.fetch);
@@ -100,11 +96,11 @@ export async function handleAssistantPost({ request, voice = false, channel }: {
 
         const result = streamText({
           model,
-          instructions: instructions + (voice ? `\nVOICE: Respond in English unless the caller explicitly speaks another language. Keep answers to one or two short sentences, asking one question at a time. Start with the direct answer; avoid repeated introductions, filler and recaps. After the fictional disclosure in the greeting, use Aura or the clinic; keep brief demo context for fees, appointments and illustrative directions. If interrupted, address the caller's latest question without restarting your earlier answer. ${ASSISTANT_SPEECH_RULES} Require explicit confirmation of the exact details before saving contact details. Appointments are simulated requests only, never saved or confirmed real bookings. Preserve completed tool results and never repeat a completed action for late transcript fragments.` : ""),
+          instructions: instructions + (voice ? `\nVOICE: Respond in English unless the caller explicitly speaks another language. Keep answers to one or two short sentences, asking one question at a time. Start with the direct answer; avoid repeated introductions, filler and recaps. ${trial.session ? "" : "After the fictional disclosure in the greeting, use Aura or the clinic; keep brief demo context for fees, appointments and illustrative directions. "}If interrupted, address the caller's latest question without restarting your earlier answer. ${ASSISTANT_SPEECH_RULES} Require explicit confirmation of the exact details before saving contact details. ${trial.session ? "Appointments are requests for the team to confirm, never confirmed bookings. " : "Appointments are simulated requests only, never saved or confirmed real bookings. "}Preserve completed tool results and never repeat a completed action for late transcript fragments.` : ""),
           messages: modelMessages,
           abortSignal: request.signal,
           stopWhen: isStepCount(4),
-          tools: floTools(db, convo.id, channel),
+          tools: trial.session ? clinicAppointmentTools(db, trial.session.id, "Website") : floTools(db, convo.id, channel),
           providerOptions,
           onChunk: ({ chunk }) => { if (firstToken == null && chunk.type === "text-delta") firstToken = Date.now(); },
           onFinish: async ({ totalUsage, steps }) => {

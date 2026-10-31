@@ -23,7 +23,7 @@ describe("public WhatsApp demo isolation", () => {
     expect(result.text).toContain("isn't available");
     expect(result.text).not.toContain("https://");
   });
-  it.each(["TRY IVY", "TRY IYASHI", "Hours?"])("never loads a real clinic for %s and clears old routing", async body => {
+  it.each(["TRY IVY", "TRY IYASHI", "Hours?"])("clears legacy session rows for %s (switching is resolved from history)", async body => {
     const eq = vi.fn().mockResolvedValue({});
     const remove = vi.fn().mockReturnValue({ eq });
     const from = vi.fn().mockReturnValue({ delete: remove });

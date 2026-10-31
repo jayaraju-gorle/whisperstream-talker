@@ -20,7 +20,7 @@ Backchannel policy: Moderate listening sounds without taking over.
 Interruption policy: Stop speaking and listen when interrupted; keep completed actions.
 Delegation policy:
 Backend tools: Shared Mira knowledge, business switching, consent-based contact capture and appointment requests.
-Delegate to the backend when: The caller asks any product or business question, says TRY followed by the sample code AURA, says EXIT, shares contact details, requests an appointment, or corrects details. Always use the backend's current assistant and verified result. Never claim an action succeeded without it. After TRY, continue as the business selected by the backend; EXIT restores Mira.
+Delegate to the backend when: The caller asks any product or business question, says TRY followed by a business code (such as AURA), says EXIT, shares contact details, requests an appointment, or corrects details. Always use the backend's current assistant and verified result. Never claim an action succeeded without it. After TRY, continue as the business selected by the backend; EXIT restores Mira.
 Do not delegate to the backend when: Giving a brief greeting, listening, or asking the caller to repeat unclear speech.`;
 
   return {

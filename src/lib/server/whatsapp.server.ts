@@ -3,8 +3,8 @@ import { publicAssistantInstructions } from "@/lib/server/public-clinic.server";
 import { floTools } from "@/lib/server/flo.server";
 import { floLanguageModel, loadFloModel, logFloTurn } from "@/lib/server/flo-model.server";
 import { createLovableAiGatewayRunIdFetch } from "@/lib/server/run-id";
-import { parseClinicCommand } from "@/lib/clinic";
-import { PUBLIC_CLINIC_CODE, PUBLIC_CLINIC_GREETING, PUBLIC_CLINIC_NOTICE, PUBLIC_SAMPLE_BUSINESS_ID, publicTrialHistory } from "@/lib/public-clinic-demo";
+import { PUBLIC_SAMPLE_BUSINESS_ID, publicTrialHistory } from "@/lib/public-clinic-demo";
+import { clinicAppointmentTools, resolveTrial } from "@/lib/server/clinic-mode.server";
 
 
 // Mira over WhatsApp: durable inbox processing, reply sending and delivery-status reconciliation.
@@ -156,7 +156,7 @@ async function processEvent(db: Db, ev: { id: string; event: string; payload: un
   }
 }
 
-/** Public WhatsApp never starts or resumes real-business sessions. */
+/** Handles fixed shortcuts; TRY/EXIT switching is resolved from history in replyTo. */
 export async function routeMessage(db: Db, phone: string, body: string): Promise<{ text?: string }> {
   await db.from("clinic_whatsapp_sessions").delete().eq("phone", phone);
   // Customer-initiated handoff stays inside the normal durable reply/status path.
@@ -171,13 +171,13 @@ export async function routeMessage(db: Db, phone: string, body: string): Promise
     }
     return { text: `Aura Health Clinic — illustrative demo location\n${url}\nThis is a sample location, not a real Aura clinic listing or directions to a real clinic.` };
   }
-  const cmd = parseClinicCommand(body);
-  if (cmd?.kind === "try") return { text: cmd.code === PUBLIC_CLINIC_CODE ? PUBLIC_CLINIC_GREETING : PUBLIC_CLINIC_NOTICE };
-  if (cmd?.kind === "exit") return { text: "You're with Mira. Would you like an assistant set up for your own clinic?" };
   return {};
 }
 
-async function generateReply(db: Db, conversationId: string, history: UIMessage[]) {
+async function generateReply(db: Db, conversationId: string, history: UIMessage[], phone: string) {
+  const trial = await resolveTrial(db, history, "WhatsApp");
+  if (trial.notice) return trial.notice;
+  history = trial.history;
   const { lovable } = keys();
   const runIdFetch = createLovableAiGatewayRunIdFetch();
   const choice = await loadFloModel(db);
@@ -188,10 +188,10 @@ async function generateReply(db: Db, conversationId: string, history: UIMessage[
   try {
     const result = streamText({
       model,
-      instructions: await publicAssistantInstructions(db) + WHATSAPP_INSTRUCTIONS,
+      instructions: trial.session ? trial.session.instructions : await publicAssistantInstructions(db) + WHATSAPP_INSTRUCTIONS,
       messages: await convertToModelMessages(history.slice(-HISTORY_LIMIT)),
       stopWhen: isStepCount(4),
-      tools: floTools(db, conversationId, "WhatsApp"),
+      tools: trial.session ? clinicAppointmentTools(db, trial.session.id, "WhatsApp", phone) : floTools(db, conversationId, "WhatsApp"),
       providerOptions,
       onChunk: ({ chunk }) => { if (firstToken == null && chunk.type === "text-delta") firstToken = Date.now(); },
     });
@@ -231,7 +231,7 @@ async function replyTo(db: Db, msgId: string) {
       : [...prior, { id: userId, role: "user" as const, parts: [{ type: "text" as const, text: claimed.body }] }];
     // Keep typing through model/tool work and sending, including first attempts and recovery.
     const sent = await withWhatsAppTyping(claimed.wa_message_id, async () => {
-      const text = routed.text ?? await generateReply(db, convo.id, history);
+      const text = routed.text ?? await generateReply(db, convo.id, history, claimed.phone);
       if (!text) return { ok: false as const, error: "Empty reply" };
       return { ...await sendWhatsAppText(claimed.phone, text), text };
     });

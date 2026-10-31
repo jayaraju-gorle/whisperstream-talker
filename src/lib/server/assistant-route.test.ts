@@ -13,13 +13,14 @@ const handler = (Route as unknown as { server: { handlers: { POST: (args: { requ
 afterEach(() => { vi.unstubAllEnvs(); vi.clearAllMocks(); });
 
 describe("visitor contact updates", () => {
-  it.each([undefined, "Bolna"] as const)("blocks real clinic lookup for public channel %s", async (channel) => {
+  it.each([undefined, "Bolna"] as const)("TRY IVY switches to the saved business on public channel %s", async (channel) => {
     vi.stubEnv("LOVABLE_API_KEY", "test-key");
-    const chain = { upsert: vi.fn().mockReturnThis(), select: vi.fn().mockReturnThis(), single: vi.fn().mockResolvedValue({ data: { id: "demo" } }) };
+    const chain = { upsert: vi.fn().mockReturnThis(), select: vi.fn().mockReturnThis(), eq: vi.fn().mockReturnThis(),
+      single: vi.fn().mockResolvedValue({ data: { id: "demo" } }),
+      maybeSingle: vi.fn().mockResolvedValueOnce({ data: { id: "ivy-id" } }).mockResolvedValueOnce({ data: { id: "ivy-id", name: "Ivy Clinic", hours: {}, doctors: [] } }) };
     mocks.from.mockReturnValue(chain);
     await handleAssistantPost({ ...(channel ? { channel } : {}), request: new Request("https://example.com", { method: "POST", body: JSON.stringify({ visitorId: channel ? "bolna_1234567890123456" : "visitor_secret_123456", messages: [{ role: "user", parts: [{ type: "text", text: "TRY IVY" }] }] }) }) });
-    expect(mocks.from).toHaveBeenCalledTimes(1);
-    expect(mocks.from).toHaveBeenCalledWith("assistant_conversations");
+    expect(mocks.from).toHaveBeenCalledWith("clinics");
     expect(mocks.stream).not.toHaveBeenCalled();
     expect(mocks.notice).toHaveBeenCalledTimes(1);
   });
