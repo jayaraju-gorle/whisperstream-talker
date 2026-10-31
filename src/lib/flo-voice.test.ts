@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { validFloVisitor, voiceMessages, PHONE_ASSISTANT_NUMBER, PHONE_ASSISTANT_URL, WHATSAPP_ASSISTANT_URL } from "./flo-voice";
+import { validFloVisitor, voiceMessages, PHONE_ASSISTANT_NUMBER, PHONE_ASSISTANT_DISPLAY, PHONE_ASSISTANT_URL, WHATSAPP_ASSISTANT_URL } from "./flo-voice";
 
 describe("Mira voice identity and conversation", () => {
   it("allows browser conversations but never reserved WhatsApp identities", () => {
