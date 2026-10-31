@@ -17,4 +17,13 @@ describe("editable public Aura sample", () => {
     expect(await publicAssistantInstructions({ from } as unknown as Parameters<typeof publicAssistantInstructions>[0])).toContain("Aura Health Clinic");
     expect(from).toHaveBeenCalledTimes(1);
   });
+  it("includes the saved Google Maps link with hypothetical-directions safeguards", async () => {
+    const map_url = "https://www.google.com/maps/search/?api=1&query=Hyderabad%2C%20Telangana%2C%20India";
+    const chain = { select: vi.fn().mockReturnThis(), eq: vi.fn().mockReturnThis(), maybeSingle: vi.fn().mockResolvedValue({ data: { name: "Aura Health Clinic", map_url, notes: "Illustrative Hyderabad city location only; not a real Aura clinic listing." } }) };
+    const instructions = await publicAssistantInstructions({ from: vi.fn().mockReturnValue(chain) } as unknown as Parameters<typeof publicAssistantInstructions>[0]);
+    expect(instructions).toContain(map_url);
+    expect(instructions).toContain("Illustrative Hyderabad city location only");
+    expect(instructions).toContain("including any contact details or directions");
+    expect(instructions).not.toContain("No real directions, map");
+  });
 });

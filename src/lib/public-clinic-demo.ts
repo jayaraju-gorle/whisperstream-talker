@@ -8,7 +8,8 @@ export const PUBLIC_CLINIC_GREETING = "Hi, I'm Mira, the 24/7 assistant for Aura
 export const PUBLIC_CLINIC_NOTICE = "This public demo uses Aura Health Clinic, a fictional sample with made-up details. Real business assistants are available only in the signed-in admin studio. Ask about sample clinic hours, fees, or an appointment request, or tell me about setting this up for your own clinic.";
 export const PUBLIC_CLINIC_KNOWLEDGE = `PUBLIC SAMPLE CLINIC — Aura Health Clinic
 - This is a hypothetical clinic, not a real healthcare practice. Every name, fee, schedule and location below is fictional.
-- Location: Suite 204, Willow Health Centre, Green Park neighbourhood, Hyderabad (fictional address). No real directions, map, contact number or clinic email is available.
+- Location: Suite 204, Willow Health Centre, Green Park neighbourhood, Hyderabad (fictional address).
+- Google Maps / Directions: https://www.google.com/maps/search/?api=1&query=Hyderabad%2C%20Telangana%2C%20India — illustrative Hyderabad city location only, not a real Aura clinic listing or directions to the fictional address. Share this link on request and explain its sample status. No real clinic contact number or email is available.
 - Hours: Monday–Saturday, 10 am–1 pm and 5 pm–8 pm; Sunday closed. Mira responds 24/7, including outside these sample opening hours.
 - Dr. Anika Rao, family medicine: Monday–Saturday during clinic hours; sample consultation fee ₹600.
 - Dr. Rohan Mehta, child health: Monday–Saturday, 5 pm–8 pm; sample consultation fee ₹700.
