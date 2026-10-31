@@ -23,7 +23,7 @@ describe("clinic onboarding", () => {
     const c = emptyClinic();
     c.hours[0] = { day: "Monday", open: true, slots: [{ from: "10:00", to: "15:00" }, { from: "17:00", to: "20:00" }] };
     expect(stepError(1, c)).toBeNull();
-    expect(clinicKnowledge({ ...c, name: "S", phone: "1" })).toContain("Monday: 10:00 – 15:00, 17:00 – 20:00");
+    expect(clinicKnowledge({ ...c, name: "S", phone: "1" })).toContain("Monday: 10:00 AM – 3:00 PM, 5:00 PM – 8:00 PM");
     c.hours[0]!.slots[1] = { from: "14:00", to: "20:00" };
     expect(stepError(1, c)).toBe("Monday: time slots overlap.");
   });

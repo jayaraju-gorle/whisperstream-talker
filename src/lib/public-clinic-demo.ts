@@ -4,7 +4,7 @@ import { parseClinicCommand } from "@/lib/clinic";
 export const PUBLIC_CLINIC_CODE = "AURA";
 export const PUBLIC_SAMPLE_BUSINESS_ID = "ddba5e0f-a003-4d8b-9af6-339712f5564e";
 export const PUBLIC_CLINIC_NAME = "Aura Health Clinic";
-export const PUBLIC_CLINIC_GREETING = "Hi, I'm Mira, the 24/7 assistant for Aura Health Clinic. Aura is a live hypothetical clinic demo showing what we build for businesses, so its details are made up and no real appointment is booked. Ask me anything a patient would, or ask about getting an assistant like me for your own business. How can I help?";
+export const PUBLIC_CLINIC_GREETING = "Hi, I'm Mira, Aura Health Clinic's 24/7 assistant. Aura is a fictional clinic for this live demonstration. How can I help?";
 export const PUBLIC_CLINIC_NOTICE = "This public demo uses Aura Health Clinic, a fictional sample with made-up details. Real business assistants are available only in the signed-in admin studio. Ask about sample clinic hours, fees, or an appointment request, or tell me about setting this up for your own clinic.";
 export const PUBLIC_CLINIC_KNOWLEDGE = `PUBLIC SAMPLE CLINIC — Aura Health Clinic
 - This is a hypothetical clinic, not a real healthcare practice. Every name, fee, schedule and location below is fictional.

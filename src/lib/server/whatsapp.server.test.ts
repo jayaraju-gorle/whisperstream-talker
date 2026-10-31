@@ -2,6 +2,27 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { nextStatus, routeMessage, typingForPayload, withWhatsAppTyping } from "./whatsapp.server";
 
 describe("public WhatsApp demo isolation", () => {
+  it("shares the current editable Aura map only to the initiating WhatsApp conversation", async () => {
+    const url = "https://www.google.com/maps/search/?api=1&query=Hyderabad";
+    const eq = vi.fn().mockReturnThis();
+    const chain = { eq, maybeSingle: vi.fn().mockResolvedValue({ data: { map_url: url }, error: null }) };
+    const from = vi.fn((table: string) => table === "clinics"
+      ? { select: vi.fn().mockReturnValue(chain) }
+      : { delete: vi.fn().mockReturnValue({ eq: vi.fn().mockResolvedValue({}) }) });
+    const result = await routeMessage({ from } as unknown as Parameters<typeof routeMessage>[0], "919999999999", "AURA MAP");
+    expect(eq).toHaveBeenCalledWith("id", "ddba5e0f-a003-4d8b-9af6-339712f5564e");
+    expect(result.text).toContain(url);
+    expect(result.text).toContain("not a real Aura clinic listing");
+  });
+  it("does not invent a map when Aura has no saved link", async () => {
+    const chain = { eq: vi.fn().mockReturnThis(), maybeSingle: vi.fn().mockResolvedValue({ data: { map_url: "" } }) };
+    const from = vi.fn((table: string) => table === "clinics"
+      ? { select: vi.fn().mockReturnValue(chain) }
+      : { delete: vi.fn().mockReturnValue({ eq: vi.fn().mockResolvedValue({}) }) });
+    const result = await routeMessage({ from } as unknown as Parameters<typeof routeMessage>[0], "919999999999", "AURA MAP");
+    expect(result.text).toContain("isn't available");
+    expect(result.text).not.toContain("https://");
+  });
   it.each(["TRY IVY", "TRY IYASHI", "Hours?"])("never loads a real clinic for %s and clears old routing", async body => {
     const eq = vi.fn().mockResolvedValue({});
     const remove = vi.fn().mockReturnValue({ eq });

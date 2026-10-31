@@ -15,6 +15,7 @@ import {
   Moon,
   CalendarCheck,
   Globe,
+  MapPin,
 } from "lucide-react";
 import { Logo } from "@/components/Logo";
 import { LeadForm } from "@/components/LeadForm";
@@ -201,7 +202,7 @@ function Index() {
           </div>
         </section>
 
-        <section aria-labelledby="try" className="mt-16 rounded-lg border border-primary/40 bg-card/70 p-4 sm:p-6">
+        <section aria-labelledby="try" className="mt-16 border-y border-primary/40 py-6">
           <p className="font-mono text-xs uppercase tracking-[0.2em] text-primary">Live sample setup</p>
           <h2 id="try" className="mt-2 text-2xl font-semibold sm:text-3xl">Experience Aura Health Clinic</h2>
           <p className="mt-2 text-sm text-muted-foreground">Aura Health Clinic is a hypothetical clinic we run as a live demo of what we build — its doctors, hours and fees are made up. Call, message on WhatsApp, or chat and talk right here, and ask Mira anything a patient would.</p>
@@ -209,12 +210,14 @@ function Index() {
             <Button asChild size="lg"><a href={PHONE_ASSISTANT_URL}><Phone className="h-4 w-4" />Call {PHONE_ASSISTANT_DISPLAY}</a></Button>
             <Button asChild variant="outline" size="lg"><a href={WHATSAPP_ASSISTANT_URL} target="_blank" rel="noopener noreferrer"><MessageCircle className="h-4 w-4" />Chat on WhatsApp</a></Button>
             <Button variant="outline" size="lg" onClick={() => document.querySelector<HTMLButtonElement>('[data-site-assistant-toggle]')?.click()}><Mic className="h-4 w-4" />Chat or talk on this site</Button>
+            <Button asChild variant="ghost" size="lg"><a href="https://wa.me/916302392274?text=AURA%20MAP" target="_blank" rel="noopener noreferrer"><MapPin className="h-4 w-4" />Get location on WhatsApp</a></Button>
           </div>
-          <div className="mt-8 border-t border-border pt-6">
-            <h3 className="text-lg font-semibold">Want one for your business?</h3>
+        </section>
+
+        <section aria-labelledby="business-enquiry" className="mt-12">
+            <h2 id="business-enquiry" className="text-2xl font-semibold sm:text-3xl">Want one for your business?</h2>
             <p className="mt-1 mb-4 text-sm text-muted-foreground">Tell us a little about you and we’ll configure a custom assistant with your details.</p>
             <LeadForm />
-          </div>
         </section>
 
 

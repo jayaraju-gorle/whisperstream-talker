@@ -1,4 +1,5 @@
 // Browser- and server-safe clinic onboarding helpers: shapes, defaults and the receptionist prompt.
+import { assistantClock } from "./assistant-speech";
 export type TimeSlot = { from: string; to: string };
 export type DayHours = { day: string; open: boolean; slots: TimeSlot[] };
 export type Doctor = { name: string; specialty: string; days: string; fee: string };
@@ -82,7 +83,9 @@ export function clinicKnowledge(c: ClinicInput) {
   if (c.email) lines.push(`- Email: ${c.email}`);
   if (c.address) lines.push(`- Address: ${c.address}`);
   if (c.map_url) lines.push(`- Google Maps / Directions: ${c.map_url}`);
-  lines.push("", "## Opening hours", ...c.hours.map((h) => `- ${hoursLine(h)}`));
+  lines.push("", "## Opening hours", ...c.hours.map((h) => `- ${h.open
+    ? `${h.day}: ${h.slots.map(s => `${assistantClock(s.from)} – ${assistantClock(s.to)}`).join(", ")}`
+    : `${h.day}: Closed`}`));
   lines.push("", firm ? "## Professionals and consultation fees" : "## Doctors and consultation fees",
     ...docs.map((d) => `- ${d.name}${d.specialty ? ` (${d.specialty})` : ""}${d.days ? ` — ${d.days}` : ""}. Fee: ${d.fee}.`));
   if (c.insurance) lines.push("", "## Insurance", c.insurance);
