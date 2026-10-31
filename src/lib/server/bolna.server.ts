@@ -41,17 +41,29 @@ export async function handleBolnaChat(request: Request): Promise<Response> {
   const denied = verifyBolnaBearer(request);
   if (denied) return denied;
   // Bound the actual body as well as individual message sizes.
+  if (request.signal.aborted) return new Response(null, { status: 499 });
   const reader = request.body?.getReader();
   if (!reader) return apiError("Missing request body", 400);
   let size = 0;
   const chunks: Uint8Array[] = [];
-  while (true) {
-    const { value, done } = await reader.read();
-    if (done) break;
-    size += value.byteLength;
-    if (size > 128 * 1024) { await reader.cancel(); return apiError("Request body is too large", 413); }
-    chunks.push(value);
+  const cancelBody = () => { void reader.cancel().catch(() => undefined); };
+  request.signal.addEventListener("abort", cancelBody, { once: true });
+  try {
+    while (true) {
+      if (request.signal.aborted) return new Response(null, { status: 499 });
+      const { value, done } = await reader.read();
+      if (done) break;
+      size += value.byteLength;
+      if (size > 128 * 1024) { await reader.cancel(); return apiError("Request body is too large", 413); }
+      chunks.push(value);
+    }
+  } catch {
+    return request.signal.aborted ? new Response(null, { status: 499 }) : apiError("Could not read request body", 400);
+  } finally {
+    request.signal.removeEventListener("abort", cancelBody);
+    reader.releaseLock();
   }
+  if (request.signal.aborted) return new Response(null, { status: 499 });
   const bytes = new Uint8Array(size);
   let offset = 0;
   for (const chunk of chunks) { bytes.set(chunk, offset); offset += chunk.byteLength; }
@@ -79,6 +91,9 @@ export async function handleBolnaChat(request: Request): Promise<Response> {
       messages = [...data.messages as unknown as UIMessage[], { id: crypto.randomUUID(), role: "user", parts: [{ type: "text", text: last.content }] }];
     }
   }
+  // Response cancellation must stop paid generation, not just the stream reader.
+  const generation = new AbortController();
+  const generationSignal = AbortSignal.any([request.signal, generation.signal]);
   const { handleAssistantPost } = await import("@/lib/server/assistant-handler.server");
   const transport = new DefaultChatTransport({
     api: "/api/public/assistant", body: { visitorId },
@@ -88,8 +103,11 @@ export async function handleBolnaChat(request: Request): Promise<Response> {
   });
   let stream: Awaited<ReturnType<typeof transport.sendMessages>>;
   try {
-    stream = await transport.sendMessages({ trigger: "submit-message", chatId: visitorId, messageId: undefined, messages, abortSignal: request.signal });
-  } catch { return apiError("Mira could not start the reply", 502, "server_error"); }
+    stream = await transport.sendMessages({ trigger: "submit-message", chatId: visitorId, messageId: undefined, messages, abortSignal: generationSignal });
+  } catch (error) {
+    if (generationSignal.aborted) return new Response(null, { status: 499 });
+    return apiError(error instanceof Error ? error.message : "Mira could not start the reply", 502, "server_error");
+  }
   const id = `chatcmpl-${crypto.randomUUID()}`;
   const created = Math.floor(Date.now() / 1000);
   const base = { id, created, model: BOLNA_MODEL };
@@ -101,7 +119,10 @@ export async function handleBolnaChat(request: Request): Promise<Response> {
       }
       if (!text.trim()) return apiError("Mira returned no reply", 502, "server_error");
       return Response.json({ ...base, object: "chat.completion", choices: [{ index: 0, message: { role: "assistant", content: text }, finish_reason: "stop" }] });
-    } catch { return apiError("Mira could not finish the reply", 502, "server_error"); }
+    } catch (error) {
+      if (generationSignal.aborted) return new Response(null, { status: 499 });
+      return apiError(error instanceof Error ? error.message : "Mira could not finish the reply", 502, "server_error");
+    }
   }
   const encoder = new TextEncoder();
   const iterator = readUIMessageStream({ stream, terminateOnError: true })[Symbol.asyncIterator]();
@@ -120,12 +141,14 @@ export async function handleBolnaChat(request: Request): Promise<Response> {
           previous = text;
           if (delta) { send({ content: delta }); return; }
         }
-      } catch {
-        controller.enqueue(encoder.encode(`data: ${JSON.stringify({ error: { message: "Mira could not finish the reply", type: "server_error" } })}\n\ndata: [DONE]\n\n`));
+      } catch (error) {
+        if (generationSignal.aborted) return;
+        generation.abort();
+        controller.enqueue(encoder.encode(`data: ${JSON.stringify({ error: { message: error instanceof Error ? error.message : "Mira could not finish the reply", type: "server_error" } })}\n\ndata: [DONE]\n\n`));
         controller.close();
       }
     },
-    async cancel() { await iterator.return?.(); },
+    async cancel() { generation.abort(); await iterator.return?.(); },
   });
-  return new Response(output, { headers: { "Content-Type": "text/event-stream; charset=utf-8", "Cache-Control": "no-cache" } });
+  return new Response(output, { headers: { "Content-Type": "text/event-stream; charset=utf-8", "Cache-Control": "no-cache, no-transform" } });
 }
