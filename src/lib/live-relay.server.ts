@@ -1,3 +1,4 @@
+import { ASSISTANT_VOICE_MODEL, ASSISTANT_VOICE_NAME } from "./assistant-voice-config";
 import { createOpenAI } from "@ai-sdk/openai";
 import { stepCountIs, streamText, tool, type ModelMessage } from "ai";
 import process from "node:process";
@@ -19,7 +20,7 @@ export type LiveConfig = {
 // Fill from co-loaded knowledge: the gateway URL, the Live model and the resolved chat model.
 const liveSettings = {
   baseURL: "https://ai.gateway.lovable.dev/v1",
-  liveModel: "openai/gpt-live-1",
+  liveModel: ASSISTANT_VOICE_MODEL,
   backendModel: "openai/gpt-6-astra",
 };
 
@@ -286,7 +287,7 @@ export function bindLiveConnection(
   connect: LiveConnector,
 ): void {
   let config: LiveConfig = { ...configuration };
-  let startOptions = { token: "", voice: "marin", language: "auto" };
+  let startOptions = { token: "", voice: ASSISTANT_VOICE_NAME, language: "auto" };
   const runID = crypto.randomUUID();
   const setupAbort = new AbortController();
   let gateway: LiveSocket | undefined;
@@ -662,7 +663,7 @@ export function bindLiveConnection(
         config = { ...config, persona: persona.replace(/Reply in the user's language\./, "") };
         startOptions = {
           token: typeof event.token === "string" ? event.token : "",
-          voice: LIVE_VOICES.includes(event.voice) ? event.voice : "marin",
+          voice: LIVE_VOICES.includes(event.voice) ? event.voice : ASSISTANT_VOICE_NAME,
           language: config.flo ? "en" : typeof event.language === "string" ? event.language.slice(0, 8) : "auto",
         };
         execution.waitUntil(

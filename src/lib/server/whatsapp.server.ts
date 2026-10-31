@@ -1,5 +1,5 @@
 import { convertToModelMessages, isStepCount, streamText, type UIMessage } from "ai";
-import { ASSISTANT_INSTRUCTIONS } from "@/lib/assistant-knowledge";
+import { publicAssistantInstructions } from "@/lib/server/public-clinic.server";
 import { floTools } from "@/lib/server/flo.server";
 import { floLanguageModel, loadFloModel, logFloTurn } from "@/lib/server/flo-model.server";
 import { createLovableAiGatewayRunIdFetch } from "@/lib/server/run-id";
@@ -18,7 +18,7 @@ const STUCK_SENDING_MS = 90_000;
 const HISTORY_LIMIT = 40;
 const REPLY_EXPIRY_MS = 15 * 60_000;
 
-const WHATSAPP_INSTRUCTIONS = `${ASSISTANT_INSTRUCTIONS}
+const WHATSAPP_INSTRUCTIONS = `
 
 CHANNEL: WHATSAPP
 - You are chatting on WhatsApp. Use WhatsApp formatting only (*bold*, _italic_, plain lists); never markdown links or headings.
@@ -176,7 +176,7 @@ async function generateReply(db: Db, conversationId: string, history: UIMessage[
   try {
     const result = streamText({
       model,
-      instructions: WHATSAPP_INSTRUCTIONS,
+      instructions: await publicAssistantInstructions(db) + WHATSAPP_INSTRUCTIONS,
       messages: await convertToModelMessages(history.slice(-HISTORY_LIMIT)),
       stopWhen: isStepCount(4),
       tools: floTools(db, conversationId, "WhatsApp"),

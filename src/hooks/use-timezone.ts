@@ -12,7 +12,7 @@ export function useTimezone() {
     if (!auth.session) return DEFAULT_TIMEZONE;
     const { data, error } = await supabase.from("profiles").select("preferences").eq("user_id", auth.session.user.id).maybeSingle();
     if (error) throw error;
-    const saved = (data?.preferences as Record<string, unknown> | null)?.timezone;
+    const saved = (data?.preferences as Record<string, unknown> | null )?.["timezone"];
     return validTimezone(saved) ? saved : DEFAULT_TIMEZONE;
   } });
   const zone = preference.data ?? DEFAULT_TIMEZONE;
