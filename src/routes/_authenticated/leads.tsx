@@ -14,9 +14,9 @@ export const Route = createFileRoute("/_authenticated/leads")({
   staticData: { sitemap: false },
   head: () => ({
     meta: [
-      { title: "Assistant — Conversational AI Flows Studio" },
+      { title: "Assistant — Conversational Flow Studio" },
       { name: "description", content: "Manage Mira's leads, web conversations, WhatsApp messages and AI model." },
-      { property: "og:title", content: "Assistant — Conversational AI Flows Studio" },
+      { property: "og:title", content: "Assistant — Conversational Flow Studio" },
       { property: "og:description", content: "Manage Mira's leads, web conversations, WhatsApp messages and AI model." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },

@@ -15,9 +15,9 @@ export const Route = createFileRoute("/auth")({
   validateSearch: z.object({ next: z.string().optional() }),
   head: () => ({
     meta: [
-      { title: "Sign in — Conversational AI Flows Studio" },
+      { title: "Sign in — Conversational Flow Studio" },
       { name: "description", content: "Sign in to save voice agent sessions, metrics and comparisons." },
-      { property: "og:title", content: "Sign in — Conversational AI Flows Studio" },
+      { property: "og:title", content: "Sign in — Conversational Flow Studio" },
       { property: "og:description", content: "Sign in to save voice agent sessions, metrics and comparisons." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
@@ -104,7 +104,7 @@ function AuthPage() {
           <Link to="/"><X /></Link>
         </Button>
         <Link to="/" className="mb-6 flex min-w-0 items-center gap-2 pr-7 font-semibold">
-          <Logo className="h-7 w-7 shrink-0" /> Conversational AI Flows Studio
+          <Logo className="h-7 w-7 shrink-0" /> Conversational Flow Studio
         </Link>
         <h1 className="text-xl font-semibold">{mode === "in" ? "Sign in" : "Create account"}</h1>
         <p className="mt-1 text-sm text-muted-foreground">Your sessions and metrics are saved to your account.</p>

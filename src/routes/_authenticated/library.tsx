@@ -21,9 +21,9 @@ export const Route = createFileRoute("/_authenticated/library")({
     meta: [
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
-      { title: "Scenarios & knowledge — Conversational AI Flows Studio" },
+      { title: "Scenarios & knowledge — Conversational Flow Studio" },
       { name: "description", content: "Create custom scenarios with caller lines and manage knowledge bases for your agents." },
-      { property: "og:title", content: "Scenarios & knowledge — Conversational AI Flows Studio" },
+      { property: "og:title", content: "Scenarios & knowledge — Conversational Flow Studio" },
       { property: "og:description", content: "Create custom scenarios with caller lines and manage knowledge bases for your agents." },
       { name: "robots", content: "noindex" },
     ],

@@ -44,7 +44,7 @@ function Layout() {
       <header className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3 border-b border-border bg-background/80 px-4 py-2.5 backdrop-blur">
         <Link to="/" className="col-span-2 flex min-w-0 items-center gap-2 font-semibold xl:col-span-1">
           <Logo className="h-6 w-6 shrink-0" />
-          <span>Conversational AI Flows Studio</span>
+          <span>Conversational Flow Studio</span>
         </Link>
         <nav className="col-span-2 flex min-w-0 flex-wrap items-center gap-1 text-sm sm:col-span-1">
           <Button asChild variant="ghost" size="sm"><Link to="/"><Home className="h-3.5 w-3.5" /> Home</Link></Button>
