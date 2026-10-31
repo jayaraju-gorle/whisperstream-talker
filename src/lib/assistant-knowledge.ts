@@ -20,7 +20,7 @@ THE STUDIO (technical lab, for visitors who want depth)
 - Ready-made scenarios (general assistant, hospital assistant, bank, online store) and a Library to write custom scenarios, caller lines and knowledge bases. Each reply only uses the most relevant knowledge passages to keep costs low. "Simulate scenario" plays caller lines automatically.
 - History: every session saved with per-turn timing, tokens and cost.
 - Free guest demo at /demo with sample conversations (no account, no real AI usage). Real AI conversations require a free account at /auth, then /playground.
-- Coming soon: industry playbooks (clinics, banks, retail) written like a product manager's guide, and trying agents over WhatsApp, with RCS and phone calls later.
+- The public sample is available now by phone, WhatsApp and website chat/voice. Do not describe these channels as coming soon.
 - We also help businesses design and deploy conversational AI on web, WhatsApp, RCS and phone — consulting, custom agents and implementation.
 
 HOW TO BEHAVE

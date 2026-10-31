@@ -30,7 +30,7 @@ export const Route = createFileRoute("/")({
       {
         name: "description",
         content:
-          "Mira answers patient calls, WhatsApp messages and website chat around the clock, handles peak-hour surges and captures appointment requests. Done for you — no technical setup.",
+          "Mira answers customer calls, WhatsApp messages and website inquiries around the clock, handles peak-hour surges and captures requests. Done for you — no technical setup.",
       },
       { property: "og:title", content: "Mira — 24/7 assistant for your business | Phone, WhatsApp & web" },
       {
@@ -139,15 +139,15 @@ const FEATURES = [
 ];
 
 const PAINS = [
-  { icon: Users, t: "Peak-hour surges", d: "Mornings and evening OPD rush bring more calls and WhatsApp messages than reception can answer. Mira picks up every one at once, so patients never hear a busy tone or wait on read receipts." },
-  { icon: Moon, t: "Nights and early mornings", d: "Patients message at 11 pm and call before you open. Mira replies 24/7 with hours, doctors, fees and directions, and records appointment requests for your team." },
-  { icon: CalendarCheck, t: "No request left unanswered", d: "Every inquiry and booking request is logged and ready for your team to confirm when the clinic opens." },
+  { icon: Users, t: "Peak-hour surges", d: "Busy mornings and evenings bring more calls and WhatsApp messages than your team can answer. Mira helps handle inquiries across channels so customers aren't left waiting." },
+  { icon: Moon, t: "Nights and early mornings", d: "Customers message at 11 pm and call before you open. Mira replies 24/7 with hours, services, fees and directions, and records requests for your team." },
+  { icon: CalendarCheck, t: "No request left unanswered", d: "Inquiries and booking requests are recorded for your team to review when your business opens." },
 ];
 
 const CHANNELS = [
-  { icon: Phone, t: "Phone calls", d: "A natural voice that answers your clinic line and speaks with callers in real time." },
-  { icon: MessageCircle, t: "WhatsApp", d: "Instant replies on the channel your patients already use, at any hour." },
-  { icon: Globe, t: "Website chat & voice", d: "A chat bubble on your website where patients can type or talk." },
+  { icon: Phone, t: "Phone calls", d: "A voice assistant that answers your business line and speaks with callers." },
+  { icon: MessageCircle, t: "WhatsApp", d: "Replies on the channel your customers already use, at any hour." },
+  { icon: Globe, t: "Website chat & voice", d: "A chat bubble on your website where customers can type or talk." },
 ];
 
 function Index() {

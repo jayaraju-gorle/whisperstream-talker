@@ -83,7 +83,7 @@ export async function handleBolnaChat(request: Request): Promise<Response> {
   const transport = new DefaultChatTransport({
     api: "/api/public/assistant", body: { visitorId },
     fetch: async (_url, init) => handleAssistantPost({ request: new Request("https://assistant.internal/api/public/assistant", {
-      ...init, signal: request.signal, headers: { "Content-Type": "application/json" },
+      ...init, signal: generationSignal, headers: { "Content-Type": "application/json" },
     }), voice: true, channel: "Bolna" }),
   });
   let stream: Awaited<ReturnType<typeof transport.sendMessages>>;
