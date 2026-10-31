@@ -21,7 +21,7 @@ export const submitLeadForm = createServerFn({ method: "POST" })
       email: data.email,
       phone: data.phone || null,
       company: data.businessType,
-      interest: data.message || `Custom front desk for: ${data.businessType}`,
+      interest: data.message || `Custom AI assistant for: ${data.businessType}`,
     };
     const { error } = await supabaseAdmin.from("leads").insert(lead);
     if (error) {

@@ -26,17 +26,17 @@ export const Route = createFileRoute("/")({
   staticData: { sitemap: true },
   head: () => ({
     meta: [
-      { title: "Mira — 24/7 virtual front desk for clinics | Phone, WhatsApp & web" },
+      { title: "Mira — 24/7 AI assistant for clinics | Phone, WhatsApp & web" },
       {
         name: "description",
         content:
           "Mira answers patient calls, WhatsApp messages and website chat around the clock, handles peak-hour surges and captures appointment requests. Done for you — no technical setup.",
       },
-      { property: "og:title", content: "Mira — 24/7 virtual front desk for clinics | Phone, WhatsApp & web" },
+      { property: "og:title", content: "Mira — 24/7 AI assistant for clinics | Phone, WhatsApp & web" },
       {
         property: "og:description",
         content:
-          "A 24/7 conversational front desk for health clinics across phone, WhatsApp and website chat. Try Mira now.",
+          "A 24/7 conversational AI assistant for health clinics across phone, WhatsApp and website chat. Try Mira now.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
@@ -141,7 +141,7 @@ const FEATURES = [
 const PAINS = [
   { icon: Users, t: "Peak-hour surges", d: "Mornings and evening OPD rush bring more calls and WhatsApp messages than reception can answer. Mira picks up every one at once, so patients never hear a busy tone or wait on read receipts." },
   { icon: Moon, t: "Nights and early mornings", d: "Patients message at 11 pm and call before you open. Mira replies 24/7 with hours, doctors, fees and directions, and records appointment requests for your team." },
-  { icon: CalendarCheck, t: "No request left unanswered", d: "Every inquiry and booking request is logged and shared with your front desk, ready to confirm when the clinic opens." },
+  { icon: CalendarCheck, t: "No request left unanswered", d: "Every inquiry and booking request is logged and ready for your team to confirm when the clinic opens." },
 ];
 
 const CHANNELS = [
@@ -165,7 +165,7 @@ function Index() {
       <main className="mx-auto max-w-6xl px-4 pb-24 pt-8 sm:px-6 sm:pt-12">
         <p className="font-mono text-xs uppercase tracking-[0.2em] text-primary">Phone · WhatsApp · Web</p>
         <h1 className="mt-4 w-full text-4xl font-semibold leading-[1.1] sm:text-5xl md:text-6xl">
-          A done-for-you 24/7 front desk for your business.
+          A done-for-you 24/7 AI assistant for your business.
         </h1>
         <p className="mt-6 w-full text-lg text-muted-foreground">
           Mira answers your calls, WhatsApp messages and website inquiries — through peak rush hours and long after
@@ -176,7 +176,7 @@ function Index() {
         </p>
 
         <section aria-labelledby="pains" className="mt-16">
-          <h2 id="pains" className="text-2xl font-semibold sm:text-3xl">The calls your front desk can’t always take</h2>
+          <h2 id="pains" className="text-2xl font-semibold sm:text-3xl">The calls your team can’t always take</h2>
           <div className="mt-6 grid gap-6 md:grid-cols-3">
             {PAINS.map(({ icon: Icon, t, d }) => (
               <div key={t} className="border-t border-border pt-4">
@@ -212,7 +212,7 @@ function Index() {
           </div>
           <div className="mt-8 border-t border-border pt-6">
             <h3 className="text-lg font-semibold">Want one for your business?</h3>
-            <p className="mt-1 mb-4 text-sm text-muted-foreground">Tell us a little about you and we’ll configure a custom front desk with your details.</p>
+            <p className="mt-1 mb-4 text-sm text-muted-foreground">Tell us a little about you and we’ll configure a custom AI assistant with your details.</p>
             <LeadForm />
           </div>
         </section>
