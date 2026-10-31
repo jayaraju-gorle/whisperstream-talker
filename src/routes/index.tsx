@@ -15,6 +15,7 @@ import {
   Moon,
   CalendarCheck,
   Globe,
+  MapPin,
 } from "lucide-react";
 import { Logo } from "@/components/Logo";
 import { LeadForm } from "@/components/LeadForm";
@@ -209,6 +210,7 @@ function Index() {
             <Button asChild size="lg"><a href={PHONE_ASSISTANT_URL}><Phone className="h-4 w-4" />Call {PHONE_ASSISTANT_DISPLAY}</a></Button>
             <Button asChild variant="outline" size="lg"><a href={WHATSAPP_ASSISTANT_URL} target="_blank" rel="noopener noreferrer"><MessageCircle className="h-4 w-4" />Chat on WhatsApp</a></Button>
             <Button variant="outline" size="lg" onClick={() => document.querySelector<HTMLButtonElement>('[data-site-assistant-toggle]')?.click()}><Mic className="h-4 w-4" />Chat or talk on this site</Button>
+            <Button asChild variant="ghost" size="lg"><a href="https://wa.me/916302392274?text=AURA%20MAP" target="_blank" rel="noopener noreferrer"><MapPin className="h-4 w-4" />Get location on WhatsApp</a></Button>
           </div>
         </section>
 

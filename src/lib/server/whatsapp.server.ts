@@ -4,7 +4,7 @@ import { floTools } from "@/lib/server/flo.server";
 import { floLanguageModel, loadFloModel, logFloTurn } from "@/lib/server/flo-model.server";
 import { createLovableAiGatewayRunIdFetch } from "@/lib/server/run-id";
 import { parseClinicCommand } from "@/lib/clinic";
-import { PUBLIC_CLINIC_CODE, PUBLIC_CLINIC_GREETING, PUBLIC_CLINIC_NOTICE, publicTrialHistory } from "@/lib/public-clinic-demo";
+import { PUBLIC_CLINIC_CODE, PUBLIC_CLINIC_GREETING, PUBLIC_CLINIC_NOTICE, PUBLIC_SAMPLE_BUSINESS_ID, publicTrialHistory } from "@/lib/public-clinic-demo";
 
 
 // Mira over WhatsApp: durable inbox processing, reply sending and delivery-status reconciliation.
@@ -159,6 +159,18 @@ async function processEvent(db: Db, ev: { id: string; event: string; payload: un
 /** Public WhatsApp never starts or resumes real-business sessions. */
 export async function routeMessage(db: Db, phone: string, body: string): Promise<{ text?: string }> {
   await db.from("clinic_whatsapp_sessions").delete().eq("phone", phone);
+  // Customer-initiated handoff stays inside the normal durable reply/status path.
+  // Never accept a caller-supplied destination or clinic identity.
+  if (/^aura\s+map[.!?]?$/i.test(body.trim())) {
+    const { data, error } = await db.from("clinics").select("map_url")
+      .eq("id", PUBLIC_SAMPLE_BUSINESS_ID).maybeSingle();
+    if (error) throw new Error("Couldn't load Aura's map link.");
+    const url = typeof data?.map_url === "string" ? data.map_url.trim() : "";
+    if (!url || !URL.canParse(url) || new URL(url).protocol !== "https:") {
+      return { text: "Aura's illustrative map link isn't available right now. Aura is a fictional clinic for this live demonstration." };
+    }
+    return { text: `Aura Health Clinic — illustrative demo location\n${url}\nThis is a sample location, not a real Aura clinic listing or directions to a real clinic.` };
+  }
   const cmd = parseClinicCommand(body);
   if (cmd?.kind === "try") return { text: cmd.code === PUBLIC_CLINIC_CODE ? PUBLIC_CLINIC_GREETING : PUBLIC_CLINIC_NOTICE };
   if (cmd?.kind === "exit") return { text: "You're with Mira. Would you like an assistant set up for your own clinic?" };
@@ -225,21 +237,29 @@ async function replyTo(db: Db, msgId: string) {
     });
     if (!sent.ok) return await fail("failed", sent.error);
     const text = sent.text;
-    const { data: out } = await db.from("whatsapp_messages").insert({
+    const { data: out, error: outErr } = await db.from("whatsapp_messages").insert({
       wa_message_id: sent.id, direction: "out", phone: claimed.phone, body: text, status: "accepted",
       conversation_id: convo.id, in_reply_to: claimed.id,
     }).select("id").single();
-    await db.from("whatsapp_messages").update({
+    // An accepted send with failed storage is ambiguous: never blindly resend it.
+    if (outErr || !out) return await fail("unknown", `Accepted WhatsApp message ${sent.id}; outbound storage failed: ${outErr?.message ?? "missing record"}`);
+    const { error: stateErr } = await db.from("whatsapp_messages").update({
       reply_state: "sent", reply_error: null, conversation_id: convo.id, reply_attempts: claimed.reply_attempts + 1, updated_at: new Date().toISOString(),
     }).eq("id", claimed.id);
+    if (stateErr) throw new Error(`reply completion failed: ${stateErr.message}`);
     const all = [...history, { id: `wa-out-${out?.id ?? sent.id}`, role: "assistant", parts: [{ type: "text", text }] }];
-    await db.from("assistant_conversations").update({ messages: all as never, updated_at: new Date().toISOString() }).eq("id", convo.id);
+    const { error: historyErr } = await db.from("assistant_conversations").update({ messages: all as never, updated_at: new Date().toISOString() }).eq("id", convo.id);
+    if (historyErr) throw new Error(`reply history failed: ${historyErr.message}`);
     // Status callbacks that arrived before this id was saved become runnable now.
-    await db.from("whatsapp_webhook_events").update({ next_attempt_at: new Date().toISOString() })
+    const { error: reconcileErr } = await db.from("whatsapp_webhook_events").update({ next_attempt_at: new Date().toISOString() })
       .is("processed_at", null).eq("event", "whatsapp.status");
+    if (reconcileErr) throw new Error(`status reconciliation scheduling failed: ${reconcileErr.message}`);
   } catch (e) {
     console.error("whatsapp reply failed", e);
-    await fail("failed", String((e as Error).message ?? e));
+    // If a durable outbound row exists, retrying would send a duplicate.
+    const { data: existing, error: existingErr } = await db.from("whatsapp_messages")
+      .select("id").eq("in_reply_to", claimed.id).limit(1);
+    await fail(existingErr || existing?.length ? "unknown" : "failed", String((e as Error).message ?? e));
   }
 }
 
