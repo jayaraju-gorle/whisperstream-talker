@@ -1,5 +1,6 @@
 import { PUBLIC_CLINIC_GREETING } from "@/lib/public-clinic-demo";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { useStickToBottomContext } from "use-stick-to-bottom";
 import { useChat } from "@ai-sdk/react";
 import { DefaultChatTransport, type UIMessage } from "ai";
 import { MessageCircle, Phone, RotateCcw, UserCheck, X } from "lucide-react";
@@ -55,7 +56,7 @@ export function SiteAssistant() {
   return (
     <>
       {open && (
-        <div className="fixed inset-x-2 bottom-20 z-50 flex h-[min(600px,calc(100dvh-7rem))] flex-col overflow-hidden rounded-xl border border-border bg-card shadow-2xl sm:inset-x-auto sm:right-5 sm:w-[400px]">
+        <div role="dialog" aria-label="Mira conversation" className="fixed inset-x-2 bottom-20 z-50 flex h-[min(640px,calc(100dvh-7rem))] flex-col overflow-hidden rounded-xl border border-border bg-card shadow-2xl sm:inset-x-auto sm:right-5 sm:w-[400px]">
           <div className="flex items-center gap-2 border-b border-border px-4 py-3">
             <Logo className="h-6 w-6" />
             <div className="min-w-0 flex-1">
@@ -124,8 +125,12 @@ function ChatBody({ visitorId, initial, onBusyChange }: { visitorId: string; ini
     },
   });
   const [voiceActive, setVoiceActive] = useState(false);
+  const [captions, setCaptions] = useState<UIMessage[]>([]);
+  const textarea = useRef<HTMLTextAreaElement>(null);
   const busy = voiceActive || status === "submitted" || status === "streaming";
   useEffect(() => { onBusyChange(busy); }, [busy, onBusyChange]);
+  useEffect(() => { if (!busy) textarea.current?.focus(); }, [busy]);
+  const visibleMessages = useMemo(() => [...messages, ...captions], [messages, captions]);
   const [text, setText] = useState("");
   const latestContactCall = messages.flatMap((m) => m.parts)
     .filter((p) => p.type === "tool-save_lead" && p.state === "output-available"
@@ -141,10 +146,12 @@ function ChatBody({ visitorId, initial, onBusyChange }: { visitorId: string; ini
 
   return (
     <>
-      {status !== "submitted" && status !== "streaming" && <FloVoice visitorId={visitorId} onActive={setVoiceActive} onMessages={setMessages} />}
-      <Conversation className="flex-1">
+      <FloVoice visitorId={visitorId} disabled={status === "submitted" || status === "streaming" || voiceActive}
+        onActive={setVoiceActive} onMessages={setMessages} onCaptions={setCaptions} />
+      <Conversation className="min-h-0 flex-1" aria-label="Conversation with Mira">
+        <TranscriptFollow messages={visibleMessages} voiceActive={voiceActive} />
         <ConversationContent className="gap-4 p-4">
-          {messages.length === 0 && (
+          {visibleMessages.length === 0 && (
             <div className="space-y-3 text-sm">
               <p className="text-muted-foreground">
                 {PUBLIC_CLINIC_GREETING}
@@ -158,7 +165,7 @@ function ChatBody({ visitorId, initial, onBusyChange }: { visitorId: string; ini
               </div>
             </div>
           )}
-          {messages.map((m) => (
+          {visibleMessages.map((m) => (
             <Message key={m.id} from={m.role}>
               <MessageContent
                 className={
@@ -201,11 +208,12 @@ function ChatBody({ visitorId, initial, onBusyChange }: { visitorId: string; ini
             <Shimmer className="text-sm">Thinking…</Shimmer>
           )}
         </ConversationContent>
-        <ConversationScrollButton />
+        <ConversationScrollButton aria-label="Scroll to latest message" title="Scroll to latest message" />
       </Conversation>
       <div className="border-t border-border p-3">
-        <PromptInput onSubmit={(msg) => send(msg.text)}>
+        {!voiceActive && <PromptInput onSubmit={(msg) => send(msg.text)}>
           <PromptInputTextarea
+            ref={textarea}
             autoFocus
             value={text}
             onChange={(e) => setText(e.target.value)}
@@ -219,7 +227,7 @@ function ChatBody({ visitorId, initial, onBusyChange }: { visitorId: string; ini
             </span>
             <PromptInputSubmit status={status} onStop={stop} disabled={voiceActive || (!busy && !text.trim())} />
           </PromptInputFooter>
-        </PromptInput>
+        </PromptInput>}
         <div className="mt-1 flex flex-wrap gap-x-4 gap-y-1">
           <Button asChild variant="link" size="sm" className="h-auto px-0 text-xs"><a href={WHATSAPP_ASSISTANT_URL} target="_blank" rel="noopener noreferrer"><MessageCircle className="h-3 w-3" />Chat on WhatsApp</a></Button>
           <Button asChild variant="link" size="sm" className="h-auto px-0 text-xs"><a href={PHONE_ASSISTANT_URL}><Phone className="h-3 w-3" />Call {PHONE_ASSISTANT_DISPLAY}</a></Button>
@@ -227,4 +235,16 @@ function ChatBody({ visitorId, initial, onBusyChange }: { visitorId: string; ini
       </div>
     </>
   );
+}
+
+function TranscriptFollow({ messages, voiceActive }: { messages: UIMessage[]; voiceActive: boolean }) {
+  const { scrollToBottom } = useStickToBottomContext();
+  const previousTurn = useRef<string | undefined>(undefined);
+  useEffect(() => {
+    const latest = messages.at(-1);
+    const newVoiceTurn = voiceActive && latest?.id !== previousTurn.current;
+    previousTurn.current = latest?.id;
+    void scrollToBottom({ animation: "instant", preserveScrollPosition: !newVoiceTurn });
+  }, [messages, voiceActive, scrollToBottom]);
+  return null;
 }

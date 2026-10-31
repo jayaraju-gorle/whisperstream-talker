@@ -15,7 +15,6 @@ import {
   Moon,
   CalendarCheck,
   Globe,
-  MapPin,
 } from "lucide-react";
 import { Logo } from "@/components/Logo";
 import { LeadForm } from "@/components/LeadForm";
@@ -210,7 +209,6 @@ function Index() {
             <Button asChild size="lg"><a href={PHONE_ASSISTANT_URL}><Phone className="h-4 w-4" />Call {PHONE_ASSISTANT_DISPLAY}</a></Button>
             <Button asChild variant="outline" size="lg"><a href={WHATSAPP_ASSISTANT_URL} target="_blank" rel="noopener noreferrer"><MessageCircle className="h-4 w-4" />Chat on WhatsApp</a></Button>
             <Button variant="outline" size="lg" onClick={() => document.querySelector<HTMLButtonElement>('[data-site-assistant-toggle]')?.click()}><Mic className="h-4 w-4" />Chat or talk on this site</Button>
-            <Button asChild variant="ghost" size="lg"><a href="https://wa.me/916302392274?text=AURA%20MAP" target="_blank" rel="noopener noreferrer"><MapPin className="h-4 w-4" />Get location on WhatsApp</a></Button>
           </div>
         </section>
 
@@ -233,14 +231,14 @@ function Index() {
           <div className="p-4 sm:p-6">
             <div className="flex items-end justify-between gap-4">
               <div className="min-w-0 text-[10px] uppercase tracking-widest text-muted-foreground sm:text-xs">
-                Voice latency benchmark
+                Browser voice timing · illustrative example
               </div>
               <div className="shrink-0 text-right">
                 <div className="text-2xl font-bold leading-none text-primary sm:text-3xl">
                   710 <span className="text-lg font-medium sm:text-xl">ms</span>
                 </div>
                 <div className="mt-1 text-[9px] uppercase tracking-wider text-muted-foreground sm:text-[10px]">
-                  Total end-to-end response time
+                  Sample stage total · not measured
                 </div>
               </div>
             </div>
@@ -265,8 +263,9 @@ function Index() {
             <div className="mt-4 text-center">
               <div className="text-[10px] uppercase tracking-widest text-muted-foreground">180 + 320 + 210 = 710 ms</div>
               <p className="mt-1 text-xs text-muted-foreground">
-                Measured from the moment you stop speaking to the agent's first spoken word.
+                Illustrative figures, not a measured benchmark or speed guarantee. Telephone and Bolna timing are excluded.
               </p>
+              <p className="mt-2 text-xs text-muted-foreground">The playground measures actual browser response times per turn. Website live voice uses a different speech-to-speech flow; phone calls also include telephony, Bolna processing and network delays.</p>
             </div>
           </div>
         </div>
