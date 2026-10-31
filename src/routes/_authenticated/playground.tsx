@@ -262,7 +262,7 @@ function Playground() {
     <div className="flex flex-1 flex-col">
       <div className="flex gap-2 border-b border-border px-4 py-3" role="tablist" aria-label="Playground views">
         <Button size="sm" role="tab" aria-selected={tab !== "history"} variant={tab !== "history" ? "default" : "outline"}
-          onClick={() => void navigate({ to: "/playground", search: { clinic: clinicId }, replace: true })}>Playground</Button>
+          onClick={() => void navigate({ to: "/playground", search: clinicId ? { clinic: clinicId } : {}, replace: true })}>Playground</Button>
         <Button size="sm" role="tab" aria-selected={tab === "history"} variant={tab === "history" ? "default" : "outline"}
           onClick={() => {
             stopAll();
@@ -270,7 +270,7 @@ function Playground() {
             mic.current = null;
             setMicOn(false);
             setLevel(0);
-            void navigate({ to: "/playground", search: { clinic: clinicId, tab: "history" }, replace: true });
+            void navigate({ to: "/playground", search: { ...(clinicId ? { clinic: clinicId } : {}), tab: "history" }, replace: true });
           }}>Session History</Button>
       </div>
       {tab === "history" && <div role="tabpanel" aria-label="Session History"><SessionHistory /></div>}
