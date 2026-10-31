@@ -15,8 +15,9 @@
 - [x] Prefill built-in scenarios and sample knowledge from the original playground
 
 ## Business roadmap (internal only)
-- [ ] Align clinic/business homepage wording and investigate uploaded phone gaps; optimize verified app-side bottlenecks without changing the selected model.
-- [ ] Check website/demo/Assistant flows against video demonstration; exact video script not present in project files or available chat history.
+- [x] Align homepage business/customer wording; parallelize fresh model/facts/history setup, tighten voice replies, propagate phone cancellation and discourage SSE buffering. 28 regression checks passed; real Bolna endpoint returned incremental text (first text 3.764s, full reply 5.291s); no claim of audible improvement.
+- [ ] Retest published phone pauses and barge-in — blocked: publishing, Bolna streaming/endpointing/TTS/interruption settings and an audible live call; no Bolna control connection available.
+- [ ] Check exact video demonstration — blocked: script absent from available files/history. Website Aura hours/map reply and populated Assistant voice/model/phone views and IST Session History verified; guest demo loaded but sample-turn effect not verified. Audible website/WhatsApp, lead form submission and full script remain unverified this turn.
 - [x] Store an illustrative Hyderabad Google Maps link in Aura and its guide; Mira's website reply shares it with a fictional-location disclaimer. Add reversible Leads test-hiding toggle (2 existing submissions hidden/restored); 7 tests passed. Google Maps destination and phone/WhatsApp delivery remain unverified.
 - [x] Move History into Playground's Session History tab; remove top navigation entry, preserve separate session records and old links, and add saved IST-default timezone selection. Signed-in transcript/back navigation, UTC persistence/IST restoration and mobile verified; 11 regression checks passed.
 - [x] Replace Sample Clinic 1 with editable Aura and linked scenario/knowledge; public channels read only its fixed identity. Admin save → live website answer verified; phone/WhatsApp audible delivery awaits publishing.
