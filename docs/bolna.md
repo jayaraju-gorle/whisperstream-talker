@@ -21,8 +21,24 @@ Pass a unique per-call identity using `metadata.conversation_id`, `metadata.call
 
 ## Telephone latency and interruptions
 
-- Set `stream: true` in Bolna's custom LLM requests. Non-streaming requests intentionally wait for the complete reply.
+- This endpoint supports `stream: true` in the Chat Completions protocol; this is not a confirmed Bolna UI toggle. Bolna's custom-LLM documentation does not establish an exposed streaming switch. Non-streaming requests intentionally wait for the complete reply; inspect actual requests rather than asking users to find a nonexistent setting.
 - The app forwards each text delta as it arrives, uses `no-transform` to discourage intermediary buffering, and aborts upstream generation when the response is cancelled. Bolna must cancel the previous HTTP response on barge-in; microphone detection and clearing spoken audio belong to Bolna, not this LLM endpoint.
 - Model settings, current Aura facts and history conversion run concurrently per turn, without caching admin edits. The selected model is unchanged.
 - Check Bolna's actual speech endpointing, interruption detection and streaming speech synthesis configuration before adjusting values. These settings are not accessible through the studio's current connections. Do not assume a model swap will fix silence detection or queued audio.
 - A telephone recording alone cannot separate caller thinking time, transcription, model generation and voice playback delays. Verify turn-level timing and audible interruption behavior on a fresh published call after configuration changes.
+
+## Engine choice and submission name
+
+Recommended display name: **Mira — Always-On Clinic Assistant**. Keep the API model identifier `flo-assistant` unchanged.
+
+Bolna's realtime speech-to-speech engine can reduce cascade stages but uses supported realtime models, not this custom Mira endpoint. Its documented tools support does not establish compatibility with this app's stored history, editable Aura knowledge or lead capture. Duplicate the agent for an A/B test; do not replace the existing agent until those functions and real-call interruptions pass.
+
+For the existing cascade, Bolna documents endpointing around 250 ms as a latency starting point; tune against caller cut-offs, with linear delay and interruption thresholds reviewed separately. No remote Bolna settings have been changed here.
+
+References: https://www.bolna.ai/docs/custom-llm-inference · https://www.bolna.ai/docs/speech-to-speech · https://www.bolna.ai/docs/concepts/latency · https://www.bolna.ai/docs/agent-setup/engine-tab
+
+## Spoken hours and WhatsApp directions
+
+Assistant knowledge uses 12-hour AM/PM times while Business editing inputs remain 24-hour. Spoken instructions require natural readings such as “one PM” and “ten thirty AM.” Aura's greeting briefly identifies the fictional demonstration; replies avoid repeatedly saying “sample clinic” while preserving brief safeguards for fees, bookings and illustrative directions.
+
+Callers can message **AURA MAP** to **+91 63023 92274**, or use the homepage **Get location on WhatsApp** link. The customer's incoming WhatsApp message triggers a reply containing the current admin-saved Aura map through the existing durable outbound/status path, without a model generation step. A phone call does not open WhatsApp's 24-hour customer-service window. This is a customer-initiated handoff, not automatic delivery from a phone call; delivery remains unverified until the receiver is published and a real customer message is tested.
