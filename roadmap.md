@@ -15,6 +15,9 @@
 - [x] Prefill built-in scenarios and sample knowledge from the original playground
 
 ## Business roadmap (internal only)
+- [x] Replace Sample Clinic 1 with editable Aura and linked scenario/knowledge; public channels read only its fixed identity. Admin save → live website answer verified; phone/WhatsApp audible delivery awaits publishing.
+- [x] Show website live speech model/voice and delegated LLM; standalone Phone conversations lists existing Bolna transcripts, excluded from Web.
+- [x] Add recent-reply headings and profile-saved timezone choice (IST default); UTC save/reload and IST restoration verified. 123 tests passed; mobile has no page overflow.
 - [x] Lead homepage with done-for-you 24/7 assistance across phone, WhatsApp and web; remove homepage AI wording and rename the brand Conversational Flows Studio while preserving playground technology terms.
 - [x] Remove the Coming Next section from the homepage; visually verified.
 - [x] Default public trial instructions to fictional Aura Health Clinic, disclose sample status, preserve Mira lead capture, block real-clinic activation/history, and load real presets only for verified admins; 47 tests and live website fee reply verified.

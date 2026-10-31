@@ -8,6 +8,10 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { FLO_MODELS, FLO_MODEL_SETTING_KEY, floTurnCostUsd, resolveFloModel } from "@/lib/flo-models";
 import { useCurrency } from "@/hooks/use-currency";
+import { useTimezone } from "@/hooks/use-timezone";
+import { TIMEZONES } from "@/lib/timezone";
+import { ASSISTANT_VOICE_MODEL, ASSISTANT_VOICE_NAME } from "@/lib/assistant-voice-config";
+import { CurrencySelect } from "@/components/CurrencySelect";
 import { matchWhatsAppMetrics } from "@/lib/whatsapp-metrics";
 
 export const Route = createFileRoute("/_authenticated/leads")({
@@ -15,9 +19,9 @@ export const Route = createFileRoute("/_authenticated/leads")({
   head: () => ({
     meta: [
       { title: "Assistant — Conversational Flows Studio" },
-      { name: "description", content: "Manage Mira's leads, web conversations, WhatsApp messages and AI model." },
+      { name: "description", content: "Manage Mira's leads, web, WhatsApp and phone conversations, voice and model settings." },
       { property: "og:title", content: "Assistant — Conversational Flows Studio" },
-      { property: "og:description", content: "Manage Mira's leads, web conversations, WhatsApp messages and AI model." },
+      { property: "og:description", content: "Manage Mira's leads, web, WhatsApp and phone conversations, voice and model settings." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
       { name: "robots", content: "noindex" },
@@ -39,10 +43,11 @@ type Lead = {
 };
 
 function Leads() {
+  const { format, zone, setZone, saving: timezoneSaving } = useTimezone();
   const qc = useQueryClient();
   const [openId, setOpenId] = useState<string | null>(null);
   const [updating, setUpdating] = useState<string | null>(null);
-  const [tab, setTab] = useState<"leads" | "web" | "whatsapp" | "model">("leads");
+  const [tab, setTab] = useState<"leads" | "web" | "whatsapp" | "phone" | "model">("leads");
   const { data, isLoading, isError } = useQuery({
     queryKey: ["leads", "list"],
     queryFn: async () => {
@@ -69,13 +74,22 @@ function Leads() {
       <p className="mt-1 text-sm text-muted-foreground">
         Mira's conversations, leads and model settings.
       </p>
+      <div className="mt-4 flex flex-wrap items-end gap-4">
+        <div className="space-y-1"><span className="text-xs text-muted-foreground">Timestamps in</span>
+          <Select value={zone} onValueChange={v => void setZone(v)} disabled={timezoneSaving}>
+            <SelectTrigger aria-label="Timestamp timezone" className="w-48"><SelectValue /></SelectTrigger>
+            <SelectContent>{TIMEZONES.map(t => <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>)}</SelectContent>
+          </Select>
+        </div><CurrencySelect />
+      </div>
       <div className="mt-4 flex flex-wrap gap-2" role="tablist" aria-label="Assistant views">
         <Button size="sm" role="tab" aria-selected={tab === "leads"} variant={tab === "leads" ? "default" : "outline"} onClick={() => setTab("leads")}>Leads</Button>
         <Button size="sm" role="tab" aria-selected={tab === "web"} variant={tab === "web" ? "default" : "outline"} onClick={() => setTab("web")}>Web conversations</Button>
         <Button size="sm" role="tab" aria-selected={tab === "whatsapp"} variant={tab === "whatsapp" ? "default" : "outline"} onClick={() => setTab("whatsapp")}>WhatsApp</Button>
+        <Button size="sm" role="tab" aria-selected={tab === "phone"} variant={tab === "phone" ? "default" : "outline"} onClick={() => setTab("phone")}>Phone conversations</Button>
         <Button size="sm" role="tab" aria-selected={tab === "model"} variant={tab === "model" ? "default" : "outline"} onClick={() => setTab("model")}>Mira model</Button>
       </div>
-      {tab === "model" ? <FloModelSettings /> : tab === "whatsapp" ? <WhatsAppMessages /> : tab === "web" ? <WebConversations leads={data ?? []} /> : <>
+      {tab === "phone" ? <WebConversations leads={data ?? []} phone /> : tab === "model" ? <FloModelSettings /> : tab === "whatsapp" ? <WhatsAppMessages /> : tab === "web" ? <WebConversations leads={data ?? []} /> : <>
       {isLoading && <div className="mt-8"><LoadingIndicator label="Loading leads…" /></div>}
       {isError && <p className="mt-8 text-sm text-destructive">You don't have access to leads, or they couldn't load.</p>}
       {data && data.length === 0 && <p className="mt-8 text-sm text-muted-foreground">No leads yet.</p>}
@@ -93,7 +107,7 @@ function Leads() {
                 </div>
                 {l.interest && <p className="mt-2 text-sm text-muted-foreground">{l.interest}</p>}
                 <div className="mt-2 font-mono text-[11px] text-muted-foreground">
-                  {new Date(l.created_at).toLocaleString()}
+                  {format(l.created_at)}
                 </div>
               </div>
               <div className="flex flex-wrap items-center gap-2">
@@ -124,19 +138,23 @@ function Leads() {
   );
 }
 
-function WebConversations({ leads }: { leads: Lead[] }) {
+function WebConversations({ leads, phone = false }: { leads: Lead[]; phone?: boolean }) {
+  const { format } = useTimezone();
+  const title = phone ? "Phone conversations" : "Web conversations";
   const [openId, setOpenId] = useState<string | null>(null);
   const [page, setPage] = useState(0);
   const pageSize = 25;
   const { data, isLoading, isError, refetch, isFetching } = useQuery({
-    queryKey: ["web-conversations", page],
+    queryKey: ["assistant-conversations", phone ? "phone" : "web", page],
     refetchInterval: 15_000,
     queryFn: async () => {
-      const { data, count, error } = await supabase.from("assistant_conversations")
+      let query = supabase.from("assistant_conversations")
         .select("id,created_at,updated_at", { count: "exact" })
         .not("visitor_id", "like", "whatsapp\\_%")
         .not("visitor_id", "like", "wa\\_c\\_%")
-        .order("updated_at", { ascending: false }).order("id", { ascending: false })
+        ;
+      query = phone ? query.like("visitor_id", "bolna\\_%") : query.not("visitor_id", "like", "bolna\\_%");
+      const { data, count, error } = await query.order("updated_at", { ascending: false }).order("id", { ascending: false })
         .range(page * pageSize, (page + 1) * pageSize - 1);
       if (error) throw error;
       return { conversations: data, total: count ?? 0 };
@@ -145,12 +163,12 @@ function WebConversations({ leads }: { leads: Lead[] }) {
   return (
     <div className="mt-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <h2 className="font-medium">Web conversations{data ? ` · ${data.total}` : ""}</h2>
+        <h2 className="font-medium">{title}{data ? ` · ${data.total}` : ""}</h2>
         <Button size="sm" variant="outline" loading={isFetching} loadingLabel="Refreshing…" onClick={() => void refetch()}>Refresh</Button>
       </div>
-      {isLoading && <div className="mt-4"><LoadingIndicator label="Loading web conversations…" /></div>}
-      {isError && <p className="mt-4 text-sm text-destructive">Web conversations couldn't load. Please try refreshing.</p>}
-      {data?.total === 0 && <p className="mt-4 text-sm text-muted-foreground">No web conversations yet.</p>}
+      {isLoading && <div className="mt-4"><LoadingIndicator label={`Loading ${title.toLowerCase()}…`} /></div>}
+      {isError && <p className="mt-4 text-sm text-destructive">{title} couldn't load. Please try refreshing.</p>}
+      {data?.total === 0 && <p className="mt-4 text-sm text-muted-foreground">No {title.toLowerCase()} yet.</p>}
       <div className="mt-4 space-y-3">
         {data?.conversations.map((conversation) => {
           const lead = leads.find((l) => l.conversation_id === conversation.id);
@@ -159,20 +177,20 @@ function WebConversations({ leads }: { leads: Lead[] }) {
             <div key={conversation.id} className="rounded-lg border border-border bg-card p-4">
               <div className="flex flex-wrap items-start justify-between gap-3">
                 <div className="min-w-0 flex-1 break-words">
-                  <h3 className="font-medium">{lead?.name ?? `Website visitor · ${conversation.id.slice(0, 8)}`}</h3>
+                  <h3 className="font-medium">{lead?.name ?? `${phone ? "Phone call" : "Website visitor"} · ${conversation.id.slice(0, 8)}`}</h3>
                   {lead && <div className="mt-1 flex flex-wrap gap-x-4 text-sm">
                     <a className="text-primary hover:underline" href={`mailto:${lead.email}`}>{lead.email}</a>
                     {lead.phone && <a className="text-primary hover:underline" href={`tel:${lead.phone}`}>{lead.phone}</a>}
                     {lead.company && <span className="text-muted-foreground">{lead.company}</span>}
                   </div>}
                   <div className="mt-2 space-y-1 font-mono text-[11px] text-muted-foreground">
-                    <p>Started {new Date(conversation.created_at).toLocaleString()}</p>
-                    <p>Last activity {new Date(conversation.updated_at).toLocaleString()}</p>
+                    <p>Started {format(conversation.created_at)}</p>
+                    <p>Last activity {format(conversation.updated_at)}</p>
                   </div>
                 </div>
                 <Button size="sm" variant="ghost" aria-expanded={open} onClick={() => setOpenId(open ? null : conversation.id)}>{open ? "Hide chat" : "View chat"}</Button>
               </div>
-              {open && <Transcript id={conversation.id} />}
+              {open && <Transcript id={conversation.id} phone={phone} />}
             </div>
           );
         })}
@@ -186,14 +204,15 @@ function WebConversations({ leads }: { leads: Lead[] }) {
   );
 }
 
-function Transcript({ id }: { id: string }) {
+function Transcript({ id, phone = false }: { id: string; phone?: boolean }) {
+  const { format } = useTimezone();
   const { data, isLoading, isError } = useQuery({
-    queryKey: ["assistant-conversation", id],
+    queryKey: ["assistant-conversation", id, phone],
     refetchInterval: 15_000,
     queryFn: async () => {
       const [{ data, error }, { data: logs }] = await Promise.all([
         supabase.from("assistant_conversations").select("messages").eq("id", id).single(),
-        supabase.from("assistant_turn_logs").select("model,first_token_ms,total_ms,ok,created_at").eq("conversation_id", id).order("created_at"),
+        supabase.from("assistant_turn_logs").select("model,first_token_ms,total_ms,ok,created_at").eq("conversation_id", id).eq("channel", phone ? "Bolna" : "Website").order("created_at"),
       ]);
       if (error) throw error;
       return {
@@ -224,7 +243,7 @@ function Transcript({ id }: { id: string }) {
             <p className="whitespace-pre-wrap">{text}</p>
             {log && (
               <p className="mt-1 font-mono text-[11px] text-muted-foreground">
-                {new Date(log.created_at).toLocaleString()} · {log.model.split("/").pop()} · first words {secs(log.first_token_ms)} · full reply {secs(log.total_ms)}
+                {format(log.created_at)} · {log.model.split("/").pop()} · first words {secs(log.first_token_ms)} · full reply {secs(log.total_ms)}
               </p>
             )}
           </div>
@@ -243,6 +262,7 @@ type WaMessage = {
 const REPLY_LABEL: Record<string, string> = { pending: "Reply waiting", sending: "Replying…", sent: "Replied", failed: "Reply failed", unknown: "Reply needs review", expired: "Not answered (too old)" };
 
 function WaThread({ msgs }: { msgs: WaMessage[] }) {
+  const { format } = useTimezone();
   const conversationIds = [...new Set(msgs.flatMap((m) => m.conversation_id ? [m.conversation_id] : []))].sort();
   const { data: logs, isError: metricsError } = useQuery({
     queryKey: ["whatsapp-turn-logs", conversationIds],
@@ -269,7 +289,7 @@ function WaThread({ msgs }: { msgs: WaMessage[] }) {
           <div key={m.id} className={isFlo ? "pl-6" : "pr-6"}>
             <div className="flex flex-wrap gap-x-2 font-mono text-[11px] uppercase text-muted-foreground">
               <span>{isFlo ? "Mira" : "Visitor"}</span>
-              <span>{new Date(m.created_at).toLocaleString()}</span>
+              <span>{format(m.created_at)}</span>
               <span className={m.status === "failed" || m.reply_state === "failed" ? "text-destructive" : ""}>
                 {isFlo ? m.status : m.reply_state ? REPLY_LABEL[m.reply_state] ?? m.reply_state : ""}
               </span>
@@ -277,7 +297,7 @@ function WaThread({ msgs }: { msgs: WaMessage[] }) {
             <p className="whitespace-pre-wrap">{m.body}</p>
             {log && (
               <p className="mt-1 font-mono text-[11px] text-muted-foreground">
-                {new Date(log.created_at).toLocaleString()} · {log.model.split("/").pop()} · first words {secs(log.first_token_ms)} · full reply {secs(log.total_ms)}
+                {format(log.created_at)} · {log.model.split("/").pop()} · first words {secs(log.first_token_ms)} · full reply {secs(log.total_ms)}
               </p>
             )}
             {m.reply_error && m.reply_state !== "sent" && <p className="text-xs text-destructive">{m.reply_error}</p>}
@@ -289,6 +309,7 @@ function WaThread({ msgs }: { msgs: WaMessage[] }) {
 }
 
 function WhatsAppMessages() {
+  const { format } = useTimezone();
   const [phone, setPhone] = useState<string | null>(null);
   const { data, isLoading, isError } = useQuery({
     queryKey: ["whatsapp-messages"],
@@ -320,7 +341,7 @@ function WhatsAppMessages() {
                 <a className="font-medium text-primary hover:underline" href={`https://wa.me/${p}`} target="_blank" rel="noreferrer">+{p}</a>
                 <p className="mt-1 truncate text-sm text-muted-foreground">{last.body}</p>
                 <div className="mt-1 font-mono text-[11px] text-muted-foreground">
-                  {msgs.length} messages · last {new Date(last.created_at).toLocaleString()}
+                  {msgs.length} messages · last {format(last.created_at)}
                 </div>
               </div>
               <Button size="sm" variant="ghost" onClick={() => setPhone(open ? null : p)}>{open ? "Hide messages" : "View messages"}</Button>
@@ -339,6 +360,7 @@ const modelLabel = (id: string) => FLO_MODELS.find((m) => m.id === id)?.label ??
 const median = (xs: number[]) => { if (!xs.length) return null; const s = [...xs].sort((a, b) => a - b); return s[Math.floor(s.length / 2)]; };
 
 function FloModelSettings() {
+  const { format } = useTimezone();
   const qc = useQueryClient();
   const { fmt } = useCurrency();
   const [saving, setSaving] = useState(false);
@@ -375,7 +397,7 @@ function FloModelSettings() {
     <div className="mt-6 space-y-6">
       <section className="rounded-lg border border-border bg-card p-4">
         <h2 className="font-medium">AI model for Mira</h2>
-        <p className="mt-1 text-sm text-muted-foreground">Used for both the website chat and WhatsApp. Changes apply to the next message.</p>
+        <p className="mt-1 text-sm text-muted-foreground">Used for website chat, WhatsApp, phone replies through Bolna, and delegated answers during website voice calls. Changes apply to the next reply.</p>
         {setting.isLoading ? <div className="mt-3"><LoadingIndicator label="Loading…" /></div> : setting.isError ? (
           <p className="mt-3 text-sm text-destructive">Couldn't load the current setting.</p>
         ) : (
@@ -395,6 +417,16 @@ function FloModelSettings() {
         )}
       </section>
 
+      <section className="border-t border-border pt-4">
+        <h2 className="font-medium">Website voice</h2>
+        <dl className="mt-3 grid gap-3 text-sm sm:grid-cols-2">
+          <div><dt className="text-muted-foreground">Live speech model</dt><dd>OpenAI GPT Live 1 <span className="font-mono text-xs">({ASSISTANT_VOICE_MODEL})</span></dd></div>
+          <div><dt className="text-muted-foreground">Voice</dt><dd className="capitalize">{ASSISTANT_VOICE_NAME}</dd></div>
+          <div><dt className="text-muted-foreground">Speech recognition & spoken replies</dt><dd>Handled together by the live speech model; no separate STT or TTS model.</dd></div>
+          <div><dt className="text-muted-foreground">Knowledge & contact capture</dt><dd>{setting.data ? modelLabel(setting.data) : "Current Mira model"} handles delegated questions and tools.</dd></div>
+        </dl>
+        <p className="mt-3 text-xs text-muted-foreground">Phone speech is configured separately in Bolna; its speech models are not reported by the chat connection. Reply costs below cover the assistant LLM, not voice or phone charges.</p>
+      </section>
       <section className="rounded-lg border border-border bg-card p-4">
         <h2 className="font-medium">Performance by model</h2>
         <p className="mt-1 text-sm text-muted-foreground">Median times from the last 500 replies. "First words" is how long until Mira starts writing. Costs are estimates from list prices.</p>
@@ -437,16 +469,17 @@ function FloModelSettings() {
       {logs.data && logs.data.length > 0 && (
         <section className="rounded-lg border border-border bg-card p-4">
           <h2 className="font-medium">Recent replies</h2>
-          <div className="mt-3 space-y-1 font-mono text-[12px]">
-            {logs.data.slice(0, 50).map((l) => (
-              <div key={l.id} className={`flex flex-wrap gap-x-4 ${l.ok ? "" : "text-destructive"}`}>
-                <span className="text-muted-foreground">{new Date(l.created_at).toLocaleString()}</span>
-                <span>{l.channel}</span><span>{modelLabel(l.model)}</span>
-                <span>first {l.first_token_ms ?? "—"} ms</span><span>total {l.total_ms} ms</span>
-                {(() => { const c = floTurnCostUsd(l.model, l.input_tokens, l.output_tokens); return c == null ? null : <span>{fmt(c)}</span>; })()}
-                {l.error && <span>{l.error}</span>}
-              </div>
-            ))}
+          <div className="mt-3 overflow-x-auto">
+            <table className="w-full text-left text-xs">
+              <thead className="text-muted-foreground"><tr>{["Date & time", "Channel", "LLM model", "First response", "Total response", "Estimated cost", "Status"].map(label => <th key={label} scope="col" className="whitespace-nowrap px-3 py-2 font-medium">{label}</th>)}</tr></thead>
+              <tbody>{logs.data.slice(0, 50).map(l => {
+                const cost = floTurnCostUsd(l.model, l.input_tokens, l.output_tokens);
+                return <tr key={l.id} className={`border-t border-border ${l.ok ? "" : "text-destructive"}`}>
+                  <td className="whitespace-nowrap px-3 py-2">{format(l.created_at)}</td><td className="px-3">{l.channel === "Bolna" ? "Phone" : l.channel}</td><td className="whitespace-nowrap px-3">{modelLabel(l.model)}</td>
+                  <td className="whitespace-nowrap px-3">{l.first_token_ms == null ? "—" : `${l.first_token_ms} ms`}</td><td className="whitespace-nowrap px-3">{l.total_ms} ms</td><td className="whitespace-nowrap px-3">{cost == null ? "—" : fmt(cost)}</td><td className="px-3">{l.ok ? "Success" : l.error ?? "Failed"}</td>
+                </tr>;
+              })}</tbody>
+            </table>
           </div>
         </section>
       )}

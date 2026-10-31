@@ -27,10 +27,12 @@ import { saveClinic, type ClinicRow } from "@/lib/clinic-store";
 import { LIBRARY_KEY } from "@/hooks/use-library";
 import { ClinicTestCall } from "./ClinicTestCall";
 import { cn } from "@/lib/utils";
+import { PUBLIC_SAMPLE_BUSINESS_ID } from "@/lib/public-clinic-demo";
 
 const STEPS = ["Business details", "Opening hours", "Team & fees", "Try assistant"];
 
 export function ClinicWizard({ userId, initial, existing }: { userId: string; initial: ClinicInput; existing?: ClinicRow }) {
+  const publicSample = existing?.id === PUBLIC_SAMPLE_BUSINESS_ID;
   const [c, setC] = useState(initial);
   const [step, setStep] = useState(0);
   const [saving, setSaving] = useState(false);
@@ -138,7 +140,7 @@ export function ClinicWizard({ userId, initial, existing }: { userId: string; in
 
       {step === 0 && (
         <div className="grid gap-4 sm:grid-cols-2">
-          <Field label="Business name *"><Input value={c.name} onChange={(e) => set("name", e.target.value)} placeholder="Sunrise Family Clinic" /></Field>
+          <Field label="Business name *"><Input value={c.name} disabled={publicSample} onChange={(e) => set("name", e.target.value)} placeholder="Sunrise Family Clinic" /></Field>
           <Field label="Appointments phone *"><Input value={c.phone} onChange={(e) => set("phone", e.target.value)} placeholder="+91 80 1234 5678" /></Field>
           <Field label="Emergency phone"><Input value={c.emergency_phone} onChange={(e) => set("emergency_phone", e.target.value)} /></Field>
           <Field label="Email"><Input type="email" value={c.email} onChange={(e) => set("email", e.target.value)} /></Field>
@@ -146,7 +148,7 @@ export function ClinicWizard({ userId, initial, existing }: { userId: string; in
           <div className="sm:col-span-2"><Field label="Google Maps link"><Input type="url" value={c.map_url} onChange={(e) => set("map_url", e.target.value)} placeholder="https://maps.app.goo.gl/…" /></Field></div>
           {existing && (
             <Field label="WhatsApp assistant code (3–10 letters or numbers)">
-              <Input value={code} maxLength={10} className="font-mono uppercase" placeholder="IVY"
+              <Input value={code} disabled={publicSample} maxLength={10} className="font-mono uppercase" placeholder="AURA"
                 onChange={(e) => setCode(e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, ""))} />
             </Field>
           )}

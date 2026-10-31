@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 const mocks = vi.hoisted(() => ({ stream: vi.fn(), from: vi.fn(), notice: vi.fn() }));
+vi.mock("@/lib/server/public-clinic.server", () => ({ publicAssistantInstructions: async () => "Fictional Aura sample instructions" }));
 vi.mock("@tanstack/react-router", () => ({ createFileRoute: () => (options: unknown) => options }));
 vi.mock("@/integrations/supabase/client.server", () => ({ supabaseAdmin: { from: mocks.from } }));
 vi.mock("@ai-sdk/openai", () => ({ createOpenAI: () => ({ responses: () => "test-model" }) }));

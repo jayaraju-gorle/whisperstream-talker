@@ -2,6 +2,7 @@
 // receptionist scenario in sync so the playground and WhatsApp test use the same information.
 import { supabase } from "@/integrations/supabase/client";
 import { CLINIC_SAMPLE, clinicKnowledge, clinicPrompt, receptionistAudience, type ClinicInput } from "@/lib/clinic";
+import { PUBLIC_SAMPLE_BUSINESS_ID } from "@/lib/public-clinic-demo";
 
 export type ClinicRow = ClinicInput & { id: string; scenario_id: string | null; kb_id: string | null; test_code: string; portal_token?: string; created_at: string; call_settings?: unknown };
 
@@ -9,8 +10,11 @@ export const CLINIC_COLUMNS = "id,name,phone,emergency_phone,email,address,map_u
 
 export async function saveClinic(userId: string, input: ClinicInput, existing?: Pick<ClinicRow, "id" | "scenario_id" | "kb_id">) {
   const clean = { ...input, doctors: input.doctors.filter((d) => d.name.trim()) };
+  const publicSample = existing?.id === PUBLIC_SAMPLE_BUSINESS_ID;
+  if (publicSample) clean.name = "Aura Health Clinic";
+  const sampleSafety = "This is a fictional Aura sample. All details are hypothetical. Simulate appointment requests only; never save patient appointments or claim real bookings. Offer custom business setup and collect contact details only with consent.";
   const firm = receptionistAudience(clean.name, clean.doctors) === "client";
-  const kb = { user_id: userId, name: `${clean.name} — ${firm ? "firm" : "clinic"} guide`, content: clinicKnowledge(clean), updated_at: new Date().toISOString() };
+  const kb = { user_id: userId, name: `${clean.name} — ${firm ? "firm" : "clinic"} guide`, content: clinicKnowledge(clean) + (publicSample ? `\n${sampleSafety}` : ""), updated_at: new Date().toISOString() };
   let kbId = existing?.kb_id ?? null;
   if (kbId) {
     const { error } = await supabase.from("knowledge_bases").update(kb).eq("id", kbId);
@@ -20,7 +24,7 @@ export async function saveClinic(userId: string, input: ClinicInput, existing?: 
     if (error) throw error;
     kbId = data.id;
   }
-  const scenario = { user_id: userId, label: `${clean.name} assistant`, prompt: clinicPrompt(clean.name, clean.doctors), sample: CLINIC_SAMPLE, kb_ids: [kbId], updated_at: new Date().toISOString() };
+  const scenario = { user_id: userId, label: `${clean.name} assistant`, prompt: publicSample ? `You are Mira, the 24/7 assistant for Aura Health Clinic. Use the attached current sample guide for clinic questions. ${sampleSafety}` : clinicPrompt(clean.name, clean.doctors), sample: CLINIC_SAMPLE, kb_ids: [kbId], updated_at: new Date().toISOString() };
   let scenarioId = existing?.scenario_id ?? null;
   if (scenarioId) {
     const { error } = await supabase.from("custom_scenarios").update(scenario).eq("id", scenarioId);

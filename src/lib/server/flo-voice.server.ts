@@ -1,6 +1,6 @@
 import { DefaultChatTransport, readUIMessageStream, type UIMessage } from "ai";
 import { handleAssistantPost } from "@/lib/server/assistant-handler.server";
-import { ASSISTANT_INSTRUCTIONS } from "@/lib/assistant-knowledge";
+import { publicAssistantInstructions } from "@/lib/server/public-clinic.server";
 import { PUBLIC_CLINIC_GREETING, publicTrialHistory } from "@/lib/public-clinic-demo";
 import { validFloVisitor, voiceMessages, type VoiceFragment } from "@/lib/flo-voice";
 
@@ -12,7 +12,7 @@ export async function createFloVoice(visitorId: unknown, runId: string) {
   const history = publicTrialHistory((Array.isArray(data?.messages) ? data.messages : []) as unknown as UIMessage[]);
   const initial = [...history];
   const answered = new Map<string, { text: string; answer: string }>();
-  const instructions = ASSISTANT_INSTRUCTIONS;
+  const instructions = await publicAssistantInstructions(db);
   const persona = `${instructions}
 VOICE CHANNEL: Speak in English unless the caller explicitly speaks another language. Keep spoken replies to one or two sentences. Do not read markdown or URLs aloud.
 Backchannel policy: Moderate listening sounds without taking over.

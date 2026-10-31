@@ -2,7 +2,7 @@ import { PUBLIC_CLINIC_CODE, PUBLIC_CLINIC_GREETING, PUBLIC_CLINIC_NOTICE, publi
 import { z } from "zod";
 import { convertToModelMessages, createUIMessageStream, createUIMessageStreamResponse, isStepCount, streamText, type UIMessage } from "ai";
 import { activeClinicCommand } from "@/lib/server/clinic-mode.server";
-import { ASSISTANT_INSTRUCTIONS } from "@/lib/assistant-knowledge";
+import { publicAssistantInstructions } from "@/lib/server/public-clinic.server";
 import { floTools } from "@/lib/server/flo.server";
 import { floLanguageModel, loadFloModel, logFloTurn } from "@/lib/server/flo-model.server";
 import {
@@ -94,7 +94,7 @@ export async function handleAssistantPost({ request, voice = false, channel }: {
 
         const result = streamText({
           model,
-          instructions: ASSISTANT_INSTRUCTIONS + (voice ? "\nVOICE: Respond in English unless the caller explicitly speaks another language. Keep answers to one or two sentences, asking one question at a time. Do not read markdown aloud. Require explicit confirmation of the exact details before saving any appointment request or contact details. An appointment is a request for the team to confirm, not a confirmed booking. Preserve completed tool results and never repeat a completed action for late transcript fragments." : ""),
+          instructions: await publicAssistantInstructions(db) + (voice ? "\nVOICE: Respond in English unless the caller explicitly speaks another language. Keep answers to one or two sentences, asking one question at a time. Do not read markdown aloud. Require explicit confirmation of the exact details before saving any appointment request or contact details. An appointment is a request for the team to confirm, not a confirmed booking. Preserve completed tool results and never repeat a completed action for late transcript fragments." : ""),
           messages: await convertToModelMessages(history),
           abortSignal: request.signal,
           stopWhen: isStepCount(4),
