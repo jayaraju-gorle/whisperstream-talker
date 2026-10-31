@@ -15,6 +15,7 @@
 - [x] Prefill built-in scenarios and sample knowledge from the original playground
 
 ## Business roadmap (internal only)
+- [ ] Separate the Aura trial from the business enquiry form; use natural spoken clock times and less repetitive fictional-demo disclosure; evaluate Bolna realtime compatibility and consented WhatsApp map sharing.
 - [x] Align homepage business/customer wording; parallelize fresh model/facts/history setup, tighten voice replies, propagate phone cancellation and discourage SSE buffering. 28 regression checks passed; real Bolna endpoint returned incremental text (first text 3.764s, full reply 5.291s); no claim of audible improvement.
 - [ ] Retest published phone pauses and barge-in — blocked: publishing, Bolna streaming/endpointing/TTS/interruption settings and an audible live call; no Bolna control connection available.
 - [ ] Check exact video demonstration — blocked: script absent from available files/history. Website Aura hours/map reply and populated Assistant voice/model/phone views and IST Session History verified; guest demo loaded but sample-turn effect not verified. Audible website/WhatsApp, lead form submission and full script remain unverified this turn.
