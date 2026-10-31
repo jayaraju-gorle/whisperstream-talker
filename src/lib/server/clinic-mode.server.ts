@@ -1,5 +1,6 @@
 import { tool, type UIMessage } from "ai";
 import { z } from "zod";
+import { PUBLIC_CLINIC_CODE, PUBLIC_CLINIC_GREETING, PUBLIC_SAMPLE_BUSINESS_ID } from "@/lib/public-clinic-demo";
 import { clinicKnowledge, clinicPrompt, parseClinicCommand, receptionistAudience, toClinicInput } from "@/lib/clinic";
 
 // Shared clinic receptionist mode for Mira on WhatsApp and the website chat.
@@ -71,4 +72,22 @@ export function activeClinicCommand(messages: UIMessage[]) {
     if (cmd?.kind === "exit") return { code: null, index: i };
   }
   return { code: null, index: -1 };
+}
+
+export const EXIT_TEXT = "You're with Mira. Would you like an assistant set up for your own clinic?";
+
+/** Resolves the active TRY/EXIT state from history for every public channel (web chat/voice, phone, WhatsApp).
+ *  AURA keeps the public sample; any other saved business code switches to that business's assistant.
+ *  Unknown codes are ignored so ordinary phrases like "try again" stay normal Mira messages. */
+export async function resolveTrial(db: Db, messages: UIMessage[], channel: ClinicChannel) {
+  const cmd = activeClinicCommand(messages);
+  const isCommand = cmd.index === messages.length - 1;
+  const after = cmd.index >= 0 ? messages.slice(cmd.index + 1) : messages;
+  if (!cmd.code) return { notice: isCommand && cmd.index >= 0 ? EXIT_TEXT : null, session: null, history: after };
+  if (cmd.code === PUBLIC_CLINIC_CODE) return { notice: isCommand ? PUBLIC_CLINIC_GREETING : null, session: null, history: after };
+  const { data } = await db.from("clinics").select("id").eq("test_code", cmd.code).maybeSingle();
+  const session = data && data.id !== PUBLIC_SAMPLE_BUSINESS_ID ? await loadClinicSession(db, data.id, channel) : null;
+  if (!session) return { notice: null, session: null, history: messages };
+  const notice = isCommand ? `Hi, you're now chatting with ${session.name}'s assistant. How can I help you today? Send EXIT anytime to return to Mira.` : null;
+  return { notice, session, history: after };
 }

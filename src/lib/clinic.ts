@@ -120,9 +120,10 @@ export function testCommand(code: string) {
 
 export function parseClinicCommand(body: string): { kind: "try"; code: string } | { kind: "exit" } | null {
   const t = body.trim();
-  const m = /^try\s+([a-z0-9]{3,10})$/i.exec(t);
-  if (m) return { kind: "try", code: m[1]!.toUpperCase() };
-  if (/^exit$/i.test(t)) return { kind: "exit" };
+  // Also accepts spoken/spelled forms such as "Try Iyashi." or "try I-Y-A-S-H-I".
+  const m = /^try\s+([a-z0-9]{3,10}|(?:[a-z0-9][\s.-]){2,9}[a-z0-9])[.!?]?$/i.exec(t);
+  if (m) return { kind: "try", code: m[1]!.replace(/[^a-z0-9]/gi, "").toUpperCase() };
+  if (/^exit[.!?]?$/i.test(t)) return { kind: "exit" };
   return null;
 }
 
