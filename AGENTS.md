@@ -35,3 +35,4 @@
 - Public channels resolve only the immutable sample-business ID in public-clinic.server.ts for editable Aura facts; never resolve arbitrary business IDs/codes. Server-owned fictional/lead safety overrides editable content; real presets and linked libraries remain admin-only.
 - Assistant and Playground Session History dates share profiles.preferences.timezone and its formatter (IST fallback); playground history reads only conversations/turns, never assistant reply tables, and /history remains a legacy entry to Playground. Bolna sessions appear only in Phone conversations. Website voice labels share relay constants.
 - Agent configuration lists only the pipeline stages the active mode runs, so a typed flow never offers a transcription picker.
+- Leads test detection lives in lead-filters.ts and only filters the Leads view; never delete records or filter Assistant transcripts with it.
