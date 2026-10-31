@@ -24,9 +24,9 @@ export const Route = createFileRoute("/_authenticated/playground")({
     meta: [
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
-      { title: "Playground — Conversational AI Flows Studio" },
+      { title: "Playground — Conversational Flow Studio" },
       { name: "description", content: "Compare voice and text agents using OpenAI, Google Gemini, Anthropic Claude, xAI Grok, Groq and Sarvam AI, with speech providers, response times and estimated costs." },
-      { property: "og:title", content: "Playground — Conversational AI Flows Studio" },
+      { property: "og:title", content: "Playground — Conversational Flow Studio" },
       { property: "og:description", content: "Compare voice and text agents using OpenAI, Google Gemini, Anthropic Claude, xAI Grok, Groq and Sarvam AI, with speech providers, response times and estimated costs." },
     ],
   }),

@@ -37,7 +37,7 @@ export function LeadForm() {
       <div className="grid gap-1.5 sm:col-span-2"><Label htmlFor="lf-msg">Anything we should know? (optional)</Label><Textarea id="lf-msg" name="message" maxLength={1000} rows={2} /></div>
       <input name="website" tabIndex={-1} autoComplete="off" aria-hidden="true" className="hidden" />
       {error && <p className="text-sm text-destructive sm:col-span-2">{error}</p>}
-      <div className="sm:col-span-2"><Button type="submit" loading={state === "sending"}>Get my custom AI assistant</Button></div>
+      <div className="sm:col-span-2"><Button type="submit" loading={state === "sending"}>Get my custom assistant</Button></div>
     </form>
   );
 }

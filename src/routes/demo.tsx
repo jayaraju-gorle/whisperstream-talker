@@ -23,9 +23,9 @@ export const Route = createFileRoute("/demo")({
   staticData: { sitemap: true },
   head: () => ({
     meta: [
-      { title: "Guest demo — Conversational AI Flows Studio" },
+      { title: "Guest demo — Conversational Flow Studio" },
       { name: "description", content: "Compare sample conversations with OpenAI, Google Gemini, Anthropic Claude and xAI Grok model options without using AI credits." },
-      { property: "og:title", content: "Guest demo — Conversational AI Flows Studio" },
+      { property: "og:title", content: "Guest demo — Conversational Flow Studio" },
       { property: "og:description", content: "Compare sample conversations with OpenAI, Google Gemini, Anthropic Claude and xAI Grok model options without using AI credits." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
@@ -119,7 +119,7 @@ function Demo() {
 
   return <div className="flex min-h-screen flex-col">
     <header className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3 border-b border-border bg-background/80 px-4 py-2.5 backdrop-blur">
-      <Link to="/" className="col-span-2 flex min-w-0 items-center gap-2 font-semibold"><Logo className="h-6 w-6 shrink-0" /><span>Conversational AI Flows Studio</span></Link>
+      <Link to="/" className="col-span-2 flex min-w-0 items-center gap-2 font-semibold"><Logo className="h-6 w-6 shrink-0" /><span>Conversational Flow Studio</span></Link>
       <nav className="col-span-2 flex min-w-0 items-center gap-1 text-sm sm:col-span-1"><Button variant="secondary" size="sm" onClick={() => { setLibraryOpen(false); setHistoryOpen(false); }}>Playground</Button><Button variant="ghost" size="sm" onClick={() => setHistoryOpen(true)}><History className="h-3.5 w-3.5" /> History</Button><Button variant="ghost" size="sm" onClick={() => setLibraryOpen(true)}><BookOpen className="h-3.5 w-3.5" /> Library</Button></nav>
       <div className="col-span-2 flex flex-wrap items-center justify-end gap-3 sm:col-span-1"><span className="font-mono text-xs text-primary">GUEST DEMO</span><CurrencySelect /><Button asChild variant="outline" size="sm"><Link to="/auth">Sign in</Link></Button></div>
     </header>

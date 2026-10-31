@@ -15,6 +15,7 @@
 - [x] Prefill built-in scenarios and sample knowledge from the original playground
 
 ## Business roadmap (internal only)
+- [x] Lead homepage with done-for-you 24/7 assistance across phone, WhatsApp and web; remove homepage AI wording and rename the brand Conversational Flow Studio while preserving playground technology terms.
 - [x] Remove the Coming Next section from the homepage; visually verified.
 - [x] Default public trial instructions to fictional Aura Health Clinic, disclose sample status, preserve Mira lead capture, block real-clinic activation/history, and load real presets only for verified admins; 47 tests and live website fee reply verified.
 - [ ] Verify Aura on a real WhatsApp message and audible phone/web voice call — blocked: updated app needs publishing; external phone greeting/configuration and audible calls remain unverified.

@@ -11,9 +11,9 @@ export const Route = createFileRoute("/_authenticated/clinics/$id/edit")({
   staticData: { sitemap: false },
   head: () => ({
     meta: [
-      { title: "Business settings — Conversational AI Flows Studio" },
+      { title: "Business settings — Conversational Flow Studio" },
       { name: "description", content: "Update business details, team, fees and assistant call settings." },
-      { property: "og:title", content: "Business settings — Conversational AI Flows Studio" },
+      { property: "og:title", content: "Business settings — Conversational Flow Studio" },
       { property: "og:description", content: "Update business details, team, fees and assistant call settings." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },

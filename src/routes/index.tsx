@@ -26,17 +26,17 @@ export const Route = createFileRoute("/")({
   staticData: { sitemap: true },
   head: () => ({
     meta: [
-      { title: "Mira — 24/7 AI assistant for clinics | Phone, WhatsApp & web" },
+      { title: "Mira — 24/7 assistant for your business | Phone, WhatsApp & web" },
       {
         name: "description",
         content:
           "Mira answers patient calls, WhatsApp messages and website chat around the clock, handles peak-hour surges and captures appointment requests. Done for you — no technical setup.",
       },
-      { property: "og:title", content: "Mira — 24/7 AI assistant for clinics | Phone, WhatsApp & web" },
+      { property: "og:title", content: "Mira — 24/7 assistant for your business | Phone, WhatsApp & web" },
       {
         property: "og:description",
         content:
-          "A 24/7 conversational AI assistant for health clinics across phone, WhatsApp and website chat. Try Mira now.",
+          "A done-for-you 24/7 assistant for your business across phone, WhatsApp and web. Try Mira with our live sample clinic.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
@@ -53,26 +53,26 @@ export const Route = createFileRoute("/")({
               "@type": "WebSite",
               "@id": "https://conversationalaistudio.online/#website",
               url: "https://conversationalaistudio.online/",
-              name: "Conversational AI Flows Studio",
+              name: "Conversational Flow Studio",
               inLanguage: "en",
             },
             {
               "@type": "WebApplication",
               "@id": "https://conversationalaistudio.online/#app",
-              name: "Conversational AI Flows Studio",
+              name: "Conversational Flow Studio",
               url: "https://conversationalaistudio.online/",
               description:
-                "Browser-based voice and text AI test bench: swap speech-to-text, LLM and text-to-speech providers and compare latency and cost per turn, side by side, in live voice or plain text conversations. Includes a free demo that runs without an account.",
+                "A done-for-you 24/7 assistant across phone, WhatsApp and web, with a live sample clinic and a secondary voice and text playground for comparing response speed and cost.",
               applicationCategory: "DeveloperApplication",
               operatingSystem: "Any (web browser)",
               browserRequirements: "Requires a modern browser with microphone access",
               isPartOf: { "@id": "https://conversationalaistudio.online/#website" },
               featureList: [
                 "Free guest demo with sample scenarios — no sign-in required",
-                "Live voice and text conversations with AI agents",
-                "Live speech-to-speech calls with streaming voice models (OpenAI Realtime, Gemini Live)",
+                "Live voice and text conversations with assistants",
+                "Live speech-to-speech calls with streaming voice models",
                 "Text-only mode for testing LLM stacks without speech providers",
-                "Voice and text provider options: OpenAI, Google Gemini, Anthropic Claude, xAI Grok, Groq, Deepgram, ElevenLabs and Sarvam AI; live availability depends on connected keys",
+                "Multiple voice and text providers; live availability depends on connected keys",
                 "Real-time latency metrics: time to first token, time to first audio, end-to-end voice response time",
                 "Estimated token usage and cost per turn, with multi-currency display",
                 "Side-by-side comparison of two agent stacks in voice or text",
@@ -99,7 +99,7 @@ const FEATURES = [
   {
     icon: PlayCircle,
     t: "Try before you sign in",
-    d: "A free demo of the full studio — voice, text and comparisons with sample conversations — right in your browser. Real AI credits start with an account.",
+    d: "A free demo of the full studio — voice, text and comparisons with sample conversations — right in your browser. Live model usage requires an account.",
   },
   {
     icon: Mic,
@@ -109,7 +109,7 @@ const FEATURES = [
   {
     icon: Shuffle,
     t: "Build your own combination",
-    d: "Mix speech-to-text (STT), language models (LLMs) and text-to-speech (TTS). Choose OpenAI, Gemini, Claude, Grok, Groq, Sarvam AI, Deepgram and ElevenLabs options, including built-in models and connected providers.",
+    d: "Mix speech-to-text (STT), language models (LLMs) and text-to-speech (TTS). Explore built-in models and connected providers in the playground.",
   },
   {
     icon: Gauge,
@@ -124,7 +124,7 @@ const FEATURES = [
   {
     icon: Radio,
     t: "Speech-to-speech calls",
-    d: "Live voice models like OpenAI Realtime and Gemini Live answer with a single streaming model — no separate transcription or voice steps.",
+    d: "Live voice models answer with a single streaming model — no separate transcription or voice steps.",
   },
   {
     icon: BookOpen,
@@ -156,7 +156,7 @@ function Index() {
     <div className="min-h-screen">
       <header className="mx-auto grid max-w-6xl grid-cols-[minmax(0,1fr)_auto] items-center gap-4 px-4 py-5 sm:px-6">
         <div className="flex min-w-0 items-center gap-2 font-semibold">
-          <Logo className="h-6 w-6 shrink-0" /> Conversational AI Flows Studio
+          <Logo className="h-6 w-6 shrink-0" /> Conversational Flow Studio
         </div>
         <Button asChild variant="ghost" size="sm">
           <Link to={user ? "/playground" : "/auth"}>{user ? "Playground" : "Sign in"}</Link>
@@ -165,7 +165,7 @@ function Index() {
       <main className="mx-auto max-w-6xl px-4 pb-24 pt-8 sm:px-6 sm:pt-12">
         <p className="font-mono text-xs uppercase tracking-[0.2em] text-primary">Phone · WhatsApp · Web</p>
         <h1 className="mt-4 w-full text-4xl font-semibold leading-[1.1] sm:text-5xl md:text-6xl">
-          A done-for-you 24/7 AI assistant for your business.
+          A done-for-you 24/7 assistant for your business.
         </h1>
         <p className="mt-6 w-full text-lg text-muted-foreground">
           Mira answers your calls, WhatsApp messages and website inquiries — through peak rush hours and long after
@@ -212,7 +212,7 @@ function Index() {
           </div>
           <div className="mt-8 border-t border-border pt-6">
             <h3 className="text-lg font-semibold">Want one for your business?</h3>
-            <p className="mt-1 mb-4 text-sm text-muted-foreground">Tell us a little about you and we’ll configure a custom AI assistant with your details.</p>
+            <p className="mt-1 mb-4 text-sm text-muted-foreground">Tell us a little about you and we’ll configure a custom assistant with your details.</p>
             <LeadForm />
           </div>
         </section>

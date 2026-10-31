@@ -59,7 +59,7 @@ export function SiteAssistant() {
           <div className="flex items-center gap-2 border-b border-border px-4 py-3">
             <Logo className="h-6 w-6" />
             <div className="min-w-0 flex-1">
-              <div className="text-sm font-semibold">Mira · Clinic AI assistant</div>
+              <div className="text-sm font-semibold">Mira · 24/7 assistant</div>
               <div className="text-xs text-muted-foreground">Aura Health Clinic · Fictional sample</div>
             </div>
             <AlertDialog>
