@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 const mocks = vi.hoisted(() => ({ from: vi.fn() }));
+vi.mock("@/lib/server/public-clinic.server", () => ({ publicAssistantInstructions: async () => "Fictional Aura sample instructions" }));
 vi.mock("@/integrations/supabase/client.server", () => ({ supabaseAdmin: { from: mocks.from } }));
 vi.mock("@/lib/server/assistant-handler.server", () => ({ handleAssistantPost: vi.fn() }));
 import { createFloVoice } from "./flo-voice.server";
