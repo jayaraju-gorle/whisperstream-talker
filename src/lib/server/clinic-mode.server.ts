@@ -1,3 +1,4 @@
+import { MIRA_TOPIC_GUARDRAILS } from "@/lib/assistant-guardrails";
 import { tool, type UIMessage } from "ai";
 import { z } from "zod";
 import { PUBLIC_CLINIC_CODE, PUBLIC_CLINIC_GREETING, PUBLIC_SAMPLE_BUSINESS_ID } from "@/lib/public-clinic-demo";
@@ -29,7 +30,7 @@ export async function loadClinicSession(db: Db, id: string, channel: ClinicChann
   const audience = receptionistAudience(c.name, c.doctors);
   return {
     id: data.id, name: c.name, audience,
-    instructions: `${clinicPrompt(c.name, c.doctors)}\n\n${audience === "client" ? "FIRM" : "CLINIC"} INFORMATION\n${clinicKnowledge(c)}\n\n${CHANNEL_RULES[channel]}`,
+    instructions: `${clinicPrompt(c.name, c.doctors)}\n\n${audience === "client" ? "FIRM" : "CLINIC"} INFORMATION\n${clinicKnowledge(c)}\n\n${MIRA_TOPIC_GUARDRAILS}\n\n${CHANNEL_RULES[channel]}`,
   };
 }
 
