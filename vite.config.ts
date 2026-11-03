@@ -15,13 +15,6 @@ Object.assign(process.env, loadEnv(process.env["NODE_ENV"] ?? "development", pro
 export default defineConfig({
   vite: {
     plugins: [liveVoiceDev()],
-    resolve: {
-      alias: {
-        "entities/lib/decode.js": path.resolve(__dirname, "node_modules/entities/lib/decode.js"),
-        "entities/lib/encode.js": path.resolve(__dirname, "node_modules/entities/lib/encode.js"),
-        entities: path.resolve(__dirname, "node_modules/entities"),
-      },
-    },
   },
   tanstackStart: {
     // Redirect TanStack Start's bundled server entry to src/server.ts (our SSR error wrapper).
