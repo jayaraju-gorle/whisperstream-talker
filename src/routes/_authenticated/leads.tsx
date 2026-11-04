@@ -212,56 +212,25 @@ function WebConversations({ leads, phone = false }: { leads: Lead[]; phone?: boo
         </div>
         <Button size="sm" variant="outline" loading={isFetching} loadingLabel="Refreshing…" onClick={() => void refetch()}>Refresh</Button>
       </div>
-      <div className="mt-4 grid gap-2 sm:grid-cols-2 lg:grid-cols-[minmax(0,1.4fr)_repeat(3,minmax(0,0.8fr))]">
-        <Input
-          value={query}
-          aria-label={`Search ${title.toLowerCase()}`}
-          placeholder="Search name, email, or message"
-          onChange={(event) => { setQuery(event.target.value); setPage(0); setOpenId(null); }}
-        />
-        <Select value={activity} onValueChange={(value) => { setActivity(value as ActivityWindow); setPage(0); setOpenId(null); }}>
-          <SelectTrigger aria-label="Last activity"><SelectValue /></SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">Any time</SelectItem>
-            <SelectItem value="today">Last activity today</SelectItem>
-            <SelectItem value="yesterday">Last activity yesterday</SelectItem>
-            <SelectItem value="7d">Last 7 days</SelectItem>
-            <SelectItem value="30d">Last 30 days</SelectItem>
-          </SelectContent>
-        </Select>
-        <Select value={contact} onValueChange={(value) => { setContact(value as ContactFilter); setPage(0); setOpenId(null); }}>
-          <SelectTrigger aria-label="Contact details"><SelectValue /></SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All visitors</SelectItem>
-            <SelectItem value="with-lead">With contact details</SelectItem>
-            <SelectItem value="visitors">No contact details</SelectItem>
-          </SelectContent>
-        </Select>
-        <Select value={sort} onValueChange={(value) => { setSort(value as ConversationSort); setPage(0); setOpenId(null); }}>
-          <SelectTrigger aria-label="Sort conversations"><SelectValue /></SelectTrigger>
-          <SelectContent>
-            <SelectItem value="activity-desc">Last activity, newest</SelectItem>
-            <SelectItem value="activity-asc">Last activity, oldest</SelectItem>
-            <SelectItem value="started-desc">Started, newest</SelectItem>
-            <SelectItem value="started-asc">Started, oldest</SelectItem>
-          </SelectContent>
-        </Select>
-      </div>
-      <div className="mt-3 flex flex-wrap items-center justify-between gap-3">
-        <p className="text-sm text-muted-foreground">
-          {data ? view.matched === view.total ? `${view.matched} conversations` : `${view.matched} of ${view.total} match` : ""}
-          {data && data.total > data.conversations.length ? ` · showing the ${data.conversations.length} most recently active` : ""}
-        </p>
-        <div className="flex items-center gap-2">
-          {filtersActive && <Button size="sm" variant="ghost" onClick={resetFilters}>Clear filters</Button>}
-          <Select value={String(pageSize)} onValueChange={(value) => { setPageSize(Number(value) as (typeof PAGE_SIZES)[number]); setPage(0); setOpenId(null); }}>
-            <SelectTrigger aria-label="Conversations per page" className="w-28"><SelectValue /></SelectTrigger>
-            <SelectContent>
-              {PAGE_SIZES.map((size) => <SelectItem key={size} value={String(size)}>{size} / page</SelectItem>)}
-            </SelectContent>
-          </Select>
-        </div>
-      </div>
+      <InboxToolbar
+        searchLabel={`Search ${title.toLowerCase()}`}
+        placeholder="Search name, email, or message"
+        query={query}
+        onQuery={(value) => { setQuery(value); setPage(0); setOpenId(null); }}
+        activity={activity}
+        onActivity={(value) => { setActivity(value); setPage(0); setOpenId(null); }}
+        sort={sort}
+        onSort={(value) => { setSort(value); setPage(0); setOpenId(null); }}
+        thirdLabel="Contact details"
+        thirdValue={contact}
+        onThird={(value) => { setContact(value as ContactFilter); setPage(0); setOpenId(null); }}
+        thirdOptions={[{ value: "all", label: "All visitors" }, { value: "with-lead", label: "With contact details" }, { value: "visitors", label: "No contact details" }]}
+        pageSize={pageSize}
+        onPageSize={(size) => { setPageSize(size); setPage(0); setOpenId(null); }}
+        filtersActive={filtersActive}
+        onClear={resetFilters}
+        summary={data ? `${view.matched === view.total ? `${view.matched} conversations` : `${view.matched} of ${view.total} match`}${data.total > data.conversations.length ? ` · showing the ${data.conversations.length} most recently active` : ""}` : ""}
+      />
       {isLoading && <div className="mt-4"><LoadingIndicator label={`Loading ${title.toLowerCase()}…`} /></div>}
       {isError && <p className="mt-4 text-sm text-destructive">{title} couldn't load. Please try refreshing.</p>}
       {data && view.total === 0 && <p className="mt-4 text-sm text-muted-foreground">No {title.toLowerCase()} yet.</p>}
@@ -296,6 +265,74 @@ function WebConversations({ leads, phone = false }: { leads: Lead[]; phone?: boo
       </div>
       {view.pages > 1 && <ConversationPager view={view} onPage={goTo} />}
     </div>
+  );
+}
+
+function InboxToolbar({
+  searchLabel, placeholder, query, onQuery, activity, onActivity, sort, onSort,
+  thirdLabel, thirdValue, onThird, thirdOptions, pageSize, onPageSize, filtersActive, onClear, summary,
+}: {
+  searchLabel: string;
+  placeholder: string;
+  query: string;
+  onQuery: (value: string) => void;
+  activity: ActivityWindow;
+  onActivity: (value: ActivityWindow) => void;
+  sort: ConversationSort;
+  onSort: (value: ConversationSort) => void;
+  thirdLabel: string;
+  thirdValue: string;
+  onThird: (value: string) => void;
+  thirdOptions: { value: string; label: string }[];
+  pageSize: (typeof PAGE_SIZES)[number];
+  onPageSize: (size: (typeof PAGE_SIZES)[number]) => void;
+  filtersActive: boolean;
+  onClear: () => void;
+  summary: string;
+}) {
+  return (
+    <>
+      <div className="mt-4 grid gap-2 sm:grid-cols-2 lg:grid-cols-[minmax(0,1.4fr)_repeat(3,minmax(0,0.8fr))]">
+        <Input value={query} aria-label={searchLabel} placeholder={placeholder} onChange={(event) => onQuery(event.target.value)} />
+        <Select value={activity} onValueChange={(value) => onActivity(value as ActivityWindow)}>
+          <SelectTrigger aria-label="Last activity"><SelectValue /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Any time</SelectItem>
+            <SelectItem value="today">Last activity today</SelectItem>
+            <SelectItem value="yesterday">Last activity yesterday</SelectItem>
+            <SelectItem value="7d">Last 7 days</SelectItem>
+            <SelectItem value="30d">Last 30 days</SelectItem>
+          </SelectContent>
+        </Select>
+        <Select value={thirdValue} onValueChange={onThird}>
+          <SelectTrigger aria-label={thirdLabel}><SelectValue /></SelectTrigger>
+          <SelectContent>
+            {thirdOptions.map((option) => <SelectItem key={option.value} value={option.value}>{option.label}</SelectItem>)}
+          </SelectContent>
+        </Select>
+        <Select value={sort} onValueChange={(value) => onSort(value as ConversationSort)}>
+          <SelectTrigger aria-label="Sort conversations"><SelectValue /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="activity-desc">Last activity, newest</SelectItem>
+            <SelectItem value="activity-asc">Last activity, oldest</SelectItem>
+            <SelectItem value="started-desc">Started, newest</SelectItem>
+            <SelectItem value="started-asc">Started, oldest</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+      <div className="mt-3 flex flex-wrap items-center justify-between gap-3">
+        <p className="text-sm text-muted-foreground">{summary}</p>
+        <div className="flex items-center gap-2">
+          {filtersActive && <Button size="sm" variant="ghost" onClick={onClear}>Clear filters</Button>}
+          <Select value={String(pageSize)} onValueChange={(value) => onPageSize(Number(value) as (typeof PAGE_SIZES)[number])}>
+            <SelectTrigger aria-label="Conversations per page" className="w-28"><SelectValue /></SelectTrigger>
+            <SelectContent>
+              {PAGE_SIZES.map((size) => <SelectItem key={size} value={String(size)}>{size} / page</SelectItem>)}
+            </SelectContent>
+          </Select>
+        </div>
+      </div>
+    </>
   );
 }
 
@@ -425,10 +462,37 @@ function WaThread({ msgs }: { msgs: WaMessage[] }) {
   );
 }
 
+type WaThread = { id: string; created_at: string; updated_at: string; messages: WaMessage[] };
+type ReplyFilter = "all" | "waiting" | "replied";
+
+function waitingOnMira(messages: WaMessage[]) {
+  const lastVisitor = [...messages].reverse().find((message) => message.direction !== "out");
+  if (!lastVisitor) return false;
+  if (lastVisitor.reply_state === "failed" || lastVisitor.reply_state === "pending" || lastVisitor.reply_state === "sending" || lastVisitor.reply_state === "unknown") return true;
+  return messages.at(-1)?.direction !== "out";
+}
+
+function whatsAppThreads(messages: WaMessage[]): WaThread[] {
+  const grouped = new Map<string, WaMessage[]>();
+  for (const message of messages) grouped.set(message.phone, [...(grouped.get(message.phone) ?? []), message]);
+  return [...grouped.entries()].flatMap(([phone, thread]) => {
+    const first = thread[0];
+    const last = thread.at(-1);
+    if (!first || !last) return [];
+    return [{ id: phone, created_at: first.created_at, updated_at: last.created_at, messages: thread }];
+  });
+}
+
 function WhatsAppMessages() {
-  const { format } = useTimezone();
+  const { format, zone } = useTimezone();
   const [phone, setPhone] = useState<string | null>(null);
-  const { data, isLoading, isError } = useQuery({
+  const [page, setPage] = useState(0);
+  const [pageSize, setPageSize] = useState<(typeof PAGE_SIZES)[number]>(15);
+  const [query, setQuery] = useState("");
+  const [sort, setSort] = useState<ConversationSort>("activity-desc");
+  const [activity, setActivity] = useState<ActivityWindow>("all");
+  const [reply, setReply] = useState<ReplyFilter>("all");
+  const { data, isLoading, isError, refetch, isFetching } = useQuery({
     queryKey: ["whatsapp-messages"],
     refetchInterval: 15_000,
     queryFn: async () => {
@@ -439,34 +503,93 @@ function WhatsAppMessages() {
       return data as WaMessage[];
     },
   });
-  if (isLoading) return <div className="mt-8"><LoadingIndicator label="Loading WhatsApp messages…" /></div>;
-  if (isError) return <p className="mt-8 text-sm text-destructive">WhatsApp messages couldn't load.</p>;
-  const threads = new Map<string, WaMessage[]>();
-  for (const m of data ?? []) threads.set(m.phone, [...(threads.get(m.phone) ?? []), m]);
-  const list = [...threads.entries()].sort((a, b) => (b[1].at(-1)?.created_at ?? "").localeCompare(a[1].at(-1)?.created_at ?? ""));
-  if (list.length === 0) return <p className="mt-8 text-sm text-muted-foreground">No WhatsApp messages yet.</p>;
+  const allThreads = whatsAppThreads(data ?? []);
+  const threads = allThreads.filter((thread) => {
+    if (reply === "waiting") return waitingOnMira(thread.messages);
+    if (reply === "replied") return !waitingOnMira(thread.messages);
+    return true;
+  });
+  const view = viewConversations(threads, {
+    sort,
+    window: activity,
+    contact: "all",
+    query,
+    page,
+    pageSize,
+    now: new Date(),
+    timeZone: zone,
+    hasLead: () => false,
+    searchText: (thread) => [thread.id, ...thread.messages.map((message) => message.body)].join(" "),
+  });
+  const filtersActive = query.trim() !== "" || activity !== "all" || reply !== "all";
+  const resetFilters = () => {
+    setQuery("");
+    setActivity("all");
+    setReply("all");
+    setPage(0);
+    setPhone(null);
+  };
+  const goTo = (next: number) => {
+    setPage(next);
+    setPhone(null);
+  };
   return (
-    <div className="mt-6 space-y-3">
-      {list.map(([p, msgs]) => {
-        const last = msgs.at(-1);
-        if (!last) return null;
-        const open = phone === p;
-        return (
-          <div key={p} className="rounded-lg border border-border bg-card p-4">
-            <div className="flex flex-wrap items-start justify-between gap-3">
-              <div className="min-w-0">
-                <a className="font-medium text-primary hover:underline" href={`https://wa.me/${p}`} target="_blank" rel="noreferrer">+{p}</a>
-                <p className="mt-1 truncate text-sm text-muted-foreground">{last.body}</p>
-                <div className="mt-1 font-mono text-[11px] text-muted-foreground">
-                  {msgs.length} messages · last {format(last.created_at)}
+    <div className="mt-6">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <h2 className="font-medium">WhatsApp{data ? ` · ${allThreads.length}` : ""}</h2>
+          <p className="mt-1 text-xs text-muted-foreground">Sorted by the latest message, so a number that just wrote stays above an older chat.</p>
+        </div>
+        <Button size="sm" variant="outline" loading={isFetching} loadingLabel="Refreshing…" onClick={() => void refetch()}>Refresh</Button>
+      </div>
+      <InboxToolbar
+        searchLabel="Search WhatsApp conversations"
+        placeholder="Search phone number or message"
+        query={query}
+        onQuery={(value) => { setQuery(value); setPage(0); setPhone(null); }}
+        activity={activity}
+        onActivity={(value) => { setActivity(value); setPage(0); setPhone(null); }}
+        sort={sort}
+        onSort={(value) => { setSort(value); setPage(0); setPhone(null); }}
+        thirdLabel="Reply status"
+        thirdValue={reply}
+        onThird={(value) => { setReply(value as ReplyFilter); setPage(0); setPhone(null); }}
+        thirdOptions={[{ value: "all", label: "All chats" }, { value: "waiting", label: "Waiting on Mira" }, { value: "replied", label: "Mira replied" }]}
+        pageSize={pageSize}
+        onPageSize={(size) => { setPageSize(size); setPage(0); setPhone(null); }}
+        filtersActive={filtersActive}
+        onClear={resetFilters}
+        summary={data ? view.matched === allThreads.length ? `${view.matched} conversations` : `${view.matched} of ${allThreads.length} match` : ""}
+      />
+      {isLoading && <div className="mt-4"><LoadingIndicator label="Loading WhatsApp messages…" /></div>}
+      {isError && <p className="mt-4 text-sm text-destructive">WhatsApp messages couldn't load.</p>}
+      {data && threads.length === 0 && reply === "all" && activity === "all" && query.trim() === "" && <p className="mt-4 text-sm text-muted-foreground">No WhatsApp messages yet.</p>}
+      {data && view.matched === 0 && (reply !== "all" || activity !== "all" || query.trim() !== "") && <p className="mt-4 text-sm text-muted-foreground">Nothing matches these filters. <button type="button" className="text-primary underline" onClick={resetFilters}>Clear filters</button></p>}
+      {view.pages > 1 && <ConversationPager view={view} onPage={goTo} />}
+      <div className="mt-4 space-y-3">
+        {view.items.map((thread) => {
+          const last = thread.messages.at(-1);
+          if (!last) return null;
+          const open = phone === thread.id;
+          return (
+            <div key={thread.id} className="rounded-lg border border-border bg-card p-4">
+              <div className="flex flex-wrap items-start justify-between gap-3">
+                <div className="min-w-0 flex-1">
+                  <a className="font-medium text-primary hover:underline" href={`https://wa.me/${thread.id}`} target="_blank" rel="noreferrer">+{thread.id}</a>
+                  <p className="mt-1 line-clamp-2 text-sm">{last.body}</p>
+                  <div className="mt-2 space-y-1 font-mono text-[11px] text-muted-foreground">
+                    <p>{thread.messages.length} messages · last activity {format(thread.updated_at)}</p>
+                    <p>Started {format(thread.created_at)}</p>
+                  </div>
                 </div>
+                <Button size="sm" variant="ghost" aria-expanded={open} onClick={() => setPhone(open ? null : thread.id)}>{open ? "Hide messages" : "View messages"}</Button>
               </div>
-              <Button size="sm" variant="ghost" onClick={() => setPhone(open ? null : p)}>{open ? "Hide messages" : "View messages"}</Button>
+              {open && <WaThread msgs={thread.messages} />}
             </div>
-            {open && <WaThread msgs={msgs} />}
-          </div>
-        );
-      })}
+          );
+        })}
+      </div>
+      {view.pages > 1 && <ConversationPager view={view} onPage={goTo} />}
     </div>
   );
 }

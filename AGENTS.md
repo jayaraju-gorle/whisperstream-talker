@@ -9,6 +9,8 @@
 > the editor, so keep the branch in a working state.
 <!-- LOVABLE:END -->
 
+- Environments: `main` is production (conversationalaistudio.online, published from Lovable). `staging` is the pre-production branch for staging.conversationalaistudio.online. Commit and push ongoing work to `staging` only after the user has reviewed it. Do not push to `main`, and do not ask Lovable to publish, unless the user explicitly says to promote staging to production. Leave Lovable's synced branch on `main` so an editor publish cannot ship unfinished staging work.
+
 - Voice pipeline is browser-orchestrated (src/lib/pipeline.ts): server routes /api/stt, /api/llm, /api/tts only proxy providers so API keys stay server-side; /api/tts always returns raw 24 kHz s16le PCM so the player is provider-agnostic.
 - Provider/model catalog and pricing live in src/lib/catalog.ts; adding a provider means a catalog entry plus a branch in each relevant /api route.
 - Catalog provider identifies the foundation vendor; optional connection identifies built-in transport, preserving saved model IDs and independent key availability. Only supported live models are listed to avoid misleading availability.
@@ -29,7 +31,7 @@
 - Restarting Flo rotates the browser's random visitor identifier and remounts the chat after confirmation, preserving prior server records while isolating the new conversation.
 - Flo on WhatsApp: signed callbacks persist in whatsapp_webhook_events; src/server.ts forwards runtime waitUntil to the receiver for reply draining after acknowledgement. Receipt-time typing is refreshed during every claimed reply and stopped after sending; reply claims and deferred status reconciliation preserve recovery. Shared floTools/notifyNewLead keep web parity; reserved whatsapp_<number> visitor ids never reach browser sessions.
 - Flo's AI model is chosen per site in the app_settings table (key flo_model) and resolved server-side against src/lib/flo-models.ts, so the web chat and WhatsApp always use the same validated model; every Flo turn is logged to assistant_turn_logs for model comparison.
-- The assistant admin area retains /leads. Web and phone lists load up to 500 conversations so search, last-activity filters, and numbered pages run together; the default order is last activity, and opening a chat still loads that transcript on demand. Reserved WhatsApp visitor prefixes stay excluded. Admin-only access policies are unchanged.
+- The assistant admin area retains /leads. Web, phone, and WhatsApp lists share search, last-activity filters, sort, and numbered pages. Web and phone load up to 500 conversations; WhatsApp groups the latest 2000 messages by phone. Default order is last activity. Opening a chat still loads that transcript on demand. Reserved WhatsApp visitor prefixes stay out of the web and phone lists. Admin-only access policies are unchanged.
 - Legacy WhatsApp reply metrics match successful WhatsApp turn logs by conversation and nearest preceding completion timestamp, never array index; this keeps unlogged older replies and failed attempts from shifting metrics onto the wrong messages.
 - Business assistants share clinic rows and audience-aware prompts; owner-only phone setup reads Twilio numbers server-side, never marking unconfigured routing ready.
 - Public channels default to the fixed Aura sample; unpromoted TRY <saved code> switches business via resolveTrial, unknown codes ignored; presets stay admin-only. AURA MAP uses the durable reply path. assistant-speech.ts formats hours as AM/PM.
