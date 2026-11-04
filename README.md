@@ -71,6 +71,17 @@ bunx vitest run    # unit tests
 
 Environment: `VITE_SUPABASE_URL`, `VITE_SUPABASE_PUBLISHABLE_KEY` (client). Server secrets as needed: `LOVABLE_API_KEY`, `OPENAI_API_KEY`, `GROQ_API_KEY`, `DEEPGRAM_API_KEY`, `ELEVENLABS_API_KEY`.
 
+## Publish to the Lovable production site
+
+Edits made here reach the live site in two steps. A push to the Git branch Lovable syncs (usually `main`) updates the Lovable project. It does not change the published website. Publishing is a separate call.
+
+1. Commit and push to the synced branch.
+2. Create a workspace API key with `projects:write` at [lovable.dev/settings/api-keys](https://lovable.dev/settings/api-keys) (Business plan or higher).
+3. Set `LOVABLE_WORKSPACE_API_KEY`. Set `LOVABLE_PROJECT_ID` when the workspace has more than one project.
+4. Run `node scripts/publish-lovable.mjs`.
+
+This workspace key is separate from the assistant gateway secret named `LOVABLE_API_KEY`. Keep the workspace key on your machine, not in the repo.
+
 ## Notes
 
 - Costs are estimates based on public list prices.

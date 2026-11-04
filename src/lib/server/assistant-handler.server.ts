@@ -48,7 +48,7 @@ export async function handleAssistantPost({ request, voice = false, channel }: {
         const db = await admin();
         const { data: convo, error: convoErr } = await db
           .from("assistant_conversations")
-          .upsert({ visitor_id: visitorId, updated_at: new Date().toISOString() }, { onConflict: "visitor_id" })
+          .upsert({ visitor_id: visitorId }, { onConflict: "visitor_id" })
           .select("id")
           .single();
         if (convoErr || !convo) return json({ error: "Couldn't start the conversation" }, 500);
@@ -128,10 +128,13 @@ export async function handleAssistantGet({ request }: { request: Request }) {
         const db = await admin();
         const { data, error } = await db
           .from("assistant_conversations")
-          .select("messages")
+          .select("messages,created_at")
           .eq("visitor_id", id.data)
           .maybeSingle();
         if (error) return json({ error: "Couldn't load the conversation" }, 500);
         const history = (Array.isArray(data?.messages) ? data.messages : []) as unknown as UIMessage[];
-        return json({ messages: publicTrialHistory(history).length === history.length ? history : [] });
+        return json({
+          messages: publicTrialHistory(history).length === history.length ? history : [],
+          createdAt: data?.created_at ?? null,
+        });
 }

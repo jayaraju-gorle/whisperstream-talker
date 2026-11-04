@@ -40,6 +40,7 @@ import {
   PHONE_ASSISTANT_URL,
   WHATSAPP_ASSISTANT_URL,
 } from "@/lib/flo-voice";
+import { startedOnEarlierDay } from "@/lib/web-conversations";
 
 const KEY = "flo-visitor-id";
 const SUGGESTIONS = [
@@ -76,7 +77,18 @@ export function SiteAssistant() {
     setId(v);
     fetch(`/api/public/assistant?visitorId=${v}`)
       .then((r) => r.json())
-      .then((d) => setInitial(Array.isArray(d.messages) ? d.messages : []))
+      .then((d) => {
+        const messages = Array.isArray(d.messages) ? d.messages : [];
+        const zone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+        if (messages.length && typeof d.createdAt === "string" && startedOnEarlierDay(d.createdAt, new Date(), zone)) {
+          const next = crypto.randomUUID().replace(/-/g, "");
+          localStorage.setItem(KEY, next);
+          setId(next);
+          setInitial([]);
+          return;
+        }
+        setInitial(messages);
+      })
       .catch(() => setInitial([]));
   }, [open, id]);
 

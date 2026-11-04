@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { LoadingIndicator } from "@/components/LoadingIndicator";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { FLO_MODELS, FLO_MODEL_SETTING_KEY, floTurnCostUsd, resolveFloModel } from "@/lib/flo-models";
 import { useCurrency } from "@/hooks/use-currency";
@@ -15,6 +16,7 @@ import { CurrencySelect } from "@/components/CurrencySelect";
 import { matchWhatsAppMetrics } from "@/lib/whatsapp-metrics";
 import { Switch } from "@/components/ui/switch";
 import { isLikelyTestLead } from "@/lib/lead-filters";
+import { latestMessagePreview, messageText, viewConversations, visiblePages, type ActivityWindow, type ContactFilter, type ConversationSort } from "@/lib/web-conversations";
 
 export const Route = createFileRoute("/_authenticated/leads")({
   staticData: { sitemap: false },
@@ -147,40 +149,127 @@ function Leads() {
   );
 }
 
+const PAGE_SIZES = [15, 25, 50] as const;
+
 function WebConversations({ leads, phone = false }: { leads: Lead[]; phone?: boolean }) {
-  const { format } = useTimezone();
+  const { format, zone } = useTimezone();
   const title = phone ? "Phone conversations" : "Web conversations";
   const [openId, setOpenId] = useState<string | null>(null);
   const [page, setPage] = useState(0);
-  const pageSize = 25;
+  const [pageSize, setPageSize] = useState<(typeof PAGE_SIZES)[number]>(15);
+  const [query, setQuery] = useState("");
+  const [sort, setSort] = useState<ConversationSort>("activity-desc");
+  const [activity, setActivity] = useState<ActivityWindow>("all");
+  const [contact, setContact] = useState<ContactFilter>("all");
   const { data, isLoading, isError, refetch, isFetching } = useQuery({
-    queryKey: ["assistant-conversations", phone ? "phone" : "web", page],
+    queryKey: ["assistant-conversations", phone ? "phone" : "web"],
     refetchInterval: 15_000,
     queryFn: async () => {
       let query = supabase.from("assistant_conversations")
-        .select("id,created_at,updated_at", { count: "exact" })
+        .select("id,created_at,updated_at,messages", { count: "exact" })
         .not("visitor_id", "like", "whatsapp\\_%")
-        .not("visitor_id", "like", "wa\\_c\\_%")
-        ;
+        .not("visitor_id", "like", "wa\\_c\\_%");
       query = phone ? query.like("visitor_id", "bolna\\_%") : query.not("visitor_id", "like", "bolna\\_%");
-      const { data, count, error } = await query.order("updated_at", { ascending: false }).order("id", { ascending: false })
-        .range(page * pageSize, (page + 1) * pageSize - 1);
+      const { data, count, error } = await query.order("updated_at", { ascending: false }).order("id", { ascending: false }).limit(500);
       if (error) throw error;
-      return { conversations: data, total: count ?? 0 };
+      return { conversations: data ?? [], total: count ?? 0 };
     },
   });
+  const leadFor = (id: string) => leads.find((lead) => lead.conversation_id === id);
+  const view = viewConversations(data?.conversations ?? [], {
+    sort,
+    window: activity,
+    contact,
+    query,
+    page,
+    pageSize,
+    now: new Date(),
+    timeZone: zone,
+    hasLead: (row) => Boolean(leadFor(row.id)),
+    searchText: (row) => {
+      const lead = leadFor(row.id);
+      return [lead?.name, lead?.email, lead?.phone, lead?.company, row.id, latestMessagePreview(row.messages, 500)].filter(Boolean).join(" ");
+    },
+  });
+  const filtersActive = query.trim() !== "" || activity !== "all" || contact !== "all";
+  const resetFilters = () => {
+    setQuery("");
+    setActivity("all");
+    setContact("all");
+    setPage(0);
+    setOpenId(null);
+  };
+  const goTo = (next: number) => {
+    setPage(next);
+    setOpenId(null);
+  };
   return (
     <div className="mt-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <h2 className="font-medium">{title}{data ? ` · ${data.total}` : ""}</h2>
+        <div>
+          <h2 className="font-medium">{title}{data ? ` · ${data.total}` : ""}</h2>
+          <p className="mt-1 text-xs text-muted-foreground">Sorted by last activity, so a returning visitor stays above a quiet chat that started later. Change the sort to order by when the chat started.</p>
+        </div>
         <Button size="sm" variant="outline" loading={isFetching} loadingLabel="Refreshing…" onClick={() => void refetch()}>Refresh</Button>
+      </div>
+      <div className="mt-4 grid gap-2 sm:grid-cols-2 lg:grid-cols-[minmax(0,1.4fr)_repeat(3,minmax(0,0.8fr))]">
+        <Input
+          value={query}
+          aria-label={`Search ${title.toLowerCase()}`}
+          placeholder="Search name, email, or message"
+          onChange={(event) => { setQuery(event.target.value); setPage(0); setOpenId(null); }}
+        />
+        <Select value={activity} onValueChange={(value) => { setActivity(value as ActivityWindow); setPage(0); setOpenId(null); }}>
+          <SelectTrigger aria-label="Last activity"><SelectValue /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Any time</SelectItem>
+            <SelectItem value="today">Last activity today</SelectItem>
+            <SelectItem value="yesterday">Last activity yesterday</SelectItem>
+            <SelectItem value="7d">Last 7 days</SelectItem>
+            <SelectItem value="30d">Last 30 days</SelectItem>
+          </SelectContent>
+        </Select>
+        <Select value={contact} onValueChange={(value) => { setContact(value as ContactFilter); setPage(0); setOpenId(null); }}>
+          <SelectTrigger aria-label="Contact details"><SelectValue /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All visitors</SelectItem>
+            <SelectItem value="with-lead">With contact details</SelectItem>
+            <SelectItem value="visitors">No contact details</SelectItem>
+          </SelectContent>
+        </Select>
+        <Select value={sort} onValueChange={(value) => { setSort(value as ConversationSort); setPage(0); setOpenId(null); }}>
+          <SelectTrigger aria-label="Sort conversations"><SelectValue /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="activity-desc">Last activity, newest</SelectItem>
+            <SelectItem value="activity-asc">Last activity, oldest</SelectItem>
+            <SelectItem value="started-desc">Started, newest</SelectItem>
+            <SelectItem value="started-asc">Started, oldest</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+      <div className="mt-3 flex flex-wrap items-center justify-between gap-3">
+        <p className="text-sm text-muted-foreground">
+          {data ? view.matched === view.total ? `${view.matched} conversations` : `${view.matched} of ${view.total} match` : ""}
+          {data && data.total > data.conversations.length ? ` · showing the ${data.conversations.length} most recently active` : ""}
+        </p>
+        <div className="flex items-center gap-2">
+          {filtersActive && <Button size="sm" variant="ghost" onClick={resetFilters}>Clear filters</Button>}
+          <Select value={String(pageSize)} onValueChange={(value) => { setPageSize(Number(value) as (typeof PAGE_SIZES)[number]); setPage(0); setOpenId(null); }}>
+            <SelectTrigger aria-label="Conversations per page" className="w-28"><SelectValue /></SelectTrigger>
+            <SelectContent>
+              {PAGE_SIZES.map((size) => <SelectItem key={size} value={String(size)}>{size} / page</SelectItem>)}
+            </SelectContent>
+          </Select>
+        </div>
       </div>
       {isLoading && <div className="mt-4"><LoadingIndicator label={`Loading ${title.toLowerCase()}…`} /></div>}
       {isError && <p className="mt-4 text-sm text-destructive">{title} couldn't load. Please try refreshing.</p>}
-      {data?.total === 0 && <p className="mt-4 text-sm text-muted-foreground">No {title.toLowerCase()} yet.</p>}
+      {data && view.total === 0 && <p className="mt-4 text-sm text-muted-foreground">No {title.toLowerCase()} yet.</p>}
+      {data && view.total > 0 && view.matched === 0 && <p className="mt-4 text-sm text-muted-foreground">Nothing matches these filters. <button type="button" className="text-primary underline" onClick={resetFilters}>Clear filters</button></p>}
+      {view.pages > 1 && <ConversationPager view={view} onPage={goTo} />}
       <div className="mt-4 space-y-3">
-        {data?.conversations.map((conversation) => {
-          const lead = leads.find((l) => l.conversation_id === conversation.id);
+        {view.items.map((conversation) => {
+          const lead = leadFor(conversation.id);
           const open = openId === conversation.id;
           return (
             <div key={conversation.id} className="rounded-lg border border-border bg-card p-4">
@@ -192,9 +281,10 @@ function WebConversations({ leads, phone = false }: { leads: Lead[]; phone?: boo
                     {lead.phone && <a className="text-primary hover:underline" href={`tel:${lead.phone}`}>{lead.phone}</a>}
                     {lead.company && <span className="text-muted-foreground">{lead.company}</span>}
                   </div>}
+                  <p className="mt-2 line-clamp-2 text-sm">{latestMessagePreview(conversation.messages) || "No messages saved yet."}</p>
                   <div className="mt-2 space-y-1 font-mono text-[11px] text-muted-foreground">
-                    <p>Started {format(conversation.created_at)}</p>
                     <p>Last activity {format(conversation.updated_at)}</p>
+                    <p>Started {format(conversation.created_at)}</p>
                   </div>
                 </div>
                 <Button size="sm" variant="ghost" aria-expanded={open} onClick={() => setOpenId(open ? null : conversation.id)}>{open ? "Hide chat" : "View chat"}</Button>
@@ -204,12 +294,30 @@ function WebConversations({ leads, phone = false }: { leads: Lead[]; phone?: boo
           );
         })}
       </div>
-      {data && data.total > pageSize && <div className="mt-4 flex items-center justify-between gap-3">
-        <Button size="sm" variant="outline" disabled={page === 0 || isFetching} onClick={() => { setPage((p) => p - 1); setOpenId(null); }}>Previous</Button>
-        <span className="text-sm text-muted-foreground">Page {page + 1} of {Math.ceil(data.total / pageSize)}</span>
-        <Button size="sm" variant="outline" disabled={(page + 1) * pageSize >= data.total || isFetching} onClick={() => { setPage((p) => p + 1); setOpenId(null); }}>Next</Button>
-      </div>}
+      {view.pages > 1 && <ConversationPager view={view} onPage={goTo} />}
     </div>
+  );
+}
+
+function ConversationPager({ view, onPage }: { view: { page: number; pages: number; from: number; to: number; matched: number }; onPage: (page: number) => void }) {
+  const pages = visiblePages(view.page, view.pages);
+  return (
+    <nav className="mt-4 flex flex-wrap items-center justify-between gap-3" aria-label="Conversation pages">
+      <p className="text-sm text-muted-foreground">{view.matched === 0 ? "No results" : `${view.from}–${view.to} of ${view.matched}`}</p>
+      <div className="flex flex-wrap items-center gap-1">
+        <Button size="sm" variant="outline" disabled={view.page === 0} onClick={() => onPage(0)}>First</Button>
+        <Button size="sm" variant="outline" disabled={view.page === 0} onClick={() => onPage(view.page - 1)}>Previous</Button>
+        {pages[0] > 0 && <span className="px-1 text-muted-foreground">…</span>}
+        {pages.map((number) => (
+          <Button key={number} size="sm" variant={number === view.page ? "default" : "outline"} aria-current={number === view.page ? "page" : undefined} onClick={() => onPage(number)}>
+            {number + 1}
+          </Button>
+        ))}
+        {pages[pages.length - 1] < view.pages - 1 && <span className="px-1 text-muted-foreground">…</span>}
+        <Button size="sm" variant="outline" disabled={view.page >= view.pages - 1} onClick={() => onPage(view.page + 1)}>Next</Button>
+        <Button size="sm" variant="outline" disabled={view.page >= view.pages - 1} onClick={() => onPage(view.pages - 1)}>Last</Button>
+      </div>
+    </nav>
   );
 }
 
@@ -244,7 +352,7 @@ function Transcript({ id, phone = false }: { id: string; phone?: boolean }) {
         const isFlo = m.role !== "user";
         if (isFlo) replyIndex++;
         const log = isFlo ? data.logs[replyIndex - offset] : undefined;
-        const text = m.parts.filter((p) => p.type === "text").map((p) => p.text).join(" ");
+        const text = messageText(m);
         if (!text) return null;
         return (
           <div key={m.id}>
