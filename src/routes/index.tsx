@@ -30,7 +30,7 @@ export const Route = createFileRoute("/")({
   staticData: { sitemap: true },
   head: () => ({
     meta: [
-      { title: "Mira — 24/7 assistant for your business | Phone, WhatsApp & web" },
+      { title: "Conversational Flows Studio — 24/7 assistant for phone, WhatsApp & web" },
       {
         name: "description",
         content:
@@ -38,7 +38,7 @@ export const Route = createFileRoute("/")({
       },
       {
         property: "og:title",
-        content: "Mira — 24/7 assistant for your business | Phone, WhatsApp & web",
+        content: "Conversational Flows Studio — 24/7 assistant for phone, WhatsApp & web",
       },
       {
         property: "og:description",
@@ -61,6 +61,7 @@ export const Route = createFileRoute("/")({
               "@id": "https://conversationalaistudio.online/#website",
               url: "https://conversationalaistudio.online/",
               name: "Conversational Flows Studio",
+              alternateName: ["Conversational AI Studio", "conversationalaistudio.online"],
               inLanguage: "en",
             },
             {
