@@ -344,13 +344,13 @@ function ConversationPager({ view, onPage }: { view: { page: number; pages: numb
       <div className="flex flex-wrap items-center gap-1">
         <Button size="sm" variant="outline" disabled={view.page === 0} onClick={() => onPage(0)}>First</Button>
         <Button size="sm" variant="outline" disabled={view.page === 0} onClick={() => onPage(view.page - 1)}>Previous</Button>
-        {pages[0] > 0 && <span className="px-1 text-muted-foreground">…</span>}
+        {(pages[0] ?? 0) > 0 && <span className="px-1 text-muted-foreground">…</span>}
         {pages.map((number) => (
           <Button key={number} size="sm" variant={number === view.page ? "default" : "outline"} aria-current={number === view.page ? "page" : undefined} onClick={() => onPage(number)}>
             {number + 1}
           </Button>
         ))}
-        {pages[pages.length - 1] < view.pages - 1 && <span className="px-1 text-muted-foreground">…</span>}
+        {(pages[pages.length - 1] ?? 0) < view.pages - 1 && <span className="px-1 text-muted-foreground">…</span>}
         <Button size="sm" variant="outline" disabled={view.page >= view.pages - 1} onClick={() => onPage(view.page + 1)}>Next</Button>
         <Button size="sm" variant="outline" disabled={view.page >= view.pages - 1} onClick={() => onPage(view.pages - 1)}>Last</Button>
       </div>
