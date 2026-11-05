@@ -43,7 +43,7 @@ export const Route = createFileRoute("/")({
       {
         property: "og:description",
         content:
-          "A done-for-you 24/7 assistant for your business across phone, WhatsApp and web. Try Mira with our live sample clinic.",
+          "A done-for-you 24/7 assistant that answers your business calls, WhatsApp messages and website inquiries, and captures every request — no setup on your side.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
