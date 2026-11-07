@@ -42,7 +42,7 @@ type Dated = { id: string; created_at: string; updated_at: string };
 
 function dayIndex(key: string): number {
   const [year, month, day] = key.split("-").map(Number);
-  return Date.UTC(year, (month ?? 1) - 1, day ?? 1) / 86_400_000;
+  return Date.UTC(year ?? 1970, (month ?? 1) - 1, day ?? 1) / 86_400_000;
 }
 
 /** Whole calendar days from `iso` until `now` in `timeZone`. Negative when `iso` is still in the future. */
