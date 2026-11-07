@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { getRouterInstance } from "@tanstack/react-start";
-import { sitemapStaticPaths, sitemapXML, type SitemapEntry } from "@/lib/sitemap";
+import { sitemapStaticEntries, sitemapXML } from "@/lib/sitemap";
 
 // TODO: If empty, configure the public site origin before publishing.
 const BASE_URL = "https://conversationalaistudio.online";
@@ -17,7 +17,7 @@ export const Route = createFileRoute("/sitemap.xml")({
           });
         }
         const router = await getRouterInstance();
-        const entries: SitemapEntry[] = sitemapStaticPaths(router).map((path) => ({ path }));
+        const entries = sitemapStaticEntries(router);
         // Add queries for dynamic pages selected for SEO, using sitemapPathForLocation.
         if (entries.length === 0) {
           return new Response(

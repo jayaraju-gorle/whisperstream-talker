@@ -14,6 +14,7 @@ import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as DemoRouteImport } from './routes/demo'
 import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
+import { Route as WhatsappAppointmentBookingRouteImport } from './routes/whatsapp-appointment-booking'
 import { Route as AuthenticatedHistoryRouteImport } from './routes/_authenticated/history'
 import { Route as AuthenticatedLeadsRouteImport } from './routes/_authenticated/leads'
 import { Route as AuthenticatedLibraryRouteImport } from './routes/_authenticated/library'
@@ -61,6 +62,12 @@ const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
   path: '/sitemap.xml',
   getParentRoute: () => rootRouteImport,
 } as any)
+const WhatsappAppointmentBookingRoute =
+  WhatsappAppointmentBookingRouteImport.update({
+    id: '/whatsapp-appointment-booking',
+    path: '/whatsapp-appointment-booking',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const AuthenticatedHistoryRoute = AuthenticatedHistoryRouteImport.update({
   id: '/history',
   path: '/history',
@@ -184,6 +191,7 @@ export interface FileRoutesByFullPath {
   '/auth': typeof AuthRoute
   '/demo': typeof DemoRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/whatsapp-appointment-booking': typeof WhatsappAppointmentBookingRoute
   '/history': typeof AuthenticatedHistoryRouteWithChildren
   '/leads': typeof AuthenticatedLeadsRoute
   '/library': typeof AuthenticatedLibraryRoute
@@ -212,6 +220,7 @@ export interface FileRoutesByTo {
   '/auth': typeof AuthRoute
   '/demo': typeof DemoRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/whatsapp-appointment-booking': typeof WhatsappAppointmentBookingRoute
   '/history': typeof AuthenticatedHistoryRouteWithChildren
   '/leads': typeof AuthenticatedLeadsRoute
   '/library': typeof AuthenticatedLibraryRoute
@@ -242,6 +251,7 @@ export interface FileRoutesById {
   '/auth': typeof AuthRoute
   '/demo': typeof DemoRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/whatsapp-appointment-booking': typeof WhatsappAppointmentBookingRoute
   '/_authenticated/history': typeof AuthenticatedHistoryRouteWithChildren
   '/_authenticated/leads': typeof AuthenticatedLeadsRoute
   '/_authenticated/library': typeof AuthenticatedLibraryRoute
@@ -272,6 +282,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/demo'
     | '/sitemap.xml'
+    | '/whatsapp-appointment-booking'
     | '/history'
     | '/leads'
     | '/library'
@@ -300,6 +311,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/demo'
     | '/sitemap.xml'
+    | '/whatsapp-appointment-booking'
     | '/history'
     | '/leads'
     | '/library'
@@ -329,6 +341,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/demo'
     | '/sitemap.xml'
+    | '/whatsapp-appointment-booking'
     | '/_authenticated/history'
     | '/_authenticated/leads'
     | '/_authenticated/library'
@@ -359,6 +372,7 @@ export interface RootRouteChildren {
   AuthRoute: typeof AuthRoute
   DemoRoute: typeof DemoRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
+  WhatsappAppointmentBookingRoute: typeof WhatsappAppointmentBookingRoute
   ApiLlmRoute: typeof ApiLlmRoute
   ApiProvidersRoute: typeof ApiProvidersRoute
   ApiSttRoute: typeof ApiSttRoute
@@ -409,6 +423,13 @@ declare module '@tanstack/react-router' {
       path: '/sitemap.xml'
       fullPath: '/sitemap.xml'
       preLoaderRoute: typeof SitemapDotxmlRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/whatsapp-appointment-booking': {
+      id: '/whatsapp-appointment-booking'
+      path: '/whatsapp-appointment-booking'
+      fullPath: '/whatsapp-appointment-booking'
+      preLoaderRoute: typeof WhatsappAppointmentBookingRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_authenticated/history': {
@@ -610,6 +631,7 @@ const rootRouteChildren: RootRouteChildren = {
   AuthRoute: AuthRoute,
   DemoRoute: DemoRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
+  WhatsappAppointmentBookingRoute: WhatsappAppointmentBookingRoute,
   ApiLlmRoute: ApiLlmRoute,
   ApiProvidersRoute: ApiProvidersRoute,
   ApiSttRoute: ApiSttRoute,

@@ -9,6 +9,8 @@ declare module "@tanstack/react-router" {
     // Required so every new route makes an explicit sitemap decision.
     // Fix missing staticData on the route; don't make this optional.
     sitemap: boolean | "exclude-subtree";
+    /** Optional 0.0–1.0 hint. Omit it on pages that should stay at the default. */
+    sitemapPriority?: number;
   }
 }
 
@@ -27,14 +29,7 @@ export function isSitemapRouteIncluded(route: AnyRoute | undefined): boolean {
 }
 
 export function sitemapStaticPaths(router: AnyRouter): string[] {
-  const paths = new Set<string>();
-  for (const route of Object.values(router.routesById) as AnyRoute[]) {
-    if (!isSitemapRouteIncluded(route) || /[$*]/.test(route.fullPath)) continue;
-    const location = router.buildLocation({ to: route.fullPath });
-    const path = sitemapPathForLocation(router, location, route.id);
-    if (path !== undefined) paths.add(path);
-  }
-  return [...paths].sort();
+  return sitemapStaticEntries(router).map((entry) => entry.path);
 }
 
 export function sitemapPathForLocation(
@@ -57,6 +52,29 @@ export function sitemapPathForLocation(
 export interface SitemapEntry {
   path: string;
   lastmod?: string;
+  priority?: number;
+}
+
+export function sitemapStaticEntries(router: AnyRouter): SitemapEntry[] {
+  const entries: SitemapEntry[] = [];
+  for (const route of Object.values(router.routesById) as AnyRoute[]) {
+    if (!isSitemapRouteIncluded(route) || /[$*]/.test(route.fullPath)) continue;
+    const location = router.buildLocation({ to: route.fullPath });
+    const path = sitemapPathForLocation(router, location, route.id);
+    if (path === undefined) continue;
+    const priority = route.options.staticData?.sitemapPriority;
+    const entry: SitemapEntry = { path };
+    if (typeof priority === "number") entry.priority = priority;
+    entries.push(entry);
+  }
+  return entries.sort((a, b) => a.path.localeCompare(b.path));
+}
+
+function sitemapPriorityValue(priority: number): string {
+  if (!Number.isFinite(priority) || priority < 0 || priority > 1) {
+    throw new Error("Sitemap priority must be between 0 and 1");
+  }
+  return priority.toFixed(1);
 }
 
 function isSafeSitemapPath(pathname: string): boolean {
@@ -93,8 +111,12 @@ export function sitemapXML(baseURL: string, entries: SitemapEntry[]): string {
     const url = new URL(entry.path, origin);
     if (seen.has(url.href)) continue;
     seen.add(url.href);
+    const priority =
+      entry.priority === undefined
+        ? ""
+        : `<priority>${escape(sitemapPriorityValue(entry.priority))}</priority>`;
     urls.push(
-      `<url><loc>${escape(url.href)}</loc>${entry.lastmod ? `<lastmod>${escape(entry.lastmod)}</lastmod>` : ""}</url>`,
+      `<url><loc>${escape(url.href)}</loc>${entry.lastmod ? `<lastmod>${escape(entry.lastmod)}</lastmod>` : ""}${priority}</url>`,
     );
   }
   return `<?xml version="1.0" encoding="UTF-8"?><urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">${urls.join("")}</urlset>`;

@@ -16,10 +16,9 @@ import {
   CalendarCheck,
   Globe,
 } from "lucide-react";
-import { Logo } from "@/components/Logo";
 import { LeadForm } from "@/components/LeadForm";
+import { PublicSiteFooter, PublicSiteHeader } from "@/components/PublicSiteChrome";
 import { Button } from "@/components/ui/button";
-import { useAuth } from "@/hooks/use-auth";
 import {
   PHONE_ASSISTANT_DISPLAY,
   PHONE_ASSISTANT_URL,
@@ -61,32 +60,18 @@ export const Route = createFileRoute("/")({
               "@id": "https://conversationalaistudio.online/#website",
               url: "https://conversationalaistudio.online/",
               name: "Conversational Flows Studio",
+              alternateName: ["Conversational AI Studio", "conversationalaistudio.online"],
+              description: "Done-for-you 24/7 business assistant across phone, WhatsApp, and web.",
               inLanguage: "en",
+              publisher: { "@id": "https://conversationalaistudio.online/#organization" },
             },
             {
-              "@type": "WebApplication",
-              "@id": "https://conversationalaistudio.online/#app",
+              "@type": "ProfessionalService",
+              "@id": "https://conversationalaistudio.online/#organization",
               name: "Conversational Flows Studio",
-              url: "https://conversationalaistudio.online/",
-              description:
-                "A done-for-you 24/7 assistant across phone, WhatsApp and web, with a live sample clinic and a secondary voice and text playground for comparing response speed and cost.",
-              applicationCategory: "DeveloperApplication",
-              operatingSystem: "Any (web browser)",
-              browserRequirements: "Requires a modern browser with microphone access",
-              isPartOf: { "@id": "https://conversationalaistudio.online/#website" },
-              featureList: [
-                "Free guest demo with sample scenarios — no sign-in required",
-                "Live voice and text conversations with assistants",
-                "Live speech-to-speech calls with streaming voice models",
-                "Text-only mode for testing LLM stacks without speech providers",
-                "Multiple voice and text providers; live availability depends on connected keys",
-                "Real-time latency metrics: time to first token, time to first audio, end-to-end voice response time",
-                "Estimated token usage and cost per turn, with multi-currency display",
-                "Side-by-side comparison of two agent stacks in voice or text",
-                "Prebuilt industry scenarios plus custom personas and knowledge bases with per-reply passage retrieval",
-                "Saved session history with per-turn metrics",
-              ],
-              offers: { "@type": "Offer", price: "0", priceCurrency: "USD" },
+              alternateName: ["Conversational AI Studio", "conversationalaistudio.online"],
+              url: "https://conversationalaistudio.online",
+              description: "Done-for-you 24/7 business assistant across phone, WhatsApp, and web.",
             },
           ],
         }),
@@ -182,17 +167,9 @@ const CHANNELS = [
 ];
 
 function Index() {
-  const { user } = useAuth();
   return (
     <div className="min-h-screen">
-      <header className="mx-auto grid max-w-6xl grid-cols-[minmax(0,1fr)_auto] items-center gap-4 px-4 py-5 sm:px-6">
-        <div className="flex min-w-0 items-center gap-2 font-semibold">
-          <Logo className="h-6 w-6 shrink-0" /> Conversational Flows Studio
-        </div>
-        <Button asChild variant="ghost" size="sm">
-          <Link to={user ? "/playground" : "/auth"}>{user ? "Playground" : "Sign in"}</Link>
-        </Button>
-      </header>
+      <PublicSiteHeader />
       <main className="mx-auto max-w-6xl px-4 pb-24 pt-8 sm:px-6 sm:pt-12">
         <p className="font-mono text-xs uppercase tracking-[0.2em] text-primary">
           Phone · WhatsApp · Web
@@ -373,6 +350,7 @@ function Index() {
           </div>
         </section>
       </main>
+      <PublicSiteFooter />
     </div>
   );
 }

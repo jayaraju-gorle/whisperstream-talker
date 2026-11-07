@@ -5,7 +5,13 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { submitLeadForm } from "@/lib/lead-form.functions";
 
-export function LeadForm() {
+export function LeadForm({
+  businessPlaceholder = "e.g. dental clinic, CA firm",
+  submitLabel = "Get my custom assistant",
+}: {
+  businessPlaceholder?: string;
+  submitLabel?: string;
+} = {}) {
   const [state, setState] = useState<"idle" | "sending" | "done">("idle");
   const [error, setError] = useState<string | null>(null);
 
@@ -31,13 +37,13 @@ export function LeadForm() {
   return (
     <form onSubmit={onSubmit} className="grid gap-3 sm:grid-cols-2">
       <div className="grid gap-1.5"><Label htmlFor="lf-name">Your name</Label><Input id="lf-name" name="name" required maxLength={120} /></div>
-      <div className="grid gap-1.5"><Label htmlFor="lf-type">Business type</Label><Input id="lf-type" name="businessType" required maxLength={160} placeholder="e.g. dental clinic, CA firm" /></div>
+      <div className="grid gap-1.5"><Label htmlFor="lf-type">Business type</Label><Input id="lf-type" name="businessType" required maxLength={160} placeholder={businessPlaceholder} /></div>
       <div className="grid gap-1.5"><Label htmlFor="lf-email">Email</Label><Input id="lf-email" name="email" type="email" required maxLength={254} /></div>
       <div className="grid gap-1.5"><Label htmlFor="lf-phone">Phone (optional)</Label><Input id="lf-phone" name="phone" type="tel" maxLength={40} /></div>
       <div className="grid gap-1.5 sm:col-span-2"><Label htmlFor="lf-msg">Anything we should know? (optional)</Label><Textarea id="lf-msg" name="message" maxLength={1000} rows={2} /></div>
       <input name="website" tabIndex={-1} autoComplete="off" aria-hidden="true" className="hidden" />
       {error && <p className="text-sm text-destructive sm:col-span-2">{error}</p>}
-      <div className="sm:col-span-2"><Button type="submit" loading={state === "sending"}>Get my custom assistant</Button></div>
+      <div className="sm:col-span-2"><Button type="submit" loading={state === "sending"} className="min-h-11">{submitLabel}</Button></div>
     </form>
   );
 }
