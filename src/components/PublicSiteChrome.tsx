@@ -52,6 +52,14 @@ export function PublicSiteFooter() {
                 WhatsApp appointment booking for clinics
               </Link>
             </li>
+            <li>
+              <Link
+                to="/virtual-receptionist"
+                className="inline-flex min-h-11 items-center text-sm text-muted-foreground underline-offset-4 hover:text-foreground hover:underline"
+              >
+                24/7 virtual receptionist and phone answering
+              </Link>
+            </li>
           </ul>
         </nav>
       </div>
