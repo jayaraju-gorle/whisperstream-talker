@@ -14,6 +14,7 @@ import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as DemoRouteImport } from './routes/demo'
 import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
+import { Route as VirtualReceptionistRouteImport } from './routes/virtual-receptionist'
 import { Route as WhatsappAppointmentBookingRouteImport } from './routes/whatsapp-appointment-booking'
 import { Route as AuthenticatedHistoryRouteImport } from './routes/_authenticated/history'
 import { Route as AuthenticatedLeadsRouteImport } from './routes/_authenticated/leads'
@@ -60,6 +61,11 @@ const DemoRoute = DemoRouteImport.update({
 const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
   id: '/sitemap.xml',
   path: '/sitemap.xml',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const VirtualReceptionistRoute = VirtualReceptionistRouteImport.update({
+  id: '/virtual-receptionist',
+  path: '/virtual-receptionist',
   getParentRoute: () => rootRouteImport,
 } as any)
 const WhatsappAppointmentBookingRoute =
@@ -191,6 +197,7 @@ export interface FileRoutesByFullPath {
   '/auth': typeof AuthRoute
   '/demo': typeof DemoRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/virtual-receptionist': typeof VirtualReceptionistRoute
   '/whatsapp-appointment-booking': typeof WhatsappAppointmentBookingRoute
   '/history': typeof AuthenticatedHistoryRouteWithChildren
   '/leads': typeof AuthenticatedLeadsRoute
@@ -220,6 +227,7 @@ export interface FileRoutesByTo {
   '/auth': typeof AuthRoute
   '/demo': typeof DemoRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/virtual-receptionist': typeof VirtualReceptionistRoute
   '/whatsapp-appointment-booking': typeof WhatsappAppointmentBookingRoute
   '/history': typeof AuthenticatedHistoryRouteWithChildren
   '/leads': typeof AuthenticatedLeadsRoute
@@ -251,6 +259,7 @@ export interface FileRoutesById {
   '/auth': typeof AuthRoute
   '/demo': typeof DemoRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/virtual-receptionist': typeof VirtualReceptionistRoute
   '/whatsapp-appointment-booking': typeof WhatsappAppointmentBookingRoute
   '/_authenticated/history': typeof AuthenticatedHistoryRouteWithChildren
   '/_authenticated/leads': typeof AuthenticatedLeadsRoute
@@ -282,6 +291,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/demo'
     | '/sitemap.xml'
+    | '/virtual-receptionist'
     | '/whatsapp-appointment-booking'
     | '/history'
     | '/leads'
@@ -311,6 +321,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/demo'
     | '/sitemap.xml'
+    | '/virtual-receptionist'
     | '/whatsapp-appointment-booking'
     | '/history'
     | '/leads'
@@ -341,6 +352,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/demo'
     | '/sitemap.xml'
+    | '/virtual-receptionist'
     | '/whatsapp-appointment-booking'
     | '/_authenticated/history'
     | '/_authenticated/leads'
@@ -372,6 +384,7 @@ export interface RootRouteChildren {
   AuthRoute: typeof AuthRoute
   DemoRoute: typeof DemoRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
+  VirtualReceptionistRoute: typeof VirtualReceptionistRoute
   WhatsappAppointmentBookingRoute: typeof WhatsappAppointmentBookingRoute
   ApiLlmRoute: typeof ApiLlmRoute
   ApiProvidersRoute: typeof ApiProvidersRoute
@@ -423,6 +436,13 @@ declare module '@tanstack/react-router' {
       path: '/sitemap.xml'
       fullPath: '/sitemap.xml'
       preLoaderRoute: typeof SitemapDotxmlRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/virtual-receptionist': {
+      id: '/virtual-receptionist'
+      path: '/virtual-receptionist'
+      fullPath: '/virtual-receptionist'
+      preLoaderRoute: typeof VirtualReceptionistRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/whatsapp-appointment-booking': {
@@ -631,6 +651,7 @@ const rootRouteChildren: RootRouteChildren = {
   AuthRoute: AuthRoute,
   DemoRoute: DemoRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
+  VirtualReceptionistRoute: VirtualReceptionistRoute,
   WhatsappAppointmentBookingRoute: WhatsappAppointmentBookingRoute,
   ApiLlmRoute: ApiLlmRoute,
   ApiProvidersRoute: ApiProvidersRoute,
