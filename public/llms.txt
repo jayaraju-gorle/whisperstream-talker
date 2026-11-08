@@ -1,0 +1,34 @@
+# Conversational Flows Studio
+
+> Done-for-you 24/7 business assistant across phone, WhatsApp, and web, designed for clinics and appointment-based local businesses.
+
+Conversational Flows Studio provides automated phone call answering, WhatsApp messaging, and website chat/voice assistance. It answers routine patient inquiries (timings, doctors, fees, clinic location), captures appointment requests, and routes them to staff for confirmation—with zero technical setup required by the business.
+
+## Core Services
+
+- **24/7 Telephone Reception**: Inbound voice answering on +91 7965481796. Handles after-hours calls, answers common clinic questions, and collects caller requests.
+- **WhatsApp Appointment Booking**: 24/7 WhatsApp messaging assistant on +91 63023 92274. Captures preferred dates, doctors, and patient details for staff review.
+- **Website Voice & Chat Widget**: Interactive browser assistant with real-time speech and text responses for visitors.
+- **Human-in-the-Loop Confirmation**: The assistant records preferred appointment slots and logs requests for clinic staff to confirm, avoiding accidental overbooking.
+- **Strict Guardrails**: Answers operational and logistical questions while strictly deferring symptoms, medical advice, and diagnoses to doctors. Directs emergencies to 108.
+
+## Primary URLs
+
+- [Conversational Flows Studio](https://conversationalaistudio.online/): Homepage with live web assistant demo, service overview, and business inquiry form.
+- [WhatsApp Appointment Booking Guide](https://conversationalaistudio.online/whatsapp-appointment-booking): Clinic workflow guide for WhatsApp appointment requests, FAQs, and staff confirmation process.
+- [Live WhatsApp Assistant Demo](https://wa.me/916302392274?text=TRY%20AURA): Interactive WhatsApp demo with Mira for the fictional Aura Health Clinic.
+- [Live Phone Demo](tel:+917965481796): Live phone call demonstration on +91 7965481796.
+
+## Reference Demo (Aura Health Clinic)
+
+Conversational Flows Studio features a live, clearly disclosed fictional reference clinic to demonstrate multi-channel capabilities:
+- **Clinic Name**: Aura Health Clinic (Fictional demonstration)
+- **Assistant Persona**: Mira
+- **Specialties & Doctors**: Dr. Anika Rao (Family Medicine), Dr. Rohan Mehta (Child Health)
+- **Consultation Hours**: Monday–Saturday, 10:00 AM – 1:00 PM and 5:00 PM – 8:00 PM IST
+- **Consultation Fee**: ₹600
+- **Location**: Illustrative suite in Hyderabad, Telangana, India
+
+## Technical Architecture & Evaluation
+
+- [Playground](https://conversationalaistudio.online/demo): Browser testing environment measuring speech-to-text (STT), language model first-token latency (TTFT), and text-to-speech (TTS) synthesis speed.
