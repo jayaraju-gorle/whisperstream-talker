@@ -98,7 +98,7 @@ function Dashboard() {
     <main className="mx-auto w-full max-w-6xl space-y-6 p-4 sm:p-6">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="min-w-0">
-          <Link to="/clinics" className="text-xs text-muted-foreground hover:text-foreground">← Businesses</Link>
+          <Link to="/businesses" className="text-xs text-muted-foreground hover:text-foreground">← Businesses</Link>
           <h1 className="text-2xl font-semibold">{c.name}</h1>
           <p className="text-sm text-muted-foreground">{c.phone}{c.address ? ` · ${c.address}` : ""}</p>
           {c.map_url && <a href={c.map_url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-sm text-primary underline-offset-4 hover:underline"><MapPin className="h-4 w-4" /> View on Google Maps</a>}

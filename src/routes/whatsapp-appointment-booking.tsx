@@ -122,7 +122,7 @@ export const Route = createFileRoute("/whatsapp-appointment-booking")({
 function WhatsAppAppointmentBookingPage() {
   return (
     <div className="min-h-screen">
-      <PublicSiteHeader current="clinics" />
+      <PublicSiteHeader />
       <main className="mx-auto max-w-6xl px-4 pb-24 pt-8 sm:px-6 sm:pt-12">
         <p className="font-mono text-xs uppercase tracking-[0.2em] text-primary">WhatsApp for clinics</p>
         <h1 className="mt-4 max-w-4xl text-4xl font-semibold leading-[1.1] sm:text-5xl">

@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { LoadingIndicator } from "@/components/LoadingIndicator";
 import { PUBLIC_SAMPLE_BUSINESS_ID } from "@/lib/public-clinic-demo";
 
-export const Route = createFileRoute("/_authenticated/clinics/")({
+export const Route = createFileRoute("/_authenticated/businesses")({
   staticData: { sitemap: false },
   head: () => ({
     meta: [

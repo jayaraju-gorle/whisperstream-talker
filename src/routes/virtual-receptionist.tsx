@@ -192,7 +192,7 @@ export const Route = createFileRoute("/virtual-receptionist")({
 function VirtualReceptionistPage() {
   return (
     <div className="min-h-screen">
-      <PublicSiteHeader current="clinics" />
+      <PublicSiteHeader />
       <main className="mx-auto max-w-6xl px-4 pb-24 pt-8 sm:px-6 sm:pt-12">
         <p className="font-mono text-xs uppercase tracking-[0.2em] text-primary">
           24/7 phone answering

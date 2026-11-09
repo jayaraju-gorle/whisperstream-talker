@@ -12,10 +12,12 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as AuthRouteImport } from './routes/auth'
+import { Route as ClinicsRouteImport } from './routes/clinics'
 import { Route as DemoRouteImport } from './routes/demo'
 import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as VirtualReceptionistRouteImport } from './routes/virtual-receptionist'
 import { Route as WhatsappAppointmentBookingRouteImport } from './routes/whatsapp-appointment-booking'
+import { Route as AuthenticatedBusinessesRouteImport } from './routes/_authenticated/businesses'
 import { Route as AuthenticatedHistoryRouteImport } from './routes/_authenticated/history'
 import { Route as AuthenticatedLeadsRouteImport } from './routes/_authenticated/leads'
 import { Route as AuthenticatedLibraryRouteImport } from './routes/_authenticated/library'
@@ -25,7 +27,6 @@ import { Route as ApiProvidersRouteImport } from './routes/api/providers'
 import { Route as ApiSttRouteImport } from './routes/api/stt'
 import { Route as ApiTtsRouteImport } from './routes/api/tts'
 import { Route as PortalTokenRouteImport } from './routes/portal.$token'
-import { Route as AuthenticatedClinicsIndexRouteImport } from './routes/_authenticated/clinics.index'
 import { Route as AuthenticatedClinicsNewRouteImport } from './routes/_authenticated/clinics.new'
 import { Route as AuthenticatedHistoryIdRouteImport } from './routes/_authenticated/history.$id'
 import { Route as ApiPublicAssistantRouteImport } from './routes/api/public/assistant'
@@ -53,6 +54,11 @@ const AuthRoute = AuthRouteImport.update({
   path: '/auth',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ClinicsRoute = ClinicsRouteImport.update({
+  id: '/clinics',
+  path: '/clinics',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const DemoRoute = DemoRouteImport.update({
   id: '/demo',
   path: '/demo',
@@ -74,6 +80,11 @@ const WhatsappAppointmentBookingRoute =
     path: '/whatsapp-appointment-booking',
     getParentRoute: () => rootRouteImport,
   } as any)
+const AuthenticatedBusinessesRoute = AuthenticatedBusinessesRouteImport.update({
+  id: '/businesses',
+  path: '/businesses',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedHistoryRoute = AuthenticatedHistoryRouteImport.update({
   id: '/history',
   path: '/history',
@@ -119,12 +130,6 @@ const PortalTokenRoute = PortalTokenRouteImport.update({
   path: '/portal/$token',
   getParentRoute: () => rootRouteImport,
 } as any)
-const AuthenticatedClinicsIndexRoute =
-  AuthenticatedClinicsIndexRouteImport.update({
-    id: '/clinics/',
-    path: '/clinics/',
-    getParentRoute: () => AuthenticatedRouteRoute,
-  } as any)
 const AuthenticatedClinicsNewRoute = AuthenticatedClinicsNewRouteImport.update({
   id: '/clinics/new',
   path: '/clinics/new',
@@ -195,10 +200,12 @@ const ApiPublicBolnaV1ChatCompletionsRoute =
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/clinics': typeof ClinicsRoute
   '/demo': typeof DemoRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/virtual-receptionist': typeof VirtualReceptionistRoute
   '/whatsapp-appointment-booking': typeof WhatsappAppointmentBookingRoute
+  '/businesses': typeof AuthenticatedBusinessesRoute
   '/history': typeof AuthenticatedHistoryRouteWithChildren
   '/leads': typeof AuthenticatedLeadsRoute
   '/library': typeof AuthenticatedLibraryRoute
@@ -212,7 +219,6 @@ export interface FileRoutesByFullPath {
   '/history/$id': typeof AuthenticatedHistoryIdRoute
   '/api/public/assistant': typeof ApiPublicAssistantRoute
   '/api/public/rates': typeof ApiPublicRatesRoute
-  '/clinics/': typeof AuthenticatedClinicsIndexRoute
   '/clinics/$id/edit': typeof AuthenticatedClinicsIdEditRoute
   '/api/bolna/v1/models': typeof ApiBolnaV1ModelsRoute
   '/api/public/whatsapp/webhook': typeof ApiPublicWhatsappWebhookRoute
@@ -225,10 +231,12 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/clinics': typeof ClinicsRoute
   '/demo': typeof DemoRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/virtual-receptionist': typeof VirtualReceptionistRoute
   '/whatsapp-appointment-booking': typeof WhatsappAppointmentBookingRoute
+  '/businesses': typeof AuthenticatedBusinessesRoute
   '/history': typeof AuthenticatedHistoryRouteWithChildren
   '/leads': typeof AuthenticatedLeadsRoute
   '/library': typeof AuthenticatedLibraryRoute
@@ -242,7 +250,6 @@ export interface FileRoutesByTo {
   '/history/$id': typeof AuthenticatedHistoryIdRoute
   '/api/public/assistant': typeof ApiPublicAssistantRoute
   '/api/public/rates': typeof ApiPublicRatesRoute
-  '/clinics': typeof AuthenticatedClinicsIndexRoute
   '/clinics/$id/edit': typeof AuthenticatedClinicsIdEditRoute
   '/api/bolna/v1/models': typeof ApiBolnaV1ModelsRoute
   '/api/public/whatsapp/webhook': typeof ApiPublicWhatsappWebhookRoute
@@ -257,10 +264,12 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/auth': typeof AuthRoute
+  '/clinics': typeof ClinicsRoute
   '/demo': typeof DemoRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/virtual-receptionist': typeof VirtualReceptionistRoute
   '/whatsapp-appointment-booking': typeof WhatsappAppointmentBookingRoute
+  '/_authenticated/businesses': typeof AuthenticatedBusinessesRoute
   '/_authenticated/history': typeof AuthenticatedHistoryRouteWithChildren
   '/_authenticated/leads': typeof AuthenticatedLeadsRoute
   '/_authenticated/library': typeof AuthenticatedLibraryRoute
@@ -274,7 +283,6 @@ export interface FileRoutesById {
   '/_authenticated/history/$id': typeof AuthenticatedHistoryIdRoute
   '/api/public/assistant': typeof ApiPublicAssistantRoute
   '/api/public/rates': typeof ApiPublicRatesRoute
-  '/_authenticated/clinics/': typeof AuthenticatedClinicsIndexRoute
   '/_authenticated/clinics/$id/edit': typeof AuthenticatedClinicsIdEditRoute
   '/api/bolna/v1/models': typeof ApiBolnaV1ModelsRoute
   '/api/public/whatsapp/webhook': typeof ApiPublicWhatsappWebhookRoute
@@ -289,10 +297,12 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/auth'
+    | '/clinics'
     | '/demo'
     | '/sitemap.xml'
     | '/virtual-receptionist'
     | '/whatsapp-appointment-booking'
+    | '/businesses'
     | '/history'
     | '/leads'
     | '/library'
@@ -306,7 +316,6 @@ export interface FileRouteTypes {
     | '/history/$id'
     | '/api/public/assistant'
     | '/api/public/rates'
-    | '/clinics/'
     | '/clinics/$id/edit'
     | '/api/bolna/v1/models'
     | '/api/public/whatsapp/webhook'
@@ -319,10 +328,12 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/auth'
+    | '/clinics'
     | '/demo'
     | '/sitemap.xml'
     | '/virtual-receptionist'
     | '/whatsapp-appointment-booking'
+    | '/businesses'
     | '/history'
     | '/leads'
     | '/library'
@@ -336,7 +347,6 @@ export interface FileRouteTypes {
     | '/history/$id'
     | '/api/public/assistant'
     | '/api/public/rates'
-    | '/clinics'
     | '/clinics/$id/edit'
     | '/api/bolna/v1/models'
     | '/api/public/whatsapp/webhook'
@@ -350,10 +360,12 @@ export interface FileRouteTypes {
     | '/'
     | '/_authenticated'
     | '/auth'
+    | '/clinics'
     | '/demo'
     | '/sitemap.xml'
     | '/virtual-receptionist'
     | '/whatsapp-appointment-booking'
+    | '/_authenticated/businesses'
     | '/_authenticated/history'
     | '/_authenticated/leads'
     | '/_authenticated/library'
@@ -367,7 +379,6 @@ export interface FileRouteTypes {
     | '/_authenticated/history/$id'
     | '/api/public/assistant'
     | '/api/public/rates'
-    | '/_authenticated/clinics/'
     | '/_authenticated/clinics/$id/edit'
     | '/api/bolna/v1/models'
     | '/api/public/whatsapp/webhook'
@@ -382,6 +393,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
   AuthRoute: typeof AuthRoute
+  ClinicsRoute: typeof ClinicsRoute
   DemoRoute: typeof DemoRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   VirtualReceptionistRoute: typeof VirtualReceptionistRoute
@@ -424,6 +436,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/clinics': {
+      id: '/clinics'
+      path: '/clinics'
+      fullPath: '/clinics'
+      preLoaderRoute: typeof ClinicsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/demo': {
       id: '/demo'
       path: '/demo'
@@ -451,6 +470,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/whatsapp-appointment-booking'
       preLoaderRoute: typeof WhatsappAppointmentBookingRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated/businesses': {
+      id: '/_authenticated/businesses'
+      path: '/businesses'
+      fullPath: '/businesses'
+      preLoaderRoute: typeof AuthenticatedBusinessesRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/history': {
       id: '/_authenticated/history'
@@ -514,13 +540,6 @@ declare module '@tanstack/react-router' {
       fullPath: '/portal/$token'
       preLoaderRoute: typeof PortalTokenRouteImport
       parentRoute: typeof rootRouteImport
-    }
-    '/_authenticated/clinics/': {
-      id: '/_authenticated/clinics/'
-      path: '/clinics'
-      fullPath: '/clinics/'
-      preLoaderRoute: typeof AuthenticatedClinicsIndexRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/clinics/new': {
       id: '/_authenticated/clinics/new'
@@ -621,23 +640,23 @@ const AuthenticatedHistoryRouteWithChildren =
   AuthenticatedHistoryRoute._addFileChildren(AuthenticatedHistoryRouteChildren)
 
 interface AuthenticatedRouteRouteChildren {
+  AuthenticatedBusinessesRoute: typeof AuthenticatedBusinessesRoute
   AuthenticatedHistoryRoute: typeof AuthenticatedHistoryRouteWithChildren
   AuthenticatedLeadsRoute: typeof AuthenticatedLeadsRoute
   AuthenticatedLibraryRoute: typeof AuthenticatedLibraryRoute
   AuthenticatedPlaygroundRoute: typeof AuthenticatedPlaygroundRoute
   AuthenticatedClinicsNewRoute: typeof AuthenticatedClinicsNewRoute
-  AuthenticatedClinicsIndexRoute: typeof AuthenticatedClinicsIndexRoute
   AuthenticatedClinicsIdEditRoute: typeof AuthenticatedClinicsIdEditRoute
   AuthenticatedClinicsIdIndexRoute: typeof AuthenticatedClinicsIdIndexRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
+  AuthenticatedBusinessesRoute: AuthenticatedBusinessesRoute,
   AuthenticatedHistoryRoute: AuthenticatedHistoryRouteWithChildren,
   AuthenticatedLeadsRoute: AuthenticatedLeadsRoute,
   AuthenticatedLibraryRoute: AuthenticatedLibraryRoute,
   AuthenticatedPlaygroundRoute: AuthenticatedPlaygroundRoute,
   AuthenticatedClinicsNewRoute: AuthenticatedClinicsNewRoute,
-  AuthenticatedClinicsIndexRoute: AuthenticatedClinicsIndexRoute,
   AuthenticatedClinicsIdEditRoute: AuthenticatedClinicsIdEditRoute,
   AuthenticatedClinicsIdIndexRoute: AuthenticatedClinicsIdIndexRoute,
 }
@@ -649,6 +668,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   AuthRoute: AuthRoute,
+  ClinicsRoute: ClinicsRoute,
   DemoRoute: DemoRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
   VirtualReceptionistRoute: VirtualReceptionistRoute,
