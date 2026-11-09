@@ -42,10 +42,15 @@ export function PublicSiteFooter() {
           </p>
         </div>
         <nav aria-label="Solutions" className="min-w-0">
-          <p className="font-mono text-xs uppercase tracking-[0.2em] text-muted-foreground">Solutions</p>
+          <p className="font-mono text-xs uppercase tracking-[0.2em] text-muted-foreground">
+            Solutions
+          </p>
           <ul className="mt-2">
             <li>
-              <Link to="/clinics" className="inline-flex min-h-11 items-center text-sm text-muted-foreground underline-offset-4 hover:text-foreground hover:underline">
+              <Link
+                to="/clinics"
+                className="inline-flex min-h-11 items-center text-sm text-muted-foreground underline-offset-4 hover:text-foreground hover:underline"
+              >
                 24/7 Clinic Assistant (Phone &amp; WhatsApp)
               </Link>
             </li>
