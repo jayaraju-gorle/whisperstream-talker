@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as AuthRouteImport } from './routes/auth'
+import { Route as ClinicsRouteImport } from './routes/clinics'
 import { Route as DemoRouteImport } from './routes/demo'
 import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as VirtualReceptionistRouteImport } from './routes/virtual-receptionist'
@@ -51,6 +52,11 @@ const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
 const AuthRoute = AuthRouteImport.update({
   id: '/auth',
   path: '/auth',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ClinicsRoute = ClinicsRouteImport.update({
+  id: '/clinics',
+  path: '/clinics',
   getParentRoute: () => rootRouteImport,
 } as any)
 const DemoRoute = DemoRouteImport.update({
@@ -194,6 +200,7 @@ const ApiPublicBolnaV1ChatCompletionsRoute =
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/clinics': typeof ClinicsRoute
   '/demo': typeof DemoRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/virtual-receptionist': typeof VirtualReceptionistRoute
@@ -224,6 +231,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/clinics': typeof ClinicsRoute
   '/demo': typeof DemoRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/virtual-receptionist': typeof VirtualReceptionistRoute
@@ -256,6 +264,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/auth': typeof AuthRoute
+  '/clinics': typeof ClinicsRoute
   '/demo': typeof DemoRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/virtual-receptionist': typeof VirtualReceptionistRoute
@@ -288,6 +297,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/auth'
+    | '/clinics'
     | '/demo'
     | '/sitemap.xml'
     | '/virtual-receptionist'
@@ -318,6 +328,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/auth'
+    | '/clinics'
     | '/demo'
     | '/sitemap.xml'
     | '/virtual-receptionist'
@@ -349,6 +360,7 @@ export interface FileRouteTypes {
     | '/'
     | '/_authenticated'
     | '/auth'
+    | '/clinics'
     | '/demo'
     | '/sitemap.xml'
     | '/virtual-receptionist'
@@ -381,6 +393,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
   AuthRoute: typeof AuthRoute
+  ClinicsRoute: typeof ClinicsRoute
   DemoRoute: typeof DemoRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   VirtualReceptionistRoute: typeof VirtualReceptionistRoute
@@ -421,6 +434,13 @@ declare module '@tanstack/react-router' {
       path: '/auth'
       fullPath: '/auth'
       preLoaderRoute: typeof AuthRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/clinics': {
+      id: '/clinics'
+      path: '/clinics'
+      fullPath: '/clinics'
+      preLoaderRoute: typeof ClinicsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/demo': {
@@ -648,6 +668,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   AuthRoute: AuthRoute,
+  ClinicsRoute: ClinicsRoute,
   DemoRoute: DemoRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
   VirtualReceptionistRoute: VirtualReceptionistRoute,
