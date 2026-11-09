@@ -42,6 +42,10 @@ describe("App routing", () => {
     });
     const xml = sitemapXML("https://conversationalaistudio.online", sitemapStaticEntries(router));
     expect(xml).not.toContain("/auth");
+    expect(xml).not.toContain("/businesses");
+    expect(xml).toContain(
+      "<loc>https://conversationalaistudio.online/clinics</loc><priority>0.9</priority>",
+    );
     expect(xml).toContain("<loc>https://conversationalaistudio.online/</loc>");
     expect(xml).toContain("<loc>https://conversationalaistudio.online/demo</loc>");
     expect(xml).toContain(
@@ -59,5 +63,12 @@ describe("App routing", () => {
     const matches = await loadAt("/demo");
     expect(failedMatches(matches)).toEqual([]);
     expect(matches.some((match) => match.pathname === "/demo")).toBe(true);
+  });
+
+  it("loads the unified clinic page without an authenticated parent", async () => {
+    const matches = await loadAt("/clinics");
+    expect(failedMatches(matches)).toEqual([]);
+    expect(matches.some((match) => match.routeId === "/clinics")).toBe(true);
+    expect(matches.some((match) => match.routeId.startsWith("/_authenticated"))).toBe(false);
   });
 });

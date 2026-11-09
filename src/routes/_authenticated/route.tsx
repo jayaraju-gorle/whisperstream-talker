@@ -72,7 +72,7 @@ function Layout() {
           <BookOpen className="h-3.5 w-3.5 shrink-0" /> Library
         </Link>
         {isAdmin && (
-          <Link to="/clinics" onClick={onNavigate} className={base} activeProps={{ className: active }}>
+          <Link to="/businesses" onClick={onNavigate} className={base} activeProps={{ className: active }}>
             <Building2 className="h-3.5 w-3.5 shrink-0" /> Businesses
           </Link>
         )}

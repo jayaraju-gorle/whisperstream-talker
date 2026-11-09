@@ -14,7 +14,7 @@ export function PublicSiteHeader({ current }: { current?: "clinics" }) {
       <nav aria-label="Primary" className="flex items-center gap-1">
         <Button asChild variant="ghost" size="sm">
           <Link
-            to="/whatsapp-appointment-booking"
+            to="/clinics"
             aria-current={current === "clinics" ? "page" : undefined}
             className="min-h-11"
           >
@@ -44,6 +44,11 @@ export function PublicSiteFooter() {
         <nav aria-label="Solutions" className="min-w-0">
           <p className="font-mono text-xs uppercase tracking-[0.2em] text-muted-foreground">Solutions</p>
           <ul className="mt-2">
+            <li>
+              <Link to="/clinics" className="inline-flex min-h-11 items-center text-sm text-muted-foreground underline-offset-4 hover:text-foreground hover:underline">
+                24/7 Clinic Assistant (Phone &amp; WhatsApp)
+              </Link>
+            </li>
             <li>
               <Link
                 to="/whatsapp-appointment-booking"
