@@ -28,7 +28,7 @@ export function resolvePreferredTime(text: string, receivedAt: string, timeZone 
     const base = new Date(receivedAt);
     const parts = new Intl.DateTimeFormat("en-CA", { timeZone, year: "numeric", month: "2-digit", day: "2-digit" }).format(base).split("-").map(Number);
     const day = new Date(Date.UTC(parts[0], parts[1] - 1, parts[2] + offset, 12));
-    const label = new Intl.DateTimeFormat("en-IN", { timeZone: "UTC", weekday: "short", day: "2-digit", month: "short", year: "numeric" }).format(day);
+    const label = new Intl.DateTimeFormat("en-IN", { timeZone: "UTC", weekday: "short", day: "numeric", month: "short", year: "numeric" }).format(day).replace(", " + parts[0], " " + parts[0]);
     return text.replace(pattern, label).replace(/\s+at\s+/i, ", ").replace(/^\s+|\s+$/g, "");
   }
   return text;
