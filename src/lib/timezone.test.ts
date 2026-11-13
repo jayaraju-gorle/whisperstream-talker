@@ -11,3 +11,12 @@ describe("Assistant timezone", () => {
     expect(validTimezone("invalid")).toBe(false);
   });
 });
+import { resolvePreferredTime as rpt } from "./timezone";
+describe("resolvePreferredTime", () => {
+  it("turns tomorrow into the date after the IST received day", () => {
+    expect(rpt("Tomorrow at 12:00 PM", "2026-11-13T19:29:17Z")).toBe("Sun, 15 Nov 2026, 12:00 PM");
+  });
+  it("leaves explicit times untouched", () => {
+    expect(rpt("20 Nov, 4 PM", "2026-11-13T10:00:00Z")).toBe("20 Nov, 4 PM");
+  });
+});
