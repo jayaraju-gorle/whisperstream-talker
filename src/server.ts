@@ -36,6 +36,25 @@ async function normalizeCatastrophicSsrResponse(response: Response): Promise<Res
   });
 }
 
+function allowAssistantEmbed(response: Response): Response {
+  const headers = new Headers(response.headers);
+  headers.delete("x-frame-options");
+  const policy = headers.get("content-security-policy");
+  const frameAncestors = "frame-ancestors *";
+  headers.set(
+    "Content-Security-Policy",
+    !policy
+      ? frameAncestors
+      : /frame-ancestors/i.test(policy)
+        ? policy.replace(/frame-ancestors[^;]*/i, frameAncestors)
+        : `${policy}; ${frameAncestors}`,
+  );
+  const permissions = headers.get("permissions-policy");
+  if (!permissions) headers.set("Permissions-Policy", "microphone=*");
+  else if (!/microphone=/i.test(permissions)) headers.set("Permissions-Policy", `${permissions}, microphone=*`);
+  return new Response(response.body, { status: response.status, statusText: response.statusText, headers });
+}
+
 function isH3SwallowedErrorBody(body: string): boolean {
   try {
     const payload = JSON.parse(body) as { unhandled?: unknown; message?: unknown };
@@ -63,8 +82,11 @@ export default {
         }
       }
       const handler = await getServerEntry();
-      const response = await handler.fetch(request, env, ctx);
-      return await normalizeCatastrophicSsrResponse(response);
+      const response = await normalizeCatastrophicSsrResponse(await handler.fetch(request, env, ctx));
+      if (new URL(request.url).pathname === "/embed/assistant") {
+        return allowAssistantEmbed(response);
+      }
+      return response;
     } catch (error) {
       console.error(error);
       return new Response(renderErrorPage(), {

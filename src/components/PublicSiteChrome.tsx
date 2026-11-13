@@ -51,7 +51,7 @@ export function PublicSiteFooter() {
                 to="/clinics"
                 className="inline-flex min-h-11 items-center text-sm text-muted-foreground underline-offset-4 hover:text-foreground hover:underline"
               >
-                24/7 Clinic Assistant (Phone &amp; WhatsApp)
+                24/7 clinic assistant — phone, WhatsApp, and web
               </Link>
             </li>
             <li>

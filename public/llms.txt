@@ -15,7 +15,7 @@ Conversational Flows Studio provides automated phone call answering, WhatsApp me
 ## Primary URLs
 
 - [Conversational Flows Studio](https://conversationalaistudio.online/): Homepage with live web assistant demo, service overview, and business inquiry form.
-- [24/7 Clinic Assistant (Phone & WhatsApp)](https://conversationalaistudio.online/clinics): Unified 24/7 phone answering and WhatsApp messaging assistant for doctors and clinics.
+- [24/7 Clinic Assistant (Phone, WhatsApp & Web)](https://conversationalaistudio.online/clinics): A done-for-you assistant for doctors and clinics. It answers phone calls, WhatsApp inquiries, and website visitors with chat and live voice through an embeddable widget. The same clinic hours, doctor profiles, fees, and appointment-request rules apply on every channel.
 - [WhatsApp Appointment Booking Guide](https://conversationalaistudio.online/whatsapp-appointment-booking): Clinic workflow guide for WhatsApp appointment requests, FAQs, and staff confirmation process.
 - [24/7 Virtual Receptionist Guide](https://conversationalaistudio.online/virtual-receptionist): Guide to 24/7 phone answering, after-hours triage, and clinic call handling.
 - [Live WhatsApp Assistant Demo](https://wa.me/916302392274?text=TRY%20AURA): Interactive WhatsApp demo with Mira for the fictional Aura Health Clinic.

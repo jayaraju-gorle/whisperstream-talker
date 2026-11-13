@@ -58,8 +58,7 @@ function visitorId() {
   return id;
 }
 
-export function SiteAssistant() {
-  const [open, setOpen] = useState(false);
+function useFloSession(enabled: boolean) {
   const [id, setId] = useState<string | null>(null);
   const [initial, setInitial] = useState<UIMessage[] | null>(null);
   const [busy, setBusy] = useState(false);
@@ -72,7 +71,7 @@ export function SiteAssistant() {
   };
 
   useEffect(() => {
-    if (!open || id) return;
+    if (!enabled || id) return;
     const v = visitorId();
     setId(v);
     fetch(`/api/public/assistant?visitorId=${v}`)
@@ -90,7 +89,68 @@ export function SiteAssistant() {
         setInitial(messages);
       })
       .catch(() => setInitial([]));
-  }, [open, id]);
+  }, [enabled, id]);
+
+  return { id, initial, busy, setBusy, restart };
+}
+
+function RestartConversation({ disabled, onRestart }: { disabled: boolean; onRestart: () => void }) {
+  return (
+    <AlertDialog>
+      <AlertDialogTrigger asChild>
+        <Button
+          variant="ghost"
+          size="icon"
+          aria-label="Restart conversation"
+          title="Restart conversation"
+          disabled={disabled}
+        >
+          <RotateCcw />
+        </Button>
+      </AlertDialogTrigger>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>Start a new conversation?</AlertDialogTitle>
+          <AlertDialogDescription>
+            This clears the chat from this window. Previously shared contact details remain saved with us.
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel>Keep chatting</AlertDialogCancel>
+          <AlertDialogAction onClick={onRestart}>Restart conversation</AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+  );
+}
+
+export function EmbeddedClinicAssistant() {
+  const { id, initial, busy, setBusy, restart } = useFloSession(true);
+  return (
+    <section className="flex h-dvh min-h-0 flex-col bg-card text-card-foreground" aria-label="Mira conversation">
+      <header className="flex items-center gap-2 border-b border-border px-4 py-3">
+        <Logo className="h-6 w-6 shrink-0" />
+        <p className="min-w-0 flex-1 text-sm font-medium leading-snug">
+          Mira · 24/7 Clinic Assistant (Aura Health Clinic Demo)
+        </p>
+        <RestartConversation disabled={busy || !initial} onRestart={restart} />
+      </header>
+      <div className="flex min-h-0 flex-1 flex-col">
+        {id && initial ? (
+          <ChatBody key={id} visitorId={id} initial={initial} onBusyChange={setBusy} />
+        ) : (
+          <div className="flex flex-1 items-center justify-center">
+            <Shimmer>Opening chat…</Shimmer>
+          </div>
+        )}
+      </div>
+    </section>
+  );
+}
+
+export function SiteAssistant() {
+  const [open, setOpen] = useState(false);
+  const { id, initial, busy, setBusy, restart } = useFloSession(open);
 
   return (
     <>
@@ -108,32 +168,7 @@ export function SiteAssistant() {
                 Aura Health Clinic · Fictional sample
               </div>
             </div>
-            <AlertDialog>
-              <AlertDialogTrigger asChild>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  aria-label="Restart conversation"
-                  title="Restart conversation"
-                  disabled={busy || !initial}
-                >
-                  <RotateCcw />
-                </Button>
-              </AlertDialogTrigger>
-              <AlertDialogContent>
-                <AlertDialogHeader>
-                  <AlertDialogTitle>Start a new conversation?</AlertDialogTitle>
-                  <AlertDialogDescription>
-                    This clears the chat from this window. Previously shared contact details remain
-                    saved with us.
-                  </AlertDialogDescription>
-                </AlertDialogHeader>
-                <AlertDialogFooter>
-                  <AlertDialogCancel>Keep chatting</AlertDialogCancel>
-                  <AlertDialogAction onClick={restart}>Restart conversation</AlertDialogAction>
-                </AlertDialogFooter>
-              </AlertDialogContent>
-            </AlertDialog>
+            <RestartConversation disabled={busy || !initial} onRestart={restart} />
             <Button
               variant="ghost"
               size="icon"

@@ -51,6 +51,13 @@ describe("App routing", () => {
     expect(xml).toContain(
       "<loc>https://conversationalaistudio.online/whatsapp-appointment-booking</loc><priority>0.8</priority>",
     );
+    expect(xml).not.toContain("/embed/assistant");
+  });
+
+  it("loads the website assistant embed without the public site chrome route", async () => {
+    const matches = await loadAt("/embed/assistant");
+    expect(failedMatches(matches)).toEqual([]);
+    expect(matches.some((match) => match.pathname === "/embed/assistant")).toBe(true);
   });
 
   it("loads the clinic WhatsApp landing page", async () => {

@@ -26,6 +26,7 @@ import { Route as ApiLlmRouteImport } from './routes/api/llm'
 import { Route as ApiProvidersRouteImport } from './routes/api/providers'
 import { Route as ApiSttRouteImport } from './routes/api/stt'
 import { Route as ApiTtsRouteImport } from './routes/api/tts'
+import { Route as EmbedAssistantRouteImport } from './routes/embed.assistant'
 import { Route as PortalTokenRouteImport } from './routes/portal.$token'
 import { Route as AuthenticatedClinicsNewRouteImport } from './routes/_authenticated/clinics.new'
 import { Route as AuthenticatedHistoryIdRouteImport } from './routes/_authenticated/history.$id'
@@ -125,6 +126,11 @@ const ApiTtsRoute = ApiTtsRouteImport.update({
   path: '/api/tts',
   getParentRoute: () => rootRouteImport,
 } as any)
+const EmbedAssistantRoute = EmbedAssistantRouteImport.update({
+  id: '/embed/assistant',
+  path: '/embed/assistant',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const PortalTokenRoute = PortalTokenRouteImport.update({
   id: '/portal/$token',
   path: '/portal/$token',
@@ -214,6 +220,7 @@ export interface FileRoutesByFullPath {
   '/api/providers': typeof ApiProvidersRoute
   '/api/stt': typeof ApiSttRoute
   '/api/tts': typeof ApiTtsRoute
+  '/embed/assistant': typeof EmbedAssistantRoute
   '/portal/$token': typeof PortalTokenRoute
   '/clinics/new': typeof AuthenticatedClinicsNewRoute
   '/history/$id': typeof AuthenticatedHistoryIdRoute
@@ -245,6 +252,7 @@ export interface FileRoutesByTo {
   '/api/providers': typeof ApiProvidersRoute
   '/api/stt': typeof ApiSttRoute
   '/api/tts': typeof ApiTtsRoute
+  '/embed/assistant': typeof EmbedAssistantRoute
   '/portal/$token': typeof PortalTokenRoute
   '/clinics/new': typeof AuthenticatedClinicsNewRoute
   '/history/$id': typeof AuthenticatedHistoryIdRoute
@@ -278,6 +286,7 @@ export interface FileRoutesById {
   '/api/providers': typeof ApiProvidersRoute
   '/api/stt': typeof ApiSttRoute
   '/api/tts': typeof ApiTtsRoute
+  '/embed/assistant': typeof EmbedAssistantRoute
   '/portal/$token': typeof PortalTokenRoute
   '/_authenticated/clinics/new': typeof AuthenticatedClinicsNewRoute
   '/_authenticated/history/$id': typeof AuthenticatedHistoryIdRoute
@@ -311,6 +320,7 @@ export interface FileRouteTypes {
     | '/api/providers'
     | '/api/stt'
     | '/api/tts'
+    | '/embed/assistant'
     | '/portal/$token'
     | '/clinics/new'
     | '/history/$id'
@@ -342,6 +352,7 @@ export interface FileRouteTypes {
     | '/api/providers'
     | '/api/stt'
     | '/api/tts'
+    | '/embed/assistant'
     | '/portal/$token'
     | '/clinics/new'
     | '/history/$id'
@@ -374,6 +385,7 @@ export interface FileRouteTypes {
     | '/api/providers'
     | '/api/stt'
     | '/api/tts'
+    | '/embed/assistant'
     | '/portal/$token'
     | '/_authenticated/clinics/new'
     | '/_authenticated/history/$id'
@@ -402,6 +414,7 @@ export interface RootRouteChildren {
   ApiProvidersRoute: typeof ApiProvidersRoute
   ApiSttRoute: typeof ApiSttRoute
   ApiTtsRoute: typeof ApiTtsRoute
+  EmbedAssistantRoute: typeof EmbedAssistantRoute
   PortalTokenRoute: typeof PortalTokenRoute
   ApiPublicAssistantRoute: typeof ApiPublicAssistantRoute
   ApiPublicRatesRoute: typeof ApiPublicRatesRoute
@@ -532,6 +545,13 @@ declare module '@tanstack/react-router' {
       path: '/api/tts'
       fullPath: '/api/tts'
       preLoaderRoute: typeof ApiTtsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/embed/assistant': {
+      id: '/embed/assistant'
+      path: '/embed/assistant'
+      fullPath: '/embed/assistant'
+      preLoaderRoute: typeof EmbedAssistantRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/portal/$token': {
@@ -677,6 +697,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiProvidersRoute: ApiProvidersRoute,
   ApiSttRoute: ApiSttRoute,
   ApiTtsRoute: ApiTtsRoute,
+  EmbedAssistantRoute: EmbedAssistantRoute,
   PortalTokenRoute: PortalTokenRoute,
   ApiPublicAssistantRoute: ApiPublicAssistantRoute,
   ApiPublicRatesRoute: ApiPublicRatesRoute,

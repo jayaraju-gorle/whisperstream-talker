@@ -4,6 +4,7 @@ import {
   Link,
   createRootRouteWithContext,
   useRouter,
+  useRouterState,
   HeadContent,
   Scripts,
   type ErrorComponentProps,
@@ -127,6 +128,7 @@ function RootShell({ children }: { children: ReactNode }) {
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
   const router = useRouter();
+  const embedded = useRouterState({ select: (state) => state.location.pathname === "/embed/assistant" });
 
   useEffect(() => {
     initAnalytics();
@@ -142,7 +144,7 @@ function RootComponent() {
       <RouteProgress />
       {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
       <Outlet />
-      <SiteAssistant />
+      {!embedded && <SiteAssistant />}
       <Toaster theme="dark" position="top-center" />
     </QueryClientProvider>
   );

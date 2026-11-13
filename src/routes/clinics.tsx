@@ -1,15 +1,21 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { useState } from "react";
 import {
   CalendarCheck,
+  Check,
   ChevronDown,
   Clock3,
+  Copy,
+  Globe,
   MapPin,
   MessageCircle,
+  Mic,
   Phone,
   ShieldCheck,
   Stethoscope,
   UserCheck,
 } from "lucide-react";
+import { toast } from "sonner";
 import clinicImage from "@/assets/clinic-assistant.jpg";
 import { LeadForm } from "@/components/LeadForm";
 import { PublicSiteFooter, PublicSiteHeader } from "@/components/PublicSiteChrome";
@@ -21,30 +27,46 @@ import {
 } from "@/lib/flo-voice";
 
 const PAGE_URL = "https://conversationalaistudio.online/clinics";
-const PAGE_TITLE = "24/7 Clinic Assistant — Phone & WhatsApp for Doctors & Clinics";
+const EMBED_URL = "https://conversationalaistudio.online/embed/assistant";
+const PAGE_TITLE = "24/7 Clinic Assistant — Phone, WhatsApp & Web for Doctors & Clinics";
 const PAGE_DESCRIPTION =
-  "A done-for-you 24/7 assistant that answers clinic phone calls and WhatsApp messages, handles appointment requests, and shares doctor timings without front-desk overload.";
+  "A done-for-you 24/7 assistant that answers clinic phone calls, WhatsApp messages, and website visitors with chat and voice. Handles appointment requests, shares doctor timings, and embeds into any website.";
+
+const EMBED_SNIPPET = `<!-- Mira 24/7 Clinic Assistant (Chat & Voice) -->
+<iframe
+  src="${EMBED_URL}"
+  width="100%"
+  height="620"
+  style="border: none; max-width: 420px; border-radius: 16px; box-shadow: 0 10px 30px rgba(0,0,0,0.15);"
+  allow="microphone"
+  title="Mira 24/7 Clinic Assistant"
+></iframe>`;
 
 const FAQS = [
   {
-    question: "Do we have to choose between phone and WhatsApp?",
+    question: "Which channels does the clinic assistant support?",
     answer:
-      "No. This is one done-for-you clinic assistant service covering both phone calls and WhatsApp messages simultaneously. Both channels use your approved clinic information and appointment-request rules.",
+      "Mira works across phone calls, WhatsApp, and your clinic website simultaneously. All three channels share the same clinic hours, doctor profiles, and appointment-request rules.",
+  },
+  {
+    question: "How does the web assistant integrate with our existing website?",
+    answer:
+      "We provide a simple embed code snippet that you or your web developer can paste into your site. It works with WordPress, Wix, Webflow, Squarespace, or any custom website, with no complex setup needed.",
   },
   {
     question: "How long does setup take?",
     answer:
-      "We configure the assistant after reviewing your clinic hours, doctor schedules, fees, directions, preparation notes and staff confirmation process. Contact us to agree a setup timeline for your phone and WhatsApp connections.",
+      "We configure the assistant after reviewing your clinic hours, doctor schedules, fees, directions, preparation notes and staff confirmation process. Contact us to agree a setup timeline for your phone, WhatsApp, and website.",
   },
   {
     question: "Can we use our existing clinic numbers?",
     answer:
-      "We review your current phone and WhatsApp setup with you. Phone coverage can use call forwarding where your provider supports it, or a dedicated number. WhatsApp connection options depend on your current business account and number; we confirm compatibility before setup.",
+      "We review your current phone and WhatsApp setup with you. Phone coverage can use call forwarding where your provider supports it, or a dedicated number. WhatsApp connection options depend on your current business account and number; we confirm compatibility before setup. The website assistant is a separate embed on your existing site.",
   },
   {
     question: "Does Mira replace our reception staff?",
     answer:
-      "No. Mira supports your staff by handling repetitive calls and messages during busy periods and after hours. Your team remains responsible for patient care, exceptions and appointment confirmation.",
+      "No. Mira supports your staff by handling repetitive calls, messages, and website questions during busy periods and after hours. Your team remains responsible for patient care, exceptions and appointment confirmation.",
   },
   {
     question: "Are appointment requests automatically confirmed?",
@@ -59,7 +81,7 @@ const FAQS = [
   {
     question: "Can we update timings and doctor information?",
     answer:
-      "Yes. Your clinic information can be updated as schedules, fees and instructions change. The assistant uses that approved information on both phone and WhatsApp.",
+      "Yes. Your clinic information can be updated as schedules, fees and instructions change. The assistant uses that approved information on phone, WhatsApp, and your website.",
   },
   {
     question: "Is Aura Health Clinic a real clinic?",
@@ -72,12 +94,12 @@ const BENEFITS = [
   {
     icon: Clock3,
     title: "Morning rush. Evening calls. Night-time messages.",
-    text: "During peak morning OPD hours, your team can focus on patients in the clinic while Mira handles routine inquiries. After hours, callers and WhatsApp visitors still get a response.",
+    text: "During peak morning OPD hours, your team can focus on patients in the clinic while Mira handles routine inquiries. After hours, callers, WhatsApp visitors, and people on your website still get a response.",
   },
   {
     icon: Stethoscope,
     title: "The answers patients ask for most",
-    text: "Share clinic hours, doctor timings and consultation fees from your approved information — without your staff repeating the same details on every call and message.",
+    text: "Share clinic hours, doctor timings and consultation fees from your approved information — without your staff repeating the same details on every call, message, and website visit.",
   },
   {
     icon: MapPin,
@@ -111,10 +133,9 @@ export const Route = createFileRoute("/clinics")({
               "@type": "Service",
               "@id": `${PAGE_URL}#service`,
               url: PAGE_URL,
-              name: "24/7 Clinic Assistant — Phone & WhatsApp",
-              serviceType: "Clinic phone answering and WhatsApp messaging",
-              description:
-                "One done-for-you 24/7 assistant for clinic phone calls and WhatsApp messages. Answers operational inquiries and captures appointment requests for human confirmation; does not provide medical advice and directs emergencies to 108.",
+              name: "24/7 Clinic Assistant",
+              serviceType: "Web chat and voice assistant",
+              description: PAGE_DESCRIPTION,
               provider: {
                 "@type": "Organization",
                 name: "Conversational Flows Studio",
@@ -125,6 +146,7 @@ export const Route = createFileRoute("/clinics")({
               availableChannel: [
                 {
                   "@type": "ServiceChannel",
+                  name: "Phone",
                   serviceUrl: PHONE_ASSISTANT_URL,
                   servicePhone: {
                     "@type": "ContactPoint",
@@ -132,8 +154,21 @@ export const Route = createFileRoute("/clinics")({
                     contactType: "live fictional clinic demo",
                   },
                 },
-                { "@type": "ServiceChannel", serviceUrl: WHATSAPP_ASSISTANT_URL },
+                { "@type": "ServiceChannel", name: "WhatsApp", serviceUrl: WHATSAPP_ASSISTANT_URL },
+                {
+                  "@type": "ServiceChannel",
+                  name: "Web chat and voice assistant",
+                  serviceUrl: EMBED_URL,
+                },
               ],
+            },
+            {
+              "@type": "MedicalBusiness",
+              "@id": `${PAGE_URL}#clinics`,
+              name: "24/7 clinic assistant for doctors and clinics",
+              url: PAGE_URL,
+              description:
+                "Done-for-you assistant for medical clinics. Web chat and voice assistant, plus phone and WhatsApp. Appointment requests are reviewed by clinic staff.",
             },
             {
               "@type": "FAQPage",
@@ -156,7 +191,7 @@ export const Route = createFileRoute("/clinics")({
                 "@id": `${PAGE_URL}#fictional-demo`,
                 name: "Aura Health Clinic — fictional demonstration",
                 description:
-                  "A hypothetical clinic used only to demonstrate phone and WhatsApp assistance. Not a real medical business; no real appointments are booked.",
+                  "A hypothetical clinic used only to demonstrate phone, WhatsApp, and website chat and voice. Not a real medical business; no real appointments are booked.",
               },
             },
           ],
@@ -167,15 +202,42 @@ export const Route = createFileRoute("/clinics")({
   component: ClinicsPage,
 });
 
+function openSiteAssistant() {
+  document.querySelector<HTMLButtonElement>("[data-site-assistant-toggle]")?.click();
+}
+
 function ClinicsPage() {
+  const [copied, setCopied] = useState(false);
+
+  async function copySnippet() {
+    try {
+      if (navigator.clipboard?.writeText) await navigator.clipboard.writeText(EMBED_SNIPPET);
+      else throw new Error("Clipboard is unavailable");
+    } catch {
+      const area = document.createElement("textarea");
+      area.value = EMBED_SNIPPET;
+      area.setAttribute("readonly", "");
+      area.style.position = "fixed";
+      area.style.left = "-9999px";
+      document.body.appendChild(area);
+      area.select();
+      const copiedByCommand = document.execCommand("copy");
+      area.remove();
+      if (!copiedByCommand) {
+        toast.error("Could not copy automatically. Select the snippet and copy it.");
+        return;
+      }
+    }
+    setCopied(true);
+    toast.success("Embed code copied");
+    window.setTimeout(() => setCopied(false), 2000);
+  }
+
   return (
     <div className="min-h-screen">
       <PublicSiteHeader current="clinics" />
       <main>
-        <section
-          aria-labelledby="clinic-title"
-          className="relative isolate overflow-hidden border-y border-border"
-        >
+        <section aria-labelledby="clinic-title" className="relative isolate overflow-hidden border-y border-border">
           <img
             src={clinicImage}
             alt="Illustrative clinic reception area with a telephone and appointment notebook"
@@ -186,67 +248,59 @@ function ClinicsPage() {
           />
           <div className="absolute inset-0 -z-10 bg-background/85" />
           <div className="mx-auto max-w-6xl px-4 py-12 sm:px-6 sm:py-16">
-            <p className="font-mono text-xs uppercase tracking-[0.2em] text-primary">
-              For doctors &amp; clinics
-            </p>
-            <h1
-              id="clinic-title"
-              className="mt-4 max-w-3xl text-4xl font-semibold leading-tight sm:text-5xl"
-            >
-              A 24/7 Phone &amp; WhatsApp Assistant for Your Clinic
+            <p className="font-mono text-xs uppercase tracking-[0.2em] text-primary">Phone · WhatsApp · Web</p>
+            <h1 id="clinic-title" className="mt-4 max-w-3xl text-4xl font-semibold leading-tight sm:text-5xl">
+              A 24/7 clinic assistant on phone, WhatsApp, and your website.
             </h1>
             <p className="mt-6 max-w-2xl text-lg text-foreground">
-              One assistant. Both channels. Done for you.
+              One assistant. Three channels. Done for you.
             </p>
             <p className="mt-3 max-w-2xl text-base text-foreground">
-              Mira answers clinic calls and WhatsApp messages simultaneously, shares doctor timings
-              and captures appointment requests — while your staff focuses on patients and confirms
-              every visit.
+              Mira answers clinic calls, WhatsApp messages, and people already on your website — by text or spoken
+              voice. She shares doctor timings and captures appointment requests while your staff focuses on patients
+              and confirms every visit.
             </p>
-            <Button asChild size="lg" className="mt-6 min-h-11">
-              <a href="#clinic-setup">Get an assistant for my clinic</a>
-            </Button>
+            <div className="mt-6 flex flex-wrap gap-3">
+              <Button asChild size="lg" className="min-h-11">
+                <a href="#try-mira">Try the live sample</a>
+              </Button>
+              <Button asChild variant="outline" size="lg" className="min-h-11">
+                <a href="#clinic-setup">Get an assistant for my clinic</a>
+              </Button>
+            </div>
           </div>
         </section>
 
         <div className="mx-auto max-w-6xl px-4 pb-24 sm:px-6">
-          <section aria-labelledby="live-demos" className="mt-12">
-            <p className="font-mono text-xs uppercase tracking-[0.2em] text-primary">
-              Live fictional clinic demo
-            </p>
+          <section id="try-mira" aria-labelledby="live-demos" className="mt-12 scroll-mt-8">
+            <p className="font-mono text-xs uppercase tracking-[0.2em] text-primary">Live fictional clinic demo</p>
             <h2 id="live-demos" className="mt-3 text-2xl font-semibold sm:text-3xl">
-              Two channels, one assistant
+              Try all three channels
             </h2>
             <p className="mt-3 max-w-3xl text-muted-foreground">
-              Meet Mira at Aura Health Clinic, a hypothetical clinic with illustrative doctors,
-              hours and fees. Try a phone call and a WhatsApp conversation. These are
-              demonstrations, not real medical appointments.
+              Meet Mira at Aura Health Clinic, a hypothetical clinic with illustrative doctors, hours and fees. Try a
+              phone call, a WhatsApp conversation, and the website chat and voice. These are demonstrations, not real
+              medical appointments. On WhatsApp, send “TRY AURA”.
             </p>
-            <div className="mt-6 grid gap-4 md:grid-cols-2">
-              <article className="flex min-w-0 flex-col rounded-lg border border-border bg-card/60 p-5 sm:p-6">
+            <div className="mt-6 grid gap-4 md:grid-cols-3">
+              <article className="flex min-w-0 flex-col rounded-lg border border-border bg-card/60 p-5">
                 <Phone className="h-6 w-6 text-primary" aria-hidden="true" />
-                <h3 className="mt-4 text-xl font-semibold">Phone channel</h3>
-                <p className="mb-5 mt-2 text-sm text-muted-foreground">
-                  Ask about doctor timings, consultation fees or a preferred appointment slot in a
-                  natural conversation.
+                <h3 className="mt-4 text-xl font-semibold">Phone line</h3>
+                <p className="mb-5 mt-2 flex-1 text-sm text-muted-foreground">
+                  Call the sample clinic line and talk with Mira the way a patient would.
                 </p>
-                <Button
-                  asChild
-                  size="lg"
-                  className="mt-auto h-auto min-h-11 whitespace-normal py-3 text-center"
-                >
+                <Button asChild size="lg" className="mt-auto h-auto min-h-11 whitespace-normal py-3 text-center">
                   <a href={PHONE_ASSISTANT_URL}>
                     <Phone className="h-4 w-4 shrink-0" />
-                    Call Mira live on {PHONE_ASSISTANT_DISPLAY}
+                    Call {PHONE_ASSISTANT_DISPLAY}
                   </a>
                 </Button>
               </article>
-              <article className="flex min-w-0 flex-col rounded-lg border border-border bg-card/60 p-5 sm:p-6">
+              <article className="flex min-w-0 flex-col rounded-lg border border-border bg-card/60 p-5">
                 <MessageCircle className="h-6 w-6 text-agent-b" aria-hidden="true" />
-                <h3 className="mt-4 text-xl font-semibold">WhatsApp channel</h3>
-                <p className="mb-5 mt-2 text-sm text-muted-foreground">
-                  Send TRY AURA to start the same fictional clinic experience. Ask for timings,
-                  directions or an appointment request.
+                <h3 className="mt-4 text-xl font-semibold">WhatsApp</h3>
+                <p className="mb-5 mt-2 flex-1 text-sm text-muted-foreground">
+                  Ask about timings, doctors, or a preferred appointment slot.
                 </p>
                 <Button
                   asChild
@@ -256,10 +310,69 @@ function ClinicsPage() {
                 >
                   <a href={WHATSAPP_ASSISTANT_URL} target="_blank" rel="noopener noreferrer">
                     <MessageCircle className="h-4 w-4 shrink-0" />
-                    Message Mira on WhatsApp
+                    Chat on WhatsApp
                   </a>
                 </Button>
               </article>
+              <article className="flex min-w-0 flex-col rounded-lg border border-border bg-card/60 p-5">
+                <Globe className="h-6 w-6 text-primary" aria-hidden="true" />
+                <h3 className="mt-4 text-xl font-semibold">Website assistant</h3>
+                <p className="mb-5 mt-2 flex-1 text-sm text-muted-foreground">
+                  Open the on-page chat and voice bubble, or jump to the embed snippet for your own site.
+                </p>
+                <div className="mt-auto flex flex-col gap-2">
+                  <Button className="min-h-11" onClick={openSiteAssistant}>
+                    <Mic className="h-4 w-4" />
+                    Chat or talk on this page
+                  </Button>
+                  <Button asChild variant="outline" className="min-h-11">
+                    <a href="#website-embed">See the website embed</a>
+                  </Button>
+                </div>
+              </article>
+            </div>
+          </section>
+
+          <section id="website-embed" aria-labelledby="embed-heading" className="mt-16 scroll-mt-8">
+            <h2 id="embed-heading" className="text-2xl font-semibold sm:text-3xl">
+              Add Mira to your existing clinic website in 60 seconds
+            </h2>
+            <p className="mt-3 max-w-3xl text-muted-foreground">
+              Copy this embed snippet into your website’s header or footer. Works with WordPress, Webflow, Wix,
+              Squarespace, or custom code.
+            </p>
+            <div className="mt-6 grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,22rem)]">
+              <div className="min-w-0 rounded-lg border border-border bg-card">
+                <div className="flex items-center justify-between gap-3 border-b border-border px-4 py-3">
+                  <p className="font-mono text-xs uppercase tracking-widest text-muted-foreground">Embed snippet</p>
+                  <Button type="button" size="sm" className="min-h-11" onClick={() => void copySnippet()}>
+                    {copied ? <Check /> : <Copy />}
+                    {copied ? "Copied" : "Copy code"}
+                  </Button>
+                </div>
+                <pre className="overflow-x-auto p-4 text-xs leading-relaxed text-foreground">
+                  <code id="embed-snippet">{EMBED_SNIPPET}</code>
+                </pre>
+              </div>
+              <ul className="min-w-0 space-y-3 text-sm text-muted-foreground">
+                <li>Includes both text chat and real-time voice recognition.</li>
+                <li>Fully mobile responsive.</li>
+                <li>Configured with your clinic’s own doctor list, consultation fees, timings, and directions.</li>
+              </ul>
+            </div>
+            <div className="mt-6">
+              <p className="text-sm font-medium">Preview</p>
+              <p className="mt-1 max-w-3xl text-sm text-muted-foreground">
+                This is the same frame your website would load. Choose Talk to Mira to use the microphone.
+              </p>
+              <iframe
+                src="/embed/assistant"
+                title="Mira 24/7 Clinic Assistant"
+                width="100%"
+                height={620}
+                allow="microphone"
+                className="mt-4 w-full max-w-[420px] rounded-2xl border-0 shadow-lg"
+              />
             </div>
           </section>
 
@@ -278,45 +391,38 @@ function ClinicsPage() {
             </div>
           </section>
 
-          <section
-            aria-labelledby="staff-confirmation"
-            className="mt-16 border-y border-border py-8"
-          >
+          <section aria-labelledby="staff-confirmation" className="mt-16 border-y border-border py-8">
             <h2 id="staff-confirmation" className="text-2xl font-semibold sm:text-3xl">
               Mira takes the request. Your team confirms the visit.
             </h2>
             <ol className="mt-6 grid gap-6 md:grid-cols-3">
               <li className="min-w-0">
                 <MessageCircle className="h-5 w-5 text-agent-b" />
-                <h3 className="mt-3 font-semibold">1. Patient calls or messages</h3>
+                <h3 className="mt-3 font-semibold">1. Patient calls, messages, or visits your site</h3>
                 <p className="mt-2 text-sm text-muted-foreground">
-                  Mira answers logistical questions using your approved clinic information, on
-                  either channel.
+                  Mira answers logistical questions using your approved clinic information, on the phone, on WhatsApp,
+                  or in the website assistant.
                 </p>
               </li>
               <li className="min-w-0">
                 <CalendarCheck className="h-5 w-5 text-primary" />
                 <h3 className="mt-3 font-semibold">2. Mira gathers the preferences</h3>
                 <p className="mt-2 text-sm text-muted-foreground">
-                  Patient name, contact details, doctor preference and preferred date or slot are
-                  captured as an appointment request.
+                  Patient name, contact details, doctor preference and preferred date or slot are captured as an
+                  appointment request.
                 </p>
               </li>
               <li className="min-w-0">
                 <UserCheck className="h-5 w-5 text-success" />
                 <h3 className="mt-3 font-semibold">3. Staff reviews and confirms</h3>
                 <p className="mt-2 text-sm text-muted-foreground">
-                  Your team checks the diary and confirms availability. No slot is promised before
-                  human review.
+                  Your team checks the diary and confirms availability. No slot is promised before human review.
                 </p>
               </li>
             </ol>
           </section>
 
-          <aside
-            aria-labelledby="medical-safety"
-            className="mt-12 border-l-4 border-primary bg-secondary/50 p-5 sm:p-6"
-          >
+          <aside aria-labelledby="medical-safety" className="mt-12 border-l-4 border-primary bg-secondary/50 p-5 sm:p-6">
             <div className="flex items-center gap-3">
               <ShieldCheck className="h-6 w-6 shrink-0 text-primary" />
               <h2 id="medical-safety" className="text-xl font-semibold">
@@ -324,13 +430,12 @@ function ClinicsPage() {
               </h2>
             </div>
             <p className="mt-3 max-w-3xl text-sm text-muted-foreground">
-              Mira handles operational and logistical inquiries only. Symptoms, diagnosis, treatment
-              and medical advice are deferred to the doctor. Pre-visit instructions come from your
-              clinic, not from an independent medical recommendation.
+              Mira handles operational and logistical inquiries only. Symptoms, diagnosis, treatment and medical advice
+              are deferred to the doctor. Pre-visit instructions come from your clinic, not from an independent medical
+              recommendation.
             </p>
             <p className="mt-3 text-sm font-medium">
-              For an emergency, call 108 immediately. Do not wait for an appointment request to be
-              reviewed.
+              For an emergency, call 108 immediately. Do not wait for an appointment request to be reviewed.
             </p>
           </aside>
 
@@ -351,22 +456,18 @@ function ClinicsPage() {
             </div>
           </section>
 
-          <section
-            id="clinic-setup"
-            aria-labelledby="clinic-enquiry"
-            className="mt-16 scroll-mt-8 border-t border-border pt-10"
-          >
+          <section id="clinic-setup" aria-labelledby="clinic-enquiry" className="mt-16 scroll-mt-8 border-t border-border pt-10">
             <h2 id="clinic-enquiry" className="text-2xl font-semibold sm:text-3xl">
               Get one for your clinic
             </h2>
             <p className="mb-6 mt-3 max-w-3xl text-muted-foreground">
-              Tell us about your clinic and how your team handles calls and WhatsApp today. We’ll
-              discuss a done-for-you setup covering both channels, with your own timings, doctors,
-              fees and staff confirmation process.
+              Tell us about your clinic and how your team handles calls, WhatsApp, and the website today. We’ll set up
+              Mira on all three channels with your own timings, doctors, fees, and staff confirmation process.
+              Appointment requests still wait for your team to confirm.
             </p>
             <LeadForm
               businessPlaceholder="e.g. dental clinic, diagnostic centre"
-              submitLabel="Request my Phone & WhatsApp assistant"
+              submitLabel="Request a clinic setup"
             />
           </section>
         </div>
