@@ -154,11 +154,12 @@ export function SiteAssistant() {
 
   return (
     <>
-      {open && (
+      {(open || initial) && (
         <div
           role="dialog"
+          hidden={!open}
           aria-label="Mira conversation"
-          className="fixed inset-x-2 bottom-20 z-50 flex h-[min(640px,calc(100dvh-7rem))] flex-col overflow-hidden rounded-xl border border-border bg-card shadow-2xl sm:inset-x-auto sm:right-5 sm:w-[400px]"
+          className="fixed inset-x-2 bottom-20 z-50 flex h-[min(640px,calc(100dvh-7rem))] flex-col overflow-hidden rounded-xl border border-border bg-card shadow-2xl sm:inset-x-auto sm:right-5 sm:w-[400px] [&[hidden]]:hidden"
         >
           <div className="flex items-center gap-2 border-b border-border px-4 py-3">
             <Logo className="h-6 w-6" />

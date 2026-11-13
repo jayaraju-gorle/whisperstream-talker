@@ -13,6 +13,8 @@ import { CLINIC_VISITOR_PREFIX, clinicVisitorKey, hoursLine, toClinicInput } fro
 import { CLINIC_COLUMNS, type ClinicRow } from "@/lib/clinic-store";
 import { floTurnCostUsd } from "@/lib/flo-models";
 import { useCurrency } from "@/hooks/use-currency";
+import { useTimezone } from "@/hooks/use-timezone";
+import { resolvePreferredTime } from "@/lib/timezone";
 
 export const Route = createFileRoute("/_authenticated/clinics/$id/")({
   staticData: { sitemap: false },
@@ -185,6 +187,7 @@ function Appointments({ clinicId }: { clinicId: string }) {
   const key = ["clinics", clinicId, "appointments"];
   const [form, setForm] = useState({ patient_name: "", phone: "", doctor: "", preferred_time: "", reason: "" });
   const [adding, setAdding] = useState(false);
+  const tz = useTimezone();
   const { data, isLoading, isError } = useQuery({
     queryKey: key,
     refetchInterval: 20000,
@@ -226,13 +229,24 @@ function Appointments({ clinicId }: { clinicId: string }) {
       {data && !data.length && <p className="text-sm text-muted-foreground">No requests yet.</p>}
       <div className="overflow-x-auto">
         <table className="w-full min-w-[40rem] text-sm">
+          <thead className="text-left text-xs uppercase tracking-wide text-muted-foreground">
+            <tr className="border-b border-border">
+              <th className="py-2 pr-3 font-medium">Patient &amp; phone</th>
+              <th className="pr-3 font-medium">Doctor</th>
+              <th className="pr-3 font-medium">Requested appointment</th>
+              <th className="pr-3 font-medium">Reason</th>
+              <th className="pr-3 font-medium">Received</th>
+              <th className="font-medium">Status</th>
+            </tr>
+          </thead>
           <tbody className="divide-y divide-border">
             {data?.map((r) => (
               <tr key={r.id}>
                 <td className="py-2 pr-3">{r.patient_name}<div className="text-xs text-muted-foreground">{r.phone}</div></td>
-                <td className="pr-3">{r.doctor}<div className="text-xs text-muted-foreground">{r.preferred_time}</div></td>
+                <td className="pr-3">{r.doctor || "—"}</td>
+                <td className="pr-3">{r.preferred_time ? resolvePreferredTime(r.preferred_time, r.created_at, tz.zone) : "—"}</td>
                 <td className="pr-3 text-muted-foreground">{r.reason}</td>
-                <td className="pr-3 text-xs text-muted-foreground">{r.channel} · {new Date(r.created_at).toLocaleString()}</td>
+                <td className="pr-3 text-xs text-muted-foreground">{tz.format(r.created_at)}<div>via {r.channel}</div></td>
                 <td>
                   <select value={r.status} onChange={(e) => setStatus(r.id, e.target.value)} aria-label="Request status"
                     className="rounded border border-border bg-background px-2 py-1 text-xs">
