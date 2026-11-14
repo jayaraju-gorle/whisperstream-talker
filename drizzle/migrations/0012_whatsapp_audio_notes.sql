@@ -1,0 +1,3 @@
+ALTER TABLE public.whatsapp_messages ADD COLUMN IF NOT EXISTS message_type text NOT NULL DEFAULT 'text', ADD COLUMN IF NOT EXISTS media_id text, ADD COLUMN IF NOT EXISTS media_mime_type text, ADD COLUMN IF NOT EXISTS transcription_state text, ADD COLUMN IF NOT EXISTS transcription_error text;
+COMMENT ON COLUMN public.whatsapp_messages.media_id IS 'Durable WhatsApp media identifier; never store expiring download URLs.';
+COMMENT ON COLUMN public.whatsapp_messages.transcription_state IS 'pending, transcribing, complete, failed, or unknown; ambiguous paid transcription is not automatically replayed.';
