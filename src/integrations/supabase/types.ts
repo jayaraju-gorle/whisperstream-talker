@@ -488,6 +488,9 @@ export type Database = {
           errors: Json | null
           id: string
           in_reply_to: string | null
+          media_id: string | null
+          media_mime_type: string | null
+          message_type: string
           phone: string
           provider_ts: string | null
           reply_attempts: number
@@ -496,6 +499,8 @@ export type Database = {
           reply_state: string | null
           status: string
           status_times: Json
+          transcription_error: string | null
+          transcription_state: string | null
           updated_at: string
           wa_message_id: string | null
         }
@@ -507,6 +512,9 @@ export type Database = {
           errors?: Json | null
           id?: string
           in_reply_to?: string | null
+          media_id?: string | null
+          media_mime_type?: string | null
+          message_type?: string
           phone: string
           provider_ts?: string | null
           reply_attempts?: number
@@ -515,6 +523,8 @@ export type Database = {
           reply_state?: string | null
           status?: string
           status_times?: Json
+          transcription_error?: string | null
+          transcription_state?: string | null
           updated_at?: string
           wa_message_id?: string | null
         }
@@ -526,6 +536,9 @@ export type Database = {
           errors?: Json | null
           id?: string
           in_reply_to?: string | null
+          media_id?: string | null
+          media_mime_type?: string | null
+          message_type?: string
           phone?: string
           provider_ts?: string | null
           reply_attempts?: number
@@ -534,6 +547,8 @@ export type Database = {
           reply_state?: string | null
           status?: string
           status_times?: Json
+          transcription_error?: string | null
+          transcription_state?: string | null
           updated_at?: string
           wa_message_id?: string | null
         }

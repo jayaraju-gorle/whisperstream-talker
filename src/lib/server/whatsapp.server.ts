@@ -5,6 +5,7 @@ import { floLanguageModel, loadFloModel, logFloTurn } from "@/lib/server/flo-mod
 import { createLovableAiGatewayRunIdFetch } from "@/lib/server/run-id";
 import { PUBLIC_SAMPLE_BUSINESS_ID, publicTrialHistory } from "@/lib/public-clinic-demo";
 import { clinicAppointmentTools, resolveTrial } from "@/lib/server/clinic-mode.server";
+import { downloadWhatsAppAudio, transcribeWhatsAppAudio, UnsupportedVoiceNote } from "./whatsapp-audio.server";
 
 
 // Mira over WhatsApp: durable inbox processing, reply sending and delivery-status reconciliation.
@@ -110,6 +111,9 @@ async function handleMessages(db: Db, payload: Json) {
     const ts = Number(m["timestamp"]);
     const { error } = await db.from("whatsapp_messages").upsert({
       wa_message_id: id, direction: "in", phone: from, body: body.slice(0, 4000), status: "received",
+      message_type: type, media_id: type === "audio" ? String((m["audio"] as Json | undefined)?.["id"] ?? "") : null,
+      media_mime_type: type === "audio" ? String((m["audio"] as Json | undefined)?.["mime_type"] ?? "") : null,
+      transcription_state: type === "audio" ? "pending" : null,
       reply_state: "pending", provider_ts: Number.isFinite(ts) ? new Date(ts * 1000).toISOString() : null,
     }, { onConflict: "wa_message_id", ignoreDuplicates: true }).select("id");
     if (error) throw new Error(`inbound save failed: ${error.message}`);
@@ -205,11 +209,46 @@ async function generateReply(db: Db, conversationId: string, history: UIMessage[
   }
 }
 
+/** Cache transcripts before reply generation so model/send retries never retranscribe a note. */
+export async function prepareVoiceNote(db: Db, message: {
+  id: string; body: string; media_id: string | null; transcription_state: string | null;
+}): Promise<{ body: string; fallback?: string }> {
+  if (message.transcription_state === "complete") return { body: message.body };
+  const fallback = { body: "[Audio note could not be transcribed]", fallback: "Sorry, I couldn’t understand that voice note. Please send a new recording or type your question." };
+  if (["transcribing", "unknown", "failed"].includes(message.transcription_state ?? "")) return fallback;
+  const save = async (state: string, error: string | null, body?: string) => {
+    const { error: dbError } = await db.from("whatsapp_messages").update({
+      transcription_state: state, transcription_error: error, ...(body ? { body } : {}),
+    }).eq("id", message.id);
+    if (dbError) throw new Error(`Voice note save failed: ${dbError.message}`);
+  };
+  let file: File;
+  try {
+    if (!message.media_id) throw new UnsupportedVoiceNote("Audio media id is missing");
+    file = await downloadWhatsAppAudio(message.media_id);
+  } catch (error) {
+    await save(error instanceof UnsupportedVoiceNote ? "failed" : "pending", String((error as Error).message).slice(0, 1000));
+    if (error instanceof UnsupportedVoiceNote) return fallback;
+    throw error; // Read-only media failures remain recoverable through the durable reply queue.
+  }
+  await save("transcribing", null);
+  let body: string;
+  try {
+    body = await transcribeWhatsAppAudio(file);
+  } catch (error) {
+    // A paid request may have executed: retain its state instead of replaying it automatically.
+    await save(error instanceof UnsupportedVoiceNote ? "failed" : "unknown", String((error as Error).message).slice(0, 1000));
+    return fallback;
+  }
+  await save("complete", null, body);
+  return { body };
+}
+
 async function replyTo(db: Db, msgId: string) {
   const { data: claimed, error: claimErr } = await db.from("whatsapp_messages")
     .update({ reply_state: "sending", reply_claimed_at: new Date().toISOString() })
     .eq("id", msgId).in("reply_state", ["pending", "failed"]).lt("reply_attempts", MAX_REPLY_ATTEMPTS)
-    .select("id,phone,body,wa_message_id,reply_attempts").maybeSingle();
+    .select("id,phone,body,wa_message_id,reply_attempts,message_type,media_id,transcription_state").maybeSingle();
   if (claimErr) throw new Error(`claim failed: ${claimErr.message}`);
   if (!claimed) return;
   const fail = async (state: "failed" | "unknown", err: string) => {
@@ -219,7 +258,9 @@ async function replyTo(db: Db, msgId: string) {
   };
   try {
     if (!claimed.wa_message_id) throw new Error("Incoming WhatsApp message id is missing");
-    const routed = await routeMessage(db, claimed.phone, claimed.body);
+    const voice = claimed.message_type === "audio"
+      ? await withWhatsAppTyping(claimed.wa_message_id, () => prepareVoiceNote(db, claimed)) : { body: claimed.body };
+    const routed = voice.fallback ? { text: voice.fallback } : await routeMessage(db, claimed.phone, voice.body);
     const visitorId = `whatsapp_${claimed.phone}`;
     const { data: convo, error: cErr } = await db.from("assistant_conversations")
       .upsert({ visitor_id: visitorId, updated_at: new Date().toISOString() }, { onConflict: "visitor_id" })
@@ -228,7 +269,7 @@ async function replyTo(db: Db, msgId: string) {
     const prior = publicTrialHistory((Array.isArray(convo.messages) ? convo.messages : []) as unknown as UIMessage[]);
     const userId = `wa-${claimed.wa_message_id}`;
     const history = prior.some((m) => m.id === userId) ? prior
-      : [...prior, { id: userId, role: "user" as const, parts: [{ type: "text" as const, text: claimed.body }] }];
+      : [...prior, { id: userId, role: "user" as const, parts: [{ type: "text" as const, text: voice.body }] }];
     // Keep typing through model/tool work and sending, including first attempts and recovery.
     const sent = await withWhatsAppTyping(claimed.wa_message_id, async () => {
       const text = routed.text ?? await generateReply(db, convo.id, history, claimed.phone);
