@@ -15,6 +15,7 @@
 - [x] Prefill built-in scenarios and sample knowledge from the original playground
 
 ## Business roadmap (internal only)
+- [ ] Add WhatsApp audio-note transcription, durable media/transcript storage, and regression checks; verify a fresh real voice note after production promotion.
 - [x] Create unified public /clinics page, discovery links and metadata; preserve business management at /businesses. Desktop/mobile, demo link destinations, FAQ, enquiry fields, sitemap and navigation verified; 156 tests pass. No new lead submitted or live call/message placed.
 - [x] Unify Mira voice/chat in one transcript with automatic following; remove fourth sample CTA; label 710 ms as illustrative browser-cascade figures, not measured or phone/live-voice timing. 21 regressions and changed-file lint pass; simulated voice UI verified at desktop/phone widths, no audible call claimed.
 - [ ] Automatic phone-requested WhatsApp map delivery — blocked: Bolna supplies no confirmed recipient to this app and no approved outbound template/customer-window sending flow is connected; existing AURA MAP inbound fallback remains. Do not claim a map was sent or read URLs aloud.
