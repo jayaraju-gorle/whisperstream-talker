@@ -209,6 +209,41 @@ async function generateReply(db: Db, conversationId: string, history: UIMessage[
   }
 }
 
+/** Cache transcripts before reply generation so model/send retries never retranscribe a note. */
+export async function prepareVoiceNote(db: Db, message: {
+  id: string; body: string; media_id: string | null; transcription_state: string | null;
+}): Promise<{ body: string; fallback?: string }> {
+  if (message.transcription_state === "complete") return { body: message.body };
+  const fallback = { body: "[Audio note could not be transcribed]", fallback: "Sorry, I couldn’t understand that voice note. Please send a new recording or type your question." };
+  if (["transcribing", "unknown", "failed"].includes(message.transcription_state ?? "")) return fallback;
+  const save = async (state: string, error: string | null, body?: string) => {
+    const { error: dbError } = await db.from("whatsapp_messages").update({
+      transcription_state: state, transcription_error: error, ...(body ? { body } : {}),
+    }).eq("id", message.id);
+    if (dbError) throw new Error(`Voice note save failed: ${dbError.message}`);
+  };
+  let file: File;
+  try {
+    if (!message.media_id) throw new UnsupportedVoiceNote("Audio media id is missing");
+    file = await downloadWhatsAppAudio(message.media_id);
+  } catch (error) {
+    await save(error instanceof UnsupportedVoiceNote ? "failed" : "pending", String((error as Error).message).slice(0, 1000));
+    if (error instanceof UnsupportedVoiceNote) return fallback;
+    throw error; // Read-only media failures remain recoverable through the durable reply queue.
+  }
+  await save("transcribing", null);
+  let body: string;
+  try {
+    body = await transcribeWhatsAppAudio(file);
+  } catch (error) {
+    // A paid request may have executed: retain its state instead of replaying it automatically.
+    await save(error instanceof UnsupportedVoiceNote ? "failed" : "unknown", String((error as Error).message).slice(0, 1000));
+    return fallback;
+  }
+  await save("complete", null, body);
+  return { body };
+}
+
 async function replyTo(db: Db, msgId: string) {
   const { data: claimed, error: claimErr } = await db.from("whatsapp_messages")
     .update({ reply_state: "sending", reply_claimed_at: new Date().toISOString() })
