@@ -126,15 +126,18 @@ export async function handleAssistantGet({ request }: { request: Request }) {
         const id = VisitorId.safeParse(new URL(request.url).searchParams.get("visitorId"));
         if (!id.success || id.data.startsWith("bolna_")) return json({ messages: [] });
         const db = await admin();
-        const { data, error } = await db
-          .from("assistant_conversations")
-          .select("messages,created_at")
-          .eq("visitor_id", id.data)
-          .maybeSingle();
+        const [{ data, error }, trial] = await Promise.all([
+          db.from("assistant_conversations")
+            .select("messages,created_at")
+            .eq("visitor_id", id.data)
+            .maybeSingle(),
+          resolveTrial(db, [], "Website"),
+        ]);
         if (error) return json({ error: "Couldn't load the conversation" }, 500);
         const history = (Array.isArray(data?.messages) ? data.messages : []) as unknown as UIMessage[];
         return json({
           messages: publicTrialHistory(history).length === history.length ? history : [],
           createdAt: data?.created_at ?? null,
+          demoBusiness: trial.session?.name ?? null,
         });
 }
