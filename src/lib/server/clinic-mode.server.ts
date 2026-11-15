@@ -2,6 +2,7 @@ import { MIRA_TOPIC_GUARDRAILS } from "@/lib/assistant-guardrails";
 import { tool, type UIMessage } from "ai";
 import { z } from "zod";
 import { PUBLIC_CLINIC_CODE, PUBLIC_CLINIC_GREETING, PUBLIC_SAMPLE_BUSINESS_ID } from "@/lib/public-clinic-demo";
+import { DEMO_BUSINESS_SETTING_KEY, parseDemoBusinessId } from "@/lib/demo-business";
 import { clinicKnowledge, clinicPrompt, parseClinicCommand, receptionistAudience, toClinicInput } from "@/lib/clinic";
 
 // Shared clinic receptionist mode for Mira on WhatsApp and the website chat.

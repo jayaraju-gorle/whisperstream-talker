@@ -2,7 +2,7 @@ import { toClinicInput, clinicKnowledge } from "@/lib/clinic";
 import { PUBLIC_CLINIC_KNOWLEDGE, PUBLIC_SAMPLE_BUSINESS_ID } from "@/lib/public-clinic-demo";
 import { ASSISTANT_INSTRUCTIONS } from "@/lib/assistant-knowledge";
 
-// This immutable identity is the ONLY business row allowed into public trials.
+// This immutable identity is the regular public sample; other rows require an explicit TRY code or admin demo selection.
 export { PUBLIC_SAMPLE_BUSINESS_ID } from "@/lib/public-clinic-demo";
 type Db = Awaited<typeof import("@/integrations/supabase/client.server")>["supabaseAdmin"];
 export async function publicAssistantInstructions(db: Db) {
