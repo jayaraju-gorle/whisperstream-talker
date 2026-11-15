@@ -1,13 +1,29 @@
 import { MIRA_TOPIC_GUARDRAILS } from "@/lib/assistant-guardrails";
 import { tool, type UIMessage } from "ai";
 import { z } from "zod";
-import { PUBLIC_CLINIC_CODE, PUBLIC_CLINIC_GREETING, PUBLIC_SAMPLE_BUSINESS_ID } from "@/lib/public-clinic-demo";
-import { clinicKnowledge, clinicPrompt, parseClinicCommand, receptionistAudience, toClinicInput } from "@/lib/clinic";
+import {
+  PUBLIC_CLINIC_CODE,
+  PUBLIC_CLINIC_GREETING,
+  PUBLIC_SAMPLE_BUSINESS_ID,
+} from "@/lib/public-clinic-demo";
+import { DEMO_BUSINESS_SETTING_KEY, parseDemoBusinessId } from "@/lib/demo-business";
+import {
+  clinicKnowledge,
+  clinicPrompt,
+  parseClinicCommand,
+  receptionistAudience,
+  toClinicInput,
+} from "@/lib/clinic";
 
 // Shared clinic receptionist mode for Mira on WhatsApp and the website chat.
 type Db = Awaited<typeof import("@/integrations/supabase/client.server")>["supabaseAdmin"];
 export type ClinicChannel = "WhatsApp" | "Website";
-export type ClinicSession = { id: string; name: string; audience: "client" | "patient"; instructions: string };
+export type ClinicSession = {
+  id: string;
+  name: string;
+  audience: "client" | "patient";
+  instructions: string;
+};
 
 const CHANNEL_RULES: Record<ClinicChannel, string> = {
   WhatsApp: `CHANNEL: WHATSAPP
@@ -22,19 +38,33 @@ const CHANNEL_RULES: Record<ClinicChannel, string> = {
 - The visitor can type EXIT to go back to Mira. Never describe yourself or this conversation as a test.`,
 };
 
-export async function loadClinicSession(db: Db, id: string, channel: ClinicChannel): Promise<ClinicSession | null> {
-  const { data } = await db.from("clinics")
-    .select("id,name,phone,emergency_phone,email,address,map_url,hours,doctors,insurance,notes").eq("id", id).maybeSingle();
+export async function loadClinicSession(
+  db: Db,
+  id: string,
+  channel: ClinicChannel,
+): Promise<ClinicSession | null> {
+  const { data } = await db
+    .from("clinics")
+    .select("id,name,phone,emergency_phone,email,address,map_url,hours,doctors,insurance,notes")
+    .eq("id", id)
+    .maybeSingle();
   if (!data) return null;
   const c = toClinicInput(data);
   const audience = receptionistAudience(c.name, c.doctors);
   return {
-    id: data.id, name: c.name, audience,
+    id: data.id,
+    name: c.name,
+    audience,
     instructions: `${clinicPrompt(c.name, c.doctors)}\n\n${audience === "client" ? "FIRM" : "CLINIC"} INFORMATION\n${clinicKnowledge(c)}\n\n${MIRA_TOPIC_GUARDRAILS}\n\n${CHANNEL_RULES[channel]}`,
   };
 }
 
-export function clinicAppointmentTools(db: Db, clinicId: string, channel: ClinicChannel, fallbackPhone = "") {
+export function clinicAppointmentTools(
+  db: Db,
+  clinicId: string,
+  channel: ClinicChannel,
+  fallbackPhone = "",
+) {
   return {
     request_appointment: tool({
       description: "Save a consultation or appointment request for the team to confirm.",
@@ -47,9 +77,13 @@ export function clinicAppointmentTools(db: Db, clinicId: string, channel: Clinic
       }),
       execute: async (i) => {
         const { error } = await db.from("clinic_appointment_requests").insert({
-          clinic_id: clinicId, channel: channel === "Website" ? "Browser" : "WhatsApp",
-          patient_name: i.name, phone: i.phone || fallbackPhone,
-          doctor: i.professional ?? "", preferred_time: i.preferred_time ?? "", reason: i.reason ?? "",
+          clinic_id: clinicId,
+          channel: channel === "Website" ? "Browser" : "WhatsApp",
+          patient_name: i.name,
+          phone: i.phone || fallbackPhone,
+          doctor: i.professional ?? "",
+          preferred_time: i.preferred_time ?? "",
+          reason: i.reason ?? "",
         });
         return error ? { ok: false, error: "Could not save the request" } : { ok: true };
       },
@@ -58,7 +92,10 @@ export function clinicAppointmentTools(db: Db, clinicId: string, channel: Clinic
 }
 
 export function messageText(m: UIMessage) {
-  return (m.parts ?? []).map((p) => (p.type === "text" ? p.text : "")).join("").trim();
+  return (m.parts ?? [])
+    .map((p) => (p.type === "text" ? p.text : ""))
+    .join("")
+    .trim();
 }
 
 /** Finds the latest TRY/EXIT command in the user's messages. Returns the active receptionist code (or null)
@@ -75,7 +112,8 @@ export function activeClinicCommand(messages: UIMessage[]) {
   return { code: null, index: -1 };
 }
 
-export const EXIT_TEXT = "You're with Mira. Would you like an assistant set up for your own clinic?";
+export const EXIT_TEXT =
+  "You're with Mira. Would you like an assistant set up for your own clinic?";
 
 /** Resolves the active TRY/EXIT state from history for every public channel (web chat/voice, phone, WhatsApp).
  *  AURA keeps the public sample; any other saved business code switches to that business's assistant.
@@ -84,11 +122,37 @@ export async function resolveTrial(db: Db, messages: UIMessage[], channel: Clini
   const cmd = activeClinicCommand(messages);
   const isCommand = cmd.index === messages.length - 1;
   const after = cmd.index >= 0 ? messages.slice(cmd.index + 1) : messages;
-  if (!cmd.code) return { notice: isCommand && cmd.index >= 0 ? EXIT_TEXT : null, session: null, history: after };
-  if (cmd.code === PUBLIC_CLINIC_CODE) return { notice: isCommand ? PUBLIC_CLINIC_GREETING : null, session: null, history: after };
+  const aura = (notice: string | null, history = after) => ({ notice, session: null, history });
+  const adminDefault = async (history: UIMessage[]) => {
+    const { data, error } = await db
+      .from("app_settings")
+      .select("value")
+      .eq("key", DEMO_BUSINESS_SETTING_KEY)
+      .maybeSingle();
+    if (error) {
+      console.error("Couldn't load the public demo business", error);
+      return aura(null, history);
+    }
+    const id = parseDemoBusinessId(data?.value);
+    if (!id || id === PUBLIC_SAMPLE_BUSINESS_ID) return aura(null, history);
+    const session = await loadClinicSession(db, id, channel);
+    return session ? { notice: null, session, history } : aura(null, history);
+  };
+
+  // An explicit EXIT or TRY AURA always wins over the admin-selected temporary default.
+  if (!cmd.code) {
+    if (isCommand && cmd.index >= 0) return aura(EXIT_TEXT);
+    return adminDefault(after);
+  }
+  if (cmd.code === PUBLIC_CLINIC_CODE) return aura(isCommand ? PUBLIC_CLINIC_GREETING : null);
   const { data } = await db.from("clinics").select("id").eq("test_code", cmd.code).maybeSingle();
-  const session = data && data.id !== PUBLIC_SAMPLE_BUSINESS_ID ? await loadClinicSession(db, data.id, channel) : null;
-  if (!session) return { notice: null, session: null, history: messages };
-  const notice = isCommand ? `Hi, you're now chatting with the assistant for ${session.name}. How can I help you today? Send EXIT anytime to return to Mira.` : null;
+  const session =
+    data && data.id !== PUBLIC_SAMPLE_BUSINESS_ID
+      ? await loadClinicSession(db, data.id, channel)
+      : null;
+  if (!session) return adminDefault(messages);
+  const notice = isCommand
+    ? `Hi, you're now chatting with the assistant for ${session.name}. How can I help you today? Send EXIT anytime to return to Mira.`
+    : null;
   return { notice, session, history: after };
 }
