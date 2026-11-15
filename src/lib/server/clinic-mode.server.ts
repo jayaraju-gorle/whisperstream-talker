@@ -85,11 +85,28 @@ export async function resolveTrial(db: Db, messages: UIMessage[], channel: Clini
   const cmd = activeClinicCommand(messages);
   const isCommand = cmd.index === messages.length - 1;
   const after = cmd.index >= 0 ? messages.slice(cmd.index + 1) : messages;
-  if (!cmd.code) return { notice: isCommand && cmd.index >= 0 ? EXIT_TEXT : null, session: null, history: after };
-  if (cmd.code === PUBLIC_CLINIC_CODE) return { notice: isCommand ? PUBLIC_CLINIC_GREETING : null, session: null, history: after };
+  const aura = (notice: string | null, history = after) => ({ notice, session: null, history });
+  const adminDefault = async (history: UIMessage[]) => {
+    const { data, error } = await db.from("app_settings").select("value").eq("key", DEMO_BUSINESS_SETTING_KEY).maybeSingle();
+    if (error) {
+      console.error("Couldn't load the public demo business", error);
+      return aura(null, history);
+    }
+    const id = parseDemoBusinessId(data?.value);
+    if (!id || id === PUBLIC_SAMPLE_BUSINESS_ID) return aura(null, history);
+    const session = await loadClinicSession(db, id, channel);
+    return session ? { notice: null, session, history } : aura(null, history);
+  };
+
+  // An explicit EXIT or TRY AURA always wins over the admin-selected temporary default.
+  if (!cmd.code) {
+    if (isCommand && cmd.index >= 0) return aura(EXIT_TEXT);
+    return adminDefault(after);
+  }
+  if (cmd.code === PUBLIC_CLINIC_CODE) return aura(isCommand ? PUBLIC_CLINIC_GREETING : null);
   const { data } = await db.from("clinics").select("id").eq("test_code", cmd.code).maybeSingle();
   const session = data && data.id !== PUBLIC_SAMPLE_BUSINESS_ID ? await loadClinicSession(db, data.id, channel) : null;
-  if (!session) return { notice: null, session: null, history: messages };
+  if (!session) return adminDefault(messages);
   const notice = isCommand ? `Hi, you're now chatting with the assistant for ${session.name}. How can I help you today? Send EXIT anytime to return to Mira.` : null;
   return { notice, session, history: after };
 }
