@@ -61,6 +61,7 @@ function visitorId() {
 function useFloSession(enabled: boolean) {
   const [id, setId] = useState<string | null>(null);
   const [initial, setInitial] = useState<UIMessage[] | null>(null);
+  const [demoBusiness, setDemoBusiness] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
   const restart = () => {
@@ -77,6 +78,7 @@ function useFloSession(enabled: boolean) {
     fetch(`/api/public/assistant?visitorId=${v}`)
       .then((r) => r.json())
       .then((d) => {
+        setDemoBusiness(typeof d.demoBusiness === "string" ? d.demoBusiness : null);
         const messages = Array.isArray(d.messages) ? d.messages : [];
         const zone = Intl.DateTimeFormat().resolvedOptions().timeZone;
         if (messages.length && typeof d.createdAt === "string" && startedOnEarlierDay(d.createdAt, new Date(), zone)) {
@@ -91,7 +93,7 @@ function useFloSession(enabled: boolean) {
       .catch(() => setInitial([]));
   }, [enabled, id]);
 
-  return { id, initial, busy, setBusy, restart };
+  return { id, initial, demoBusiness, busy, setBusy, restart };
 }
 
 function RestartConversation({ disabled, onRestart }: { disabled: boolean; onRestart: () => void }) {
