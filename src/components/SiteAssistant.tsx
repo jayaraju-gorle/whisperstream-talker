@@ -303,7 +303,7 @@ function ChatBody({
             <div className="space-y-3 text-sm">
               <p className="text-muted-foreground">
                 {demoBusiness
-                  ? `Hi, I'm Mira, ${demoBusiness}'s 24/7 assistant. How can I help?`
+                  ? `Hi, I'm Mira, the 24/7 assistant for ${demoBusiness}. How can I help?`
                   : PUBLIC_CLINIC_GREETING}
               </p>
               <div className="flex flex-wrap gap-2">
