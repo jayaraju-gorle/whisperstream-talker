@@ -127,19 +127,19 @@ function RestartConversation({ disabled, onRestart }: { disabled: boolean; onRes
 }
 
 export function EmbeddedClinicAssistant() {
-  const { id, initial, busy, setBusy, restart } = useFloSession(true);
+  const { id, initial, demoBusiness, busy, setBusy, restart } = useFloSession(true);
   return (
     <section className="flex h-dvh min-h-0 flex-col bg-card text-card-foreground" aria-label="Mira conversation">
       <header className="flex items-center gap-2 border-b border-border px-4 py-3">
         <Logo className="h-6 w-6 shrink-0" />
         <p className="min-w-0 flex-1 text-sm font-medium leading-snug">
-          Mira · 24/7 Clinic Assistant (Aura Health Clinic Demo)
+          Mira · 24/7 Assistant ({demoBusiness ?? "Aura Health Clinic Demo"})
         </p>
         <RestartConversation disabled={busy || !initial} onRestart={restart} />
       </header>
       <div className="flex min-h-0 flex-1 flex-col">
         {id && initial ? (
-          <ChatBody key={id} visitorId={id} initial={initial} onBusyChange={setBusy} />
+          <ChatBody key={id} visitorId={id} initial={initial} demoBusiness={demoBusiness} onBusyChange={setBusy} />
         ) : (
           <div className="flex flex-1 items-center justify-center">
             <Shimmer>Opening chat…</Shimmer>
@@ -152,7 +152,7 @@ export function EmbeddedClinicAssistant() {
 
 export function SiteAssistant() {
   const [open, setOpen] = useState(false);
-  const { id, initial, busy, setBusy, restart } = useFloSession(open);
+  const { id, initial, demoBusiness, busy, setBusy, restart } = useFloSession(open);
 
   return (
     <>
@@ -168,7 +168,7 @@ export function SiteAssistant() {
             <div className="min-w-0 flex-1">
               <div className="text-sm font-semibold">Mira · 24/7 assistant</div>
               <div className="text-xs text-muted-foreground">
-                Aura Health Clinic · Fictional sample
+                {demoBusiness ?? "Aura Health Clinic · Fictional sample"}
               </div>
             </div>
             <RestartConversation disabled={busy || !initial} onRestart={restart} />
@@ -182,7 +182,7 @@ export function SiteAssistant() {
             </Button>
           </div>
           {id && initial ? (
-            <ChatBody key={id} visitorId={id} initial={initial} onBusyChange={setBusy} />
+            <ChatBody key={id} visitorId={id} initial={initial} demoBusiness={demoBusiness} onBusyChange={setBusy} />
           ) : (
             <div className="flex flex-1 items-center justify-center">
               <Shimmer>Opening chat…</Shimmer>
@@ -206,10 +206,12 @@ export function SiteAssistant() {
 function ChatBody({
   visitorId,
   initial,
+  demoBusiness,
   onBusyChange,
 }: {
   visitorId: string;
   initial: UIMessage[];
+  demoBusiness: string | null;
   onBusyChange: (busy: boolean) => void;
 }) {
   const transport = useMemo(
@@ -273,9 +275,9 @@ function ChatBody({
         <ConversationContent className="gap-4 p-4">
           {visibleMessages.length === 0 && (
             <div className="space-y-3 text-sm">
-              <p className="text-muted-foreground">{PUBLIC_CLINIC_GREETING}</p>
+              <p className="text-muted-foreground">{demoBusiness ? `Hi, I'm Mira, ${demoBusiness}'s 24/7 assistant. How can I help?` : PUBLIC_CLINIC_GREETING}</p>
               <div className="flex flex-wrap gap-2">
-                {SUGGESTIONS.map((s) => (
+                {(demoBusiness ? ["What are your opening hours?", "Try an appointment request", "I’d like Mira for my business"] : SUGGESTIONS).map((s) => (
                   <Button
                     key={s}
                     variant="outline"
@@ -358,7 +360,7 @@ function ChatBody({
               autoFocus
               value={text}
               onChange={(e) => setText(e.target.value)}
-              placeholder="Ask Mira about Aura or your business…"
+              placeholder={demoBusiness ? `Ask Mira about ${demoBusiness}…` : "Ask Mira about Aura or your business…"}
               maxLength={2000}
               disabled={voiceActive}
             />
