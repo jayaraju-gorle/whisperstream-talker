@@ -35,6 +35,7 @@ import { Route as ApiPublicRatesRouteImport } from './routes/api/public/rates'
 import { Route as AuthenticatedClinicsIdIndexRouteImport } from './routes/_authenticated/clinics.$id.index'
 import { Route as AuthenticatedClinicsIdEditRouteImport } from './routes/_authenticated/clinics.$id.edit'
 import { Route as ApiBolnaV1ModelsRouteImport } from './routes/api/bolna/v1/models'
+import { Route as ApiPublicBolnaCallerRouteImport } from './routes/api/public/bolna/caller'
 import { Route as ApiPublicWhatsappWebhookRouteImport } from './routes/api/public/whatsapp/webhook'
 import { Route as LovableEmailTransactionalPreviewRouteImport } from './routes/lovable/email/transactional/preview'
 import { Route as ApiBolnaV1ChatCompletionsRouteImport } from './routes/api/bolna/v1/chat/completions'
@@ -173,6 +174,11 @@ const ApiBolnaV1ModelsRoute = ApiBolnaV1ModelsRouteImport.update({
   path: '/api/bolna/v1/models',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicBolnaCallerRoute = ApiPublicBolnaCallerRouteImport.update({
+  id: '/api/public/bolna/caller',
+  path: '/api/public/bolna/caller',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPublicWhatsappWebhookRoute =
   ApiPublicWhatsappWebhookRouteImport.update({
     id: '/api/public/whatsapp/webhook',
@@ -228,6 +234,7 @@ export interface FileRoutesByFullPath {
   '/api/public/rates': typeof ApiPublicRatesRoute
   '/clinics/$id/edit': typeof AuthenticatedClinicsIdEditRoute
   '/api/bolna/v1/models': typeof ApiBolnaV1ModelsRoute
+  '/api/public/bolna/caller': typeof ApiPublicBolnaCallerRoute
   '/api/public/whatsapp/webhook': typeof ApiPublicWhatsappWebhookRoute
   '/lovable/email/transactional/preview': typeof LovableEmailTransactionalPreviewRoute
   '/clinics/$id/': typeof AuthenticatedClinicsIdIndexRoute
@@ -260,6 +267,7 @@ export interface FileRoutesByTo {
   '/api/public/rates': typeof ApiPublicRatesRoute
   '/clinics/$id/edit': typeof AuthenticatedClinicsIdEditRoute
   '/api/bolna/v1/models': typeof ApiBolnaV1ModelsRoute
+  '/api/public/bolna/caller': typeof ApiPublicBolnaCallerRoute
   '/api/public/whatsapp/webhook': typeof ApiPublicWhatsappWebhookRoute
   '/lovable/email/transactional/preview': typeof LovableEmailTransactionalPreviewRoute
   '/clinics/$id': typeof AuthenticatedClinicsIdIndexRoute
@@ -294,6 +302,7 @@ export interface FileRoutesById {
   '/api/public/rates': typeof ApiPublicRatesRoute
   '/_authenticated/clinics/$id/edit': typeof AuthenticatedClinicsIdEditRoute
   '/api/bolna/v1/models': typeof ApiBolnaV1ModelsRoute
+  '/api/public/bolna/caller': typeof ApiPublicBolnaCallerRoute
   '/api/public/whatsapp/webhook': typeof ApiPublicWhatsappWebhookRoute
   '/lovable/email/transactional/preview': typeof LovableEmailTransactionalPreviewRoute
   '/_authenticated/clinics/$id/': typeof AuthenticatedClinicsIdIndexRoute
@@ -328,6 +337,7 @@ export interface FileRouteTypes {
     | '/api/public/rates'
     | '/clinics/$id/edit'
     | '/api/bolna/v1/models'
+    | '/api/public/bolna/caller'
     | '/api/public/whatsapp/webhook'
     | '/lovable/email/transactional/preview'
     | '/clinics/$id/'
@@ -360,6 +370,7 @@ export interface FileRouteTypes {
     | '/api/public/rates'
     | '/clinics/$id/edit'
     | '/api/bolna/v1/models'
+    | '/api/public/bolna/caller'
     | '/api/public/whatsapp/webhook'
     | '/lovable/email/transactional/preview'
     | '/clinics/$id'
@@ -393,6 +404,7 @@ export interface FileRouteTypes {
     | '/api/public/rates'
     | '/_authenticated/clinics/$id/edit'
     | '/api/bolna/v1/models'
+    | '/api/public/bolna/caller'
     | '/api/public/whatsapp/webhook'
     | '/lovable/email/transactional/preview'
     | '/_authenticated/clinics/$id/'
@@ -419,6 +431,7 @@ export interface RootRouteChildren {
   ApiPublicAssistantRoute: typeof ApiPublicAssistantRoute
   ApiPublicRatesRoute: typeof ApiPublicRatesRoute
   ApiBolnaV1ModelsRoute: typeof ApiBolnaV1ModelsRoute
+  ApiPublicBolnaCallerRoute: typeof ApiPublicBolnaCallerRoute
   ApiPublicWhatsappWebhookRoute: typeof ApiPublicWhatsappWebhookRoute
   LovableEmailTransactionalPreviewRoute: typeof LovableEmailTransactionalPreviewRoute
   ApiBolnaV1ChatCompletionsRoute: typeof ApiBolnaV1ChatCompletionsRoute
@@ -610,6 +623,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiBolnaV1ModelsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/bolna/caller': {
+      id: '/api/public/bolna/caller'
+      path: '/api/public/bolna/caller'
+      fullPath: '/api/public/bolna/caller'
+      preLoaderRoute: typeof ApiPublicBolnaCallerRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/whatsapp/webhook': {
       id: '/api/public/whatsapp/webhook'
       path: '/api/public/whatsapp/webhook'
@@ -702,6 +722,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicAssistantRoute: ApiPublicAssistantRoute,
   ApiPublicRatesRoute: ApiPublicRatesRoute,
   ApiBolnaV1ModelsRoute: ApiBolnaV1ModelsRoute,
+  ApiPublicBolnaCallerRoute: ApiPublicBolnaCallerRoute,
   ApiPublicWhatsappWebhookRoute: ApiPublicWhatsappWebhookRoute,
   LovableEmailTransactionalPreviewRoute: LovableEmailTransactionalPreviewRoute,
   ApiBolnaV1ChatCompletionsRoute: ApiBolnaV1ChatCompletionsRoute,
