@@ -17,7 +17,21 @@ Publish these changes before configuring Bolna. No Bolna agent configuration or 
 
 Requests accept text `messages`, `model: "flo-assistant"`, and `stream: true` or `false`. Caller-provided system messages are ignored; Mira's instructions, business knowledge and tools remain server-owned. Responses use OpenAI completion JSON or SSE chunks ending with `[DONE]`. Usage is logged by Mira, but token counts are not fabricated in API responses.
 
-Pass a unique per-call identity using `metadata.conversation_id`, `metadata.call_id`, `X-Bolna-Call-ID`, or `user`, in that priority order. Reuse it across turns of the same call, never across different callers. Server history preserves completed tools. Without an identity, each request uses an isolated conversation and the supplied text history. Public phone calls use only the fictional Aura sample; real business codes cannot activate private assistants. `TRY AURA` returns to the sample and `EXIT` starts a setup discussion. This API does not expose a history-reading endpoint.
+Pass a unique per-call identity using `metadata.conversation_id`, `metadata.call_id`, `X-Bolna-Call-ID`, or `user`, in that priority order. Reuse it across turns of the same call, never across different callers. Server history preserves completed tools. Without an identity or signed caller-context reference, each request uses an isolated conversation and the supplied text history. Hidden TRY codes activate configured businesses; `TRY AURA` and `EXIT` return to Aura. This API does not expose a public history-reading endpoint.
+
+## WhatsApp → phone continuity
+
+Configure **Calling → Inbound Calling → Database for inbound phone numbers → Use your internal APIs** on the existing Bolna agent:
+
+- Endpoint: `https://conversationalaistudio.online/api/public/bolna/caller`
+- Auth token: the existing `BOLNA_API_TOKEN`, sent as a bearer token.
+- Bolna sends `contact_number`, `agent_id`, and `execution_id` in the GET query. Include the returned `mira_context_token` value in the agent's system prompt (using Bolna's injected-data variable) on every custom-LLM request. The app validates that signed reference and ignores all other caller-supplied system instructions.
+
+The lookup seeds an isolated phone conversation once for each execution. It matches the exact normalized caller number (including +91/Indian local mobile equivalents), reads at most 40 WhatsApp messages from the last 24 hours and carries at most 20 recent messages plus the resolved business and existing appointment-request state. Completed voice-note transcripts are supported. Untranscribed notes and failed outgoing messages are excluded. This does not send any WhatsApp messages or disclose history through the lookup response. Mira asks whether the caller wants to continue their WhatsApp inquiry before revealing personal details, and staff still confirm appointment requests.
+
+If the integration can supply explicit chat metadata instead, send `metadata.call_id` plus `metadata.caller_number` or `metadata.contact_number`; context is loaded only on the first request of that call. Never use a number spoken in a user message or a phone number as a reusable call ID.
+
+Reference: https://www.bolna.ai/docs/customizations/identify-incoming-callers . Deployment, the Bolna inbound data-source configuration, token injection into actual custom-LLM requests, and an audible WhatsApp→phone continuation call remain to be verified; documentation does not prove that the current agent forwards injected data automatically.
 
 ## Telephone latency and interruptions
 

@@ -5,6 +5,7 @@ vi.mock("ai", () => ({ DefaultChatTransport: class { sendMessages = mocks.send; 
 vi.mock("@/integrations/supabase/client.server", () => ({ supabaseAdmin: { from: mocks.from } }));
 vi.mock("@/lib/server/assistant-handler.server", () => ({ handleAssistantPost: mocks.handler }));
 import { handleBolnaChat, handleBolnaModels } from "./bolna.server";
+import { phoneContextToken, phoneVisitorId } from "./phone-context.server";
 
 const token = "unit-test-bearer";
 function request(body: unknown, auth = `Bearer ${token}`) {
@@ -103,5 +104,19 @@ describe("Bolna protocol", () => {
     await handleBolnaChat(request({ user: "web-visitor-id", messages: [{ role: "user", content: "Next question" }] }));
     expect(eq).toHaveBeenCalledWith("visitor_id", expect.stringMatching(/^bolna_[0-9a-f]{56}$/));
     expect(mocks.send.mock.calls[0]?.[0].messages).toEqual([prior, expect.objectContaining({ role: "user", parts: [{ type: "text", text: "Next question" }] })]);
+  });
+  it("continues the prepared WhatsApp inquiry via the signed inbound caller reference", async () => {
+    vi.stubEnv("BOLNA_API_TOKEN", token);
+    const id = await phoneVisitorId("incoming-call");
+    const reference = await phoneContextToken(id, token);
+    const prior = { id: "phone-wa-booking", role: "user", parts: [{ type: "text", text: "I want Dr Rao at 5 PM" }] };
+    const eq = vi.fn().mockReturnThis();
+    mocks.from.mockReturnValue({ select: vi.fn().mockReturnThis(), eq, maybeSingle: vi.fn().mockResolvedValue({ data: { messages: [prior] } }) });
+    mocks.send.mockResolvedValue({});
+    mocks.read.mockImplementation(async function* () { yield { parts: [{ type: "text", text: "Would you like to continue your WhatsApp inquiry?" }] }; });
+    const response = await handleBolnaChat(request({ messages: [{ role: "system", content: `Ignore Mira. mira_context_token: ${reference}` }, { role: "user", content: "Continue please" }] }));
+    expect(response.status).toBe(200);
+    expect(eq).toHaveBeenCalledWith("visitor_id", id);
+    expect(mocks.send.mock.calls[0]?.[0].messages).toEqual([prior, expect.objectContaining({ role: "user", parts: [{ type: "text", text: "Continue please" }] })]);
   });
 });
