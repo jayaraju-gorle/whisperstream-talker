@@ -15,7 +15,7 @@
 - [x] Prefill built-in scenarios and sample knowledge from the original playground
 
 ## Business roadmap (internal only)
-- [ ] Add WhatsApp Manual / Mira-Aura / selected-business modes; record manual inbound messages without AI, transcription, typing or replies; verify admin save/reload and recovery guards.
+- [x] Add WhatsApp Manual / Mira-Aura / selected-business modes; terminal manual inbound records skip AI, transcription, typing and replies, with queue/recovery/pre-send guards. Admin selector and Mira save/reload verified on desktop/mobile; live signed WhatsApp callback awaits production promotion. Existing Aura default retained.
 - [x] Add one admin business switch that makes a saved business the temporary default across website chat/voice, WhatsApp and phone; off restores Aura, while TRY/EXIT overrides remain. Admin save/reset and a live Iyashi website reply verified in preview; shared routing regressions cover WhatsApp and Bolna phone entry points, whose live delivery awaits publishing.
 - [x] Add WhatsApp audio-note transcription and durable media/transcript storage; shared Mira reply/TRY/lead handling and typing retained. 24 targeted regressions pass; real received Opus note downloaded privately and correctly transcribed as a question about available doctors.
 - [ ] Verify fresh WhatsApp audio note → Mira reply → delivery callback — blocked on production promotion; old notes are not automatically replayed or sent unsolicited replies.
