@@ -1,6 +1,7 @@
 import { timingSafeEqual } from "node:crypto";
 import { DefaultChatTransport, readUIMessageStream, type UIMessage } from "ai";
 import { z } from "zod";
+import { loadRecentWhatsAppContext, normalizeCallerPhone, phoneVisitorId, resolvePhoneContextToken } from "./phone-context.server";
 
 export const BOLNA_MODEL = "flo-assistant";
 const Message = z.object({ role: z.enum(["system", "user", "assistant"]), content: z.string().max(4000) });
@@ -9,7 +10,7 @@ const Body = z.object({
   messages: z.array(Message).min(1).max(80),
   stream: z.boolean().default(false),
   user: z.string().min(1).max(200).optional(),
-  metadata: z.object({ conversation_id: z.string().min(1).max(200).optional(), call_id: z.string().min(1).max(200).optional() }).optional(),
+  metadata: z.object({ conversation_id: z.string().min(1).max(200).optional(), call_id: z.string().min(1).max(200).optional(), caller_number: z.string().max(40).optional(), contact_number: z.string().max(40).optional() }).optional(),
 });
 
 function apiError(message: string, status: number, type = "invalid_request_error") {
@@ -77,18 +78,29 @@ export async function handleBolnaChat(request: Request): Promise<Response> {
   const session = input.metadata?.conversation_id ?? input.metadata?.call_id ?? request.headers.get("x-bolna-call-id") ?? input.user;
   if (session && session.length > 200) return apiError("Invalid conversation identity", 400);
   // Namespacing prevents access to web or WhatsApp conversations even with a known visitor ID.
-  const hash = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(session ?? crypto.randomUUID()));
-  const visitorId = `bolna_${Array.from(new Uint8Array(hash)).map((b) => b.toString(16).padStart(2, "0")).join("").slice(0, 56)}`;
+  const secret = process.env["BOLNA_API_TOKEN"];
+  const contextId = secret ? await resolvePhoneContextToken(input.messages.filter(m => m.role === "system").map(m => m.content).join("\n"), secret) : null;
+  const visitorId = contextId ?? await phoneVisitorId(session ?? crypto.randomUUID());
   let messages: UIMessage[] = input.messages.filter((m) => m.role !== "system").map((m) => ({
     id: crypto.randomUUID(), role: m.role as "user" | "assistant", parts: [{ type: "text", text: m.content }],
   }));
-  if (session) {
+  if (session || contextId) {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { data, error } = await supabaseAdmin.from("assistant_conversations").select("messages").eq("visitor_id", visitorId).maybeSingle();
     if (error) return apiError("Could not load the conversation", 500, "server_error");
     if (Array.isArray(data?.messages) && data.messages.length) {
       // Server history retains completed tool results, consent and TRY/EXIT state.
       messages = [...data.messages as unknown as UIMessage[], { id: crypto.randomUUID(), role: "user", parts: [{ type: "text", text: last.content }] }];
+    } else if (!data && session) {
+      const phone = normalizeCallerPhone(input.metadata?.caller_number ?? input.metadata?.contact_number);
+      if (phone) {
+        try {
+          const context = await loadRecentWhatsAppContext(supabaseAdmin, phone);
+          messages = [...context, ...messages];
+        } catch {
+          return apiError("Could not load caller context", 503, "server_error");
+        }
+      }
     }
   }
   // Response cancellation must stop paid generation, not just the stream reader.
