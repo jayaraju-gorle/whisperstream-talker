@@ -14,6 +14,8 @@ export async function handlePhoneCaller(request: Request) {
   const { supabaseAdmin: db } = await import("@/integrations/supabase/client.server");
   const visitorId = await phoneVisitorId(execution);
   try {
+    const { error: linkError } = await db.from("phone_call_links").upsert({ visitor_id: visitorId, phone }, { onConflict: "visitor_id", ignoreDuplicates: true });
+    if (linkError) throw new Error("Could not link phone call");
     const { data: existing, error } = await db.from("assistant_conversations").select("messages").eq("visitor_id", visitorId).maybeSingle();
     if (error) throw new Error("Could not load phone conversation");
     if (!existing) {

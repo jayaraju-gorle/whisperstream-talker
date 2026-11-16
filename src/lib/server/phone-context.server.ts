@@ -84,3 +84,27 @@ export function phoneContextDetails(messages: UIMessage[]) {
   const metadata = messages.find(m => m.id.startsWith("phone-context-"))?.metadata as { miraPhoneContext?: { phone?: string; importedAt?: string; requests?: unknown[] } } | undefined;
   return metadata?.miraPhoneContext;
 }
+
+/** Recent phone-call turns for a WhatsApp number, as one read-only context note (newest calls last). */
+export async function loadRecentCallContext(db: Db, phone: string, now = Date.now()): Promise<UIMessage[]> {
+  const cutoff = new Date(now - PHONE_CONTEXT_WINDOW_MS).toISOString();
+  const { data: links, error } = await db.from("phone_call_links").select("visitor_id,created_at")
+    .eq("phone", phone).gte("created_at", cutoff).order("created_at", { ascending: false }).limit(3);
+  if (error) throw new Error("Could not load recent call links");
+  if (!links?.length) return [];
+  const { data: calls, error: callError } = await db.from("assistant_conversations").select("visitor_id,messages")
+    .in("visitor_id", links.map(l => l.visitor_id));
+  if (callError) throw new Error("Could not load recent calls");
+  const lines: string[] = [];
+  for (const link of [...links].reverse()) {
+    const msgs = (calls?.find(c => c.visitor_id === link.visitor_id)?.messages ?? []) as unknown as UIMessage[];
+    const turns = (Array.isArray(msgs) ? msgs : [])
+      .filter(m => !m.id?.startsWith("phone-wa-") && !m.id?.startsWith("phone-context-"))
+      .map(m => `${m.role === "user" ? "Caller" : "Mira"}: ${m.parts.filter(p => p.type === "text").map(p => (p as { text: string }).text).join(" ").trim()}`)
+      .filter(l => !/:\s*$/.test(l)).slice(-16);
+    if (turns.length) lines.push(`Phone call at ${link.created_at}:\n${turns.join("\n")}`);
+  }
+  if (!lines.length) return [];
+  return [{ id: `call-context-${links[0]!.visitor_id}`, role: "user", parts: [{ type: "text",
+    text: `[Context only, not a new request: this customer recently phoned Mira from the same number. Continue naturally without repeating questions already answered.]\n${lines.join("\n\n")}`.slice(0, 6000) }] }];
+}

@@ -66,10 +66,28 @@ describe("WhatsApp to phone context", () => {
   it("reuses a prepared call without overwriting ongoing phone history or returning private text", async () => {
     vi.stubEnv("BOLNA_API_TOKEN", "secret");
     const upsert = vi.fn();
-    mocks.from.mockReturnValue({ select: vi.fn().mockReturnThis(), eq: vi.fn().mockReturnThis(), maybeSingle: vi.fn().mockResolvedValue({ data: { messages: [{ content: "private" }] } }), upsert });
+    const linkUpsert = vi.fn().mockResolvedValue({ error: null });
+    mocks.from.mockImplementation((t: string) => t === "phone_call_links" ? { upsert: linkUpsert } : { select: vi.fn().mockReturnThis(), eq: vi.fn().mockReturnThis(), maybeSingle: vi.fn().mockResolvedValue({ data: { messages: [{ content: "private" }] } }), upsert });
     const response = await handlePhoneCaller(new Request("https://example.com/api/public/bolna/caller?contact_number=919876543210&execution_id=one", { headers: { Authorization: "Bearer secret" } }));
     expect(response.status).toBe(200);
     expect(Object.keys(await response.json())).toEqual(["mira_context_token"]);
     expect(upsert).not.toHaveBeenCalled();
+    expect(linkUpsert).toHaveBeenCalledWith(expect.objectContaining({ phone: "919876543210" }), expect.anything());
+  });
+});
+describe("loadRecentCallContext", () => {
+  it("summarizes recent call turns for WhatsApp, skipping imported WhatsApp lines", async () => {
+    const { loadRecentCallContext } = await import("./phone-context.server");
+    const links = { select: () => links, eq: () => links, gte: () => links, order: () => links, limit: async () => ({ data: [{ visitor_id: "bolna_a", created_at: "2026-11-16T06:00:00Z" }], error: null }) };
+    const convos = { select: () => convos, in: async () => ({ data: [{ visitor_id: "bolna_a", messages: [
+      { id: "phone-wa-1", role: "user", parts: [{ type: "text", text: "old whatsapp" }] },
+      { id: "u1", role: "user", parts: [{ type: "text", text: "Book Dr Rao Friday" }] },
+      { id: "a1", role: "assistant", parts: [{ type: "text", text: "Noted, Friday 11 AM." }] }] }], error: null }) };
+    const db = { from: (t: string) => t === "phone_call_links" ? links : convos } as never;
+    const [note] = await loadRecentCallContext(db, "919876543210", Date.parse("2026-11-16T07:00:00Z"));
+    const text = (note!.parts[0] as { text: string }).text;
+    expect(text).toContain("Caller: Book Dr Rao Friday");
+    expect(text).toContain("Mira: Noted, Friday 11 AM.");
+    expect(text).not.toContain("old whatsapp");
   });
 });
