@@ -15,6 +15,7 @@
 - [x] Prefill built-in scenarios and sample knowledge from the original playground
 
 ## Business roadmap (internal only)
+- [ ] Carry recent WhatsApp booking/inquiry context into authenticated phone calls by caller number; verify isolation, continuity and provider caller-number requirements.
 - [x] Make website text/voice welcomes business-neutral by default and resolve selected business greetings from saved context. Live Iyashi welcome, TRY activation and refresh verified; neutral desktop/mobile welcome checked with simulated default response. All 197 tests pass; build OK. Audible voice remains unverified; no production promotion.
 - [x] Remove the WhatsApp assistant selector; Businesses is the sole shared demo control and retired WhatsApp overrides are ignored. Signed-in web/WhatsApp/phone tabs and desktop/mobile verified; all 195 tests pass and build OK. No production promotion or live message sent.
 - [x] Remove WhatsApp manual mode; retain Aura or a configured business, normalize retired settings to Aura and restore automatic reply handling without replaying historical manual messages. Signed-in desktop/mobile choices verified; all 192 tests pass and build OK. Live WhatsApp delivery awaits production promotion.
