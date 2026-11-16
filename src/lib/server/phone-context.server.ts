@@ -43,7 +43,7 @@ export async function resolvePhoneContextToken(systemText: string, secret: strin
 export async function loadRecentWhatsAppContext(db: Db, phone: string, now = Date.now()): Promise<UIMessage[]> {
   const cutoff = new Date(now - PHONE_CONTEXT_WINDOW_MS).toISOString();
   const { data, error } = await db.from("whatsapp_messages")
-    .select("id,direction,body,created_at,provider_ts,message_type,transcription_state,status")
+    .select("id,wa_message_id,direction,body,created_at,provider_ts,message_type,transcription_state,status")
     .eq("phone", phone).gte("created_at", cutoff).order("created_at", { ascending: false }).limit(40);
   if (error) throw new Error("Could not load recent WhatsApp context");
   // Resolve older TRY state from the server transcript, not the truncated recent-message window.
@@ -55,11 +55,11 @@ export async function loadRecentWhatsAppContext(db: Db, phone: string, now = Dat
     .map(row => ({ id: `phone-wa-${row.id}`, role: row.direction === "in" ? "user" : "assistant", parts: [{ type: "text", text: `[WhatsApp ${row.provider_ts ?? row.created_at}] ${row.body}` }] }));
   if (!history.some(m => m.role === "user")) return [];
   const savedHistory = (Array.isArray(conversation?.messages) ? conversation.messages : []) as unknown as UIMessage[];
-  const routingHistory = savedHistory.length ? savedHistory : history;
+  const routingHistory = savedHistory.length ? savedHistory : (data ?? []).map(row => ({ id: `wa-${row.wa_message_id}`, role: row.direction === "in" ? "user" as const : "assistant" as const, parts: [{ type: "text" as const, text: row.body }] }));
   const trial = await resolveTrial(db, routingHistory, "Website");
   const command = activeClinicCommand(routingHistory);
   const boundary = command.index >= 0 ? routingHistory[command.index]?.id : undefined;
-  const commandRow = boundary?.startsWith("wa-") ? (data ?? []).find(row => row.id && savedHistory.some(m => m.id === boundary && m.role === "user" && m.parts.some(p => p.type === "text" && p.text === row.body))) : undefined;
+  const commandRow = boundary?.startsWith("wa-") ? (data ?? []).find(row => `wa-${row.wa_message_id}` === boundary) : undefined;
   // Pin the resolved business in this call, including the shared default when WhatsApp had no TRY.
   const { data: business, error: businessError } = await db.from("clinics").select("test_code")
     .eq("id", trial.session?.id ?? PUBLIC_SAMPLE_BUSINESS_ID).maybeSingle();
@@ -71,7 +71,11 @@ export async function loadRecentWhatsAppContext(db: Db, phone: string, now = Dat
     .eq("clinic_id", trial.session?.id ?? PUBLIC_SAMPLE_BUSINESS_ID).eq("phone", phone)
     .gte("created_at", cutoff).order("created_at", { ascending: false }).limit(3);
   if (requestsError) throw new Error("Could not load existing appointment requests");
-  const carried = history.filter(m => !commandRow || (data ?? []).find(row => `phone-wa-${row.id}` === m.id)?.created_at >= commandRow.created_at).slice(-20);
+  const carried = history.filter(m => {
+    if (!commandRow) return true;
+    const row = (data ?? []).find(row => `phone-wa-${row.id}` === m.id);
+    return row && row.created_at > commandRow.created_at;
+  }).slice(-20);
   return [{ id: `phone-context-${crypto.randomUUID()}`, role: "user", parts: [{ type: "text", text: `TRY ${code}` }],
     metadata: { miraPhoneContext: { phone, importedAt: new Date(now).toISOString(), requests: requests ?? [] } } }, ...carried];
 }

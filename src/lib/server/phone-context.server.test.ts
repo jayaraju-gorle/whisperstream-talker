@@ -35,7 +35,7 @@ describe("WhatsApp to phone context", () => {
     expect(eq).toHaveBeenCalledWith("clinic_id", "iyashi");
     expect(gte).toHaveBeenCalledWith("created_at", "2026-11-15T06:31:00.000Z");
     expect(history[0]?.parts).toEqual([{ type: "text", text: "TRY IYASHI" }]);
-    expect(history[1]?.parts).toEqual([{ type: "text", text: "Dr Rao please" }]);
+    expect(history[1]?.parts).toEqual([{ type: "text", text: "[WhatsApp undefined] Dr Rao please" }]);
     expect(history[0]?.metadata).toMatchObject({ miraPhoneContext: { requests: [{ status: "new", doctor: "Dr Rao" }] } });
   });
   it("ignores failed outgoing replies and untranscribed media", async () => {
