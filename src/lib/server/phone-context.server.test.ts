@@ -66,11 +66,13 @@ describe("WhatsApp to phone context", () => {
   it("reuses a prepared call without overwriting ongoing phone history or returning private text", async () => {
     vi.stubEnv("BOLNA_API_TOKEN", "secret");
     const upsert = vi.fn();
-    mocks.from.mockReturnValue({ select: vi.fn().mockReturnThis(), eq: vi.fn().mockReturnThis(), maybeSingle: vi.fn().mockResolvedValue({ data: { messages: [{ content: "private" }] } }), upsert });
+    const linkUpsert = vi.fn().mockResolvedValue({ error: null });
+    mocks.from.mockImplementation((t: string) => t === "phone_call_links" ? { upsert: linkUpsert } : { select: vi.fn().mockReturnThis(), eq: vi.fn().mockReturnThis(), maybeSingle: vi.fn().mockResolvedValue({ data: { messages: [{ content: "private" }] } }), upsert });
     const response = await handlePhoneCaller(new Request("https://example.com/api/public/bolna/caller?contact_number=919876543210&execution_id=one", { headers: { Authorization: "Bearer secret" } }));
     expect(response.status).toBe(200);
     expect(Object.keys(await response.json())).toEqual(["mira_context_token"]);
     expect(upsert).not.toHaveBeenCalled();
+    expect(linkUpsert).toHaveBeenCalledWith(expect.objectContaining({ phone: "919876543210" }), expect.anything());
   });
 });
 describe("loadRecentCallContext", () => {
