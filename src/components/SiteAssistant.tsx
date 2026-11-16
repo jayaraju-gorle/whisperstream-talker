@@ -1,4 +1,4 @@
-import { PUBLIC_CLINIC_GREETING } from "@/lib/public-clinic-demo";
+import { webAssistantGreeting } from "@/lib/web-assistant";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useStickToBottomContext } from "use-stick-to-bottom";
 import { useChat } from "@ai-sdk/react";
@@ -44,9 +44,9 @@ import { startedOnEarlierDay } from "@/lib/web-conversations";
 
 const KEY = "flo-visitor-id";
 const SUGGESTIONS = [
-  "What are the sample clinic hours?",
-  "Try an appointment request",
-  "I’d like Mira for my clinic",
+  "How can Mira help my business?",
+  "What can your assistant handle?",
+  "I’d like Mira for my business",
 ];
 
 function visitorId() {
@@ -147,7 +147,7 @@ export function EmbeddedClinicAssistant() {
       <header className="flex items-center gap-2 border-b border-border px-4 py-3">
         <Logo className="h-6 w-6 shrink-0" />
         <p className="min-w-0 flex-1 text-sm font-medium leading-snug">
-          Mira · 24/7 Assistant ({demoBusiness ?? "Aura Health Clinic Demo"})
+          Mira · 24/7 Assistant{demoBusiness ? ` (${demoBusiness})` : ""}
         </p>
         <RestartConversation disabled={busy || !initial} onRestart={restart} />
       </header>
@@ -188,7 +188,7 @@ export function SiteAssistant() {
             <div className="min-w-0 flex-1">
               <div className="text-sm font-semibold">Mira · 24/7 assistant</div>
               <div className="text-xs text-muted-foreground">
-                {demoBusiness ?? "Aura Health Clinic · Fictional sample"}
+                {demoBusiness ?? "Phone · WhatsApp · Web"}
               </div>
             </div>
             <RestartConversation disabled={busy || !initial} onRestart={restart} />
@@ -302,9 +302,7 @@ function ChatBody({
           {visibleMessages.length === 0 && (
             <div className="space-y-3 text-sm">
               <p className="text-muted-foreground">
-                {demoBusiness
-                  ? `Hi, I'm Mira, the 24/7 assistant for ${demoBusiness}. How can I help?`
-                  : PUBLIC_CLINIC_GREETING}
+                {webAssistantGreeting(demoBusiness)}
               </p>
               <div className="flex flex-wrap gap-2">
                 {(demoBusiness
@@ -400,7 +398,7 @@ function ChatBody({
               placeholder={
                 demoBusiness
                   ? `Ask Mira about ${demoBusiness}…`
-                  : "Ask Mira about Aura or your business…"
+                  : "Ask Mira about your business…"
               }
               maxLength={2000}
               disabled={voiceActive}

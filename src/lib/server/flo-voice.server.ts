@@ -1,7 +1,9 @@
 import { DefaultChatTransport, readUIMessageStream, type UIMessage } from "ai";
 import { handleAssistantPost } from "@/lib/server/assistant-handler.server";
 import { publicAssistantInstructions } from "@/lib/server/public-clinic.server";
-import { PUBLIC_CLINIC_GREETING, publicTrialHistory } from "@/lib/public-clinic-demo";
+import { publicTrialHistory } from "@/lib/public-clinic-demo";
+import { webAssistantGreeting, WEB_GREETING_RULES } from "@/lib/web-assistant";
+import { resolveTrial } from "@/lib/server/clinic-mode.server";
 import { ASSISTANT_SPEECH_RULES } from "@/lib/assistant-speech";
 import { validFloVisitor, voiceMessages, type VoiceFragment } from "@/lib/flo-voice";
 
@@ -13,7 +15,8 @@ export async function createFloVoice(visitorId: unknown, runId: string) {
   const history = publicTrialHistory((Array.isArray(data?.messages) ? data.messages : []) as unknown as UIMessage[]);
   const initial = [...history];
   const answered = new Map<string, { text: string; answer: string }>();
-  const instructions = await publicAssistantInstructions(db);
+  const trial = await resolveTrial(db, history, "Website");
+  const instructions = trial.session?.instructions ?? await publicAssistantInstructions(db);
   const persona = `${instructions}
 VOICE CHANNEL: Speak in English unless the caller explicitly speaks another language. Keep spoken replies to one or two sentences. ${ASSISTANT_SPEECH_RULES}
 Backchannel policy: Moderate listening sounds without taking over.
@@ -21,11 +24,12 @@ Interruption policy: Stop speaking and listen when interrupted; keep completed a
 Delegation policy:
 Backend tools: Shared Mira knowledge, business switching, consent-based contact capture and appointment requests.
 Delegate to the backend when: The caller asks any product or business question, says TRY followed by a business code (such as AURA), says EXIT, shares contact details, requests an appointment, or corrects details. Always use the backend's current assistant and verified result. Never claim an action succeeded without it. After TRY, continue as the business selected by the backend; EXIT restores Mira.
-Do not delegate to the backend when: Giving a brief greeting, listening, or asking the caller to repeat unclear speech.`;
+Do not delegate to the backend when: Giving a brief greeting, listening, or asking the caller to repeat unclear speech.
+${WEB_GREETING_RULES}`;
 
   return {
     persona,
-    openingInstructions: PUBLIC_CLINIC_GREETING + " Give this brief fictional-demo disclosure once, then listen.",
+    openingInstructions: webAssistantGreeting(trial.session?.name ?? null) + " Say only this brief greeting, then listen.",
     history,
     async persist(fragments: VoiceFragment[]) {
       if (!fragments.length) return;
