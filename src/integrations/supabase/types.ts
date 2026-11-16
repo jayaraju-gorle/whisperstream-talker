@@ -396,6 +396,24 @@ export type Database = {
           },
         ]
       }
+      phone_call_links: {
+        Row: {
+          created_at: string
+          phone: string
+          visitor_id: string
+        }
+        Insert: {
+          created_at?: string
+          phone: string
+          visitor_id: string
+        }
+        Update: {
+          created_at?: string
+          phone?: string
+          visitor_id?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           avatar_url: string | null
