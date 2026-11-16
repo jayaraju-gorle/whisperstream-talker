@@ -13,6 +13,19 @@ const handler = (Route as unknown as { server: { handlers: { POST: (args: { requ
 afterEach(() => { vi.unstubAllEnvs(); vi.clearAllMocks(); });
 
 describe("visitor contact updates", () => {
+  it("reloads the saved TRY business instead of the current default", async () => {
+    const messages = [{ id: "try-iyashi", role: "user", parts: [{ type: "text", text: "TRY IYASHI" }] }];
+    const chain = { select: vi.fn().mockReturnThis(), eq: vi.fn().mockReturnThis(),
+      maybeSingle: vi.fn()
+        .mockResolvedValueOnce({ data: { messages, created_at: "2026-11-16T04:00:00Z" } })
+        .mockResolvedValueOnce({ data: { id: "iyashi-id" } })
+        .mockResolvedValueOnce({ data: { id: "iyashi-id", name: "Iyashi Clinics", hours: {}, doctors: [] } }) };
+    mocks.from.mockReturnValue(chain);
+    const response = await handleAssistantGet({ request: new Request("http://localhost/api/public/assistant?visitorId=visitor_secret_123456") });
+    expect(await response.json()).toEqual({ messages, createdAt: "2026-11-16T04:00:00Z", demoBusiness: "Iyashi Clinics" });
+    expect(chain.eq).toHaveBeenCalledWith("test_code", "IYASHI");
+    expect(mocks.from).not.toHaveBeenCalledWith("app_settings");
+  });
   it.each([undefined, "Bolna"] as const)("TRY IVY switches to the saved business on public channel %s", async (channel) => {
     vi.stubEnv("LOVABLE_API_KEY", "test-key");
     const chain = { upsert: vi.fn().mockReturnThis(), select: vi.fn().mockReturnThis(), eq: vi.fn().mockReturnThis(),
