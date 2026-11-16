@@ -37,8 +37,8 @@ describe("WhatsApp modes", () => {
     const { db, saved } = storage();
     await handleMessages(db, { entry: [{ changes: [{ value: { messages: [{ id: `incoming-${type}`, from: "919999999999", type, timestamp: "1794794400", text: { body: "Hours?" }, audio: { id: "media123", mime_type: "audio/ogg" } }] } }] }] });
     expect(saved).toHaveLength(1);
-    expect(saved[0]?.reply_state).toBe("manual");
-    expect(saved[0]?.media_id).toBe(type === "audio" ? "media123" : null);
+    expect(saved[0]?.["reply_state"]).toBe("manual");
+    expect(saved[0]?.["media_id"]).toBe(type === "audio" ? "media123" : null);
   });
   it("manual recovery skips AI, transcription, typing, outbound writes and automatic queue reads", async () => {
     const { db, tables, updates } = storage();
@@ -46,13 +46,13 @@ describe("WhatsApp modes", () => {
     await drainWhatsApp(db);
     expect(fetch).not.toHaveBeenCalled();
     expect(tables).not.toContain("assistant_conversations");
-    expect(updates.map(row => row.reply_state)).toEqual(["manual", "unknown"]);
+    expect(updates.map(row => row["reply_state"])).toEqual(["manual", "unknown"]);
     expect(tables.filter(table => table === "whatsapp_messages")).toHaveLength(2);
   });
   it("automatic Mira mode queues new text for the existing reply path", async () => {
     const { db, saved } = storage({ mode: "mira" });
     await handleMessages(db, { entry: [{ changes: [{ value: { messages: [{ id: "incoming", from: "919999999999", type: "text", text: { body: "Hours?" } }] } }] }] });
-    expect(saved[0]?.reply_state).toBe("pending");
+    expect(saved[0]?.["reply_state"]).toBe("pending");
   });
   it("mode lookup errors stop processing rather than enabling paid replies", async () => {
     const db = { from: () => ({ select: () => ({ in: () => Promise.resolve({ error: { message: "Unavailable" } }) }) }) } as unknown as Parameters<typeof loadWhatsAppMode>[0];
