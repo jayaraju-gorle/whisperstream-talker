@@ -15,7 +15,7 @@
 - [x] Prefill built-in scenarios and sample knowledge from the original playground
 
 ## Business roadmap (internal only)
-- [ ] Make website text/voice welcomes business-neutral by default and resolve selected business greetings from current conversation context; verify preview and regressions.
+- [x] Make website text/voice welcomes business-neutral by default and resolve selected business greetings from saved context. Live Iyashi welcome, TRY activation and refresh verified; neutral desktop/mobile welcome checked with simulated default response. All 197 tests pass; build OK. Audible voice remains unverified; no production promotion.
 - [x] Remove the WhatsApp assistant selector; Businesses is the sole shared demo control and retired WhatsApp overrides are ignored. Signed-in web/WhatsApp/phone tabs and desktop/mobile verified; all 195 tests pass and build OK. No production promotion or live message sent.
 - [x] Remove WhatsApp manual mode; retain Aura or a configured business, normalize retired settings to Aura and restore automatic reply handling without replaying historical manual messages. Signed-in desktop/mobile choices verified; all 192 tests pass and build OK. Live WhatsApp delivery awaits production promotion.
 - [x] Add one admin business switch that makes a saved business the temporary default across website chat/voice, WhatsApp and phone; off restores Aura, while TRY/EXIT overrides remain. Admin save/reset and a live Iyashi website reply verified in preview; shared routing regressions cover WhatsApp and Bolna phone entry points, whose live delivery awaits publishing.
