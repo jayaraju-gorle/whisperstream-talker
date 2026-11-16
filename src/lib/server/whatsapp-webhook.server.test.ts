@@ -19,13 +19,14 @@ function setup() {
   const request = new Request("http://localhost/api/public/whatsapp/webhook", { method: "POST", headers: { "X-Lovable-Delivery": "delivery-test", "X-Lovable-Event": "whatsapp.message" }, body: JSON.stringify(payload) });
   return { request, payload };
 }
-describe("manual-mode webhook guard", () => {
-  it("durably records a verified inbound message and acknowledges without typing or replies", async () => {
+describe("automatic WhatsApp webhook", () => {
+  it("records a verified inbound message and starts typing and reply processing despite retired manual settings", async () => {
     const { request, payload } = setup();
     expect((await post({ request })).status).toBe(200);
     expect(mocks.from).toHaveBeenCalledWith("whatsapp_webhook_events");
     expect(mocks.inbound).toHaveBeenCalledWith(expect.anything(), payload);
-    expect(mocks.typing).not.toHaveBeenCalled();
+    expect(mocks.typing).toHaveBeenCalledWith(payload);
+    expect(mocks.drain).toHaveBeenCalled();
   });
   it("does not acknowledge failed message storage", async () => {
     const { request } = setup();

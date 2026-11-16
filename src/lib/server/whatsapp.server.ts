@@ -99,7 +99,6 @@ function value(payload: Json) {
 class Deferred extends Error {}
 
 export async function handleMessages(db: Db, payload: Json) {
-  const mode = await loadWhatsAppMode(db);
   const msgs = (value(payload)["messages"] as Json[] | undefined) ?? [];
   for (const m of msgs) {
     const id = String(m["id"] ?? "");
@@ -116,7 +115,7 @@ export async function handleMessages(db: Db, payload: Json) {
       message_type: type, media_id: type === "audio" ? String((m["audio"] as Json | undefined)?.["id"] ?? "") : null,
       media_mime_type: type === "audio" ? String((m["audio"] as Json | undefined)?.["mime_type"] ?? "") : null,
       transcription_state: type === "audio" ? "pending" : null,
-      reply_state: mode.mode === "manual" ? "manual" : "pending", provider_ts: Number.isFinite(ts) ? new Date(ts * 1000).toISOString() : null,
+      reply_state: "pending", provider_ts: Number.isFinite(ts) ? new Date(ts * 1000).toISOString() : null,
     }, { onConflict: "wa_message_id", ignoreDuplicates: true }).select("id");
     if (error) throw new Error(`inbound save failed: ${error.message}`);
   }
@@ -182,7 +181,6 @@ export async function routeMessage(db: Db, phone: string, body: string): Promise
 
 async function generateReply(db: Db, conversationId: string, history: UIMessage[], phone: string) {
   const mode = await loadWhatsAppMode(db);
-  if (mode.mode === "manual") return "";
   const trial = await resolveTrial(db, history, "WhatsApp", mode.mode === "business" ? mode.clinic_id : null);
   if (trial.notice) return trial.notice;
   history = trial.history;
@@ -249,21 +247,12 @@ export async function prepareVoiceNote(db: Db, message: {
 }
 
 async function replyTo(db: Db, msgId: string) {
-  if ((await loadWhatsAppMode(db)).mode === "manual") {
-    await suppressPendingReplies(db);
-    return;
-  }
   const { data: claimed, error: claimErr } = await db.from("whatsapp_messages")
     .update({ reply_state: "sending", reply_claimed_at: new Date().toISOString() })
     .eq("id", msgId).in("reply_state", ["pending", "failed"]).lt("reply_attempts", MAX_REPLY_ATTEMPTS)
     .select("id,phone,body,wa_message_id,reply_attempts,message_type,media_id,transcription_state").maybeSingle();
   if (claimErr) throw new Error(`claim failed: ${claimErr.message}`);
   if (!claimed) return;
-  if ((await loadWhatsAppMode(db)).mode === "manual") {
-    const { error } = await db.from("whatsapp_messages").update({ reply_state: "manual", reply_error: null }).eq("id", claimed.id);
-    if (error) throw new Error(error.message);
-    return;
-  }
   const fail = async (state: "failed" | "unknown", err: string) => {
     await db.from("whatsapp_messages").update({
       reply_state: state, reply_error: err.slice(0, 1000), reply_attempts: claimed.reply_attempts + 1, updated_at: new Date().toISOString(),
@@ -286,17 +275,10 @@ async function replyTo(db: Db, msgId: string) {
     // Keep typing through model/tool work and sending, including first attempts and recovery.
     const sent = await withWhatsAppTyping(claimed.wa_message_id, async () => {
       const text = routed.text ?? await generateReply(db, convo.id, history, claimed.phone);
-      // Recheck immediately before sending in case an admin switched off replies during generation.
-      if ((await loadWhatsAppMode(db)).mode === "manual") return { ok: false as const, manual: true as const, error: "Manual mode" };
       if (!text) return { ok: false as const, error: "Empty reply" };
       return { ...await sendWhatsAppText(claimed.phone, text), text };
     });
     if (!sent.ok) {
-      if ("manual" in sent) {
-        const { error } = await db.from("whatsapp_messages").update({ reply_state: "manual", reply_error: null }).eq("id", claimed.id);
-        if (error) throw new Error(error.message);
-        return;
-      }
       return await fail("failed", sent.error);
     }
     const text = sent.text;
@@ -327,18 +309,6 @@ async function replyTo(db: Db, msgId: string) {
 }
 
 /** Bounded recovery pass: pending inbox events, then pending replies. Safe to run concurrently. */
-export async function suppressPendingReplies(db: Db) {
-  const { error } = await db.from("whatsapp_messages")
-    .update({ reply_state: "manual", reply_error: null, updated_at: new Date().toISOString() })
-    .eq("direction", "in").in("reply_state", ["pending", "failed"]);
-  if (error) throw new Error(`Manual reply suppression failed: ${error.message}`);
-  // Already-claimed work may have an ambiguous send outcome: never release it into automatic retries.
-  const { error: claimedError } = await db.from("whatsapp_messages")
-    .update({ reply_state: "unknown", reply_error: "Interrupted by manual mode; check for a sent reply", updated_at: new Date().toISOString() })
-    .eq("direction", "in").eq("reply_state", "sending");
-  if (claimedError) throw new Error(`Manual claimed-reply suppression failed: ${claimedError.message}`);
-}
-
 export async function drainWhatsApp(db?: Db) {
   db ??= (await import("@/integrations/supabase/client.server")).supabaseAdmin;
   const now = new Date().toISOString();
@@ -347,10 +317,6 @@ export async function drainWhatsApp(db?: Db) {
     .order("next_attempt_at").limit(10);
   for (const ev of events ?? []) await processEvent(db, ev);
   if (eventsError) throw new Error(`Inbox recovery failed: ${eventsError.message}`);
-  if ((await loadWhatsAppMode(db)).mode === "manual") {
-    await suppressPendingReplies(db);
-    return;
-  }
 
   // Release replies stuck in "sending" (the worker was cut off). Retry when no reply was recorded;
   // only an unrecorded send whose outcome can't be known would risk a duplicate, which is rare.

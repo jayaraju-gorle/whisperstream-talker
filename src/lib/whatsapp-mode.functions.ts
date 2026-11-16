@@ -6,7 +6,6 @@ import { WHATSAPP_MODE_SETTING_KEY } from "./whatsapp-mode";
 export const saveWhatsAppMode = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator(z.discriminatedUnion("mode", [
-    z.object({ mode: z.literal("manual"), clinic_id: z.null() }),
     z.object({ mode: z.literal("mira"), clinic_id: z.null() }),
     z.object({ mode: z.literal("business"), clinic_id: z.string().uuid() }),
   ]))
@@ -21,10 +20,5 @@ export const saveWhatsAppMode = createServerFn({ method: "POST" })
       key: WHATSAPP_MODE_SETTING_KEY, value: data, updated_at: new Date().toISOString(),
     }, { onConflict: "key" });
     if (error) throw new Error("Couldn't save WhatsApp mode");
-    if (data.mode === "manual") {
-      const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-      const { suppressPendingReplies } = await import("./server/whatsapp.server");
-      await suppressPendingReplies(supabaseAdmin);
-    }
     return data;
   });

@@ -29,11 +29,10 @@ export const Route = createFileRoute("/api/public/whatsapp/webhook")({
           return new Response("Storage failed", { status: 500 });
         }
         try {
-          // Persist incoming messages before acknowledging, including manual-mode audio media IDs.
+          // Persist incoming messages and audio media IDs before acknowledging.
           if (event === "whatsapp.message") {
             await wa.handleMessages(supabaseAdmin, payload as Record<string, unknown>);
-            const { loadWhatsAppMode } = await import("@/lib/server/whatsapp-mode.server");
-            if ((await loadWhatsAppMode(supabaseAdmin)).mode !== "manual") await wa.typingForPayload(payload);
+            await wa.typingForPayload(payload);
           }
         } catch (error) {
           console.error("whatsapp inbound write failed", error);

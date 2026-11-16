@@ -48,13 +48,13 @@ export function WhatsAppModeSettings() {
     } finally { setSaving(false); }
   };
   return <section className="mb-6 border-b border-border pb-6" aria-labelledby="whatsapp-mode-heading">
-    <h2 id="whatsapp-mode-heading" className="font-medium">WhatsApp reply mode</h2>
+    <h2 id="whatsapp-mode-heading" className="font-medium">WhatsApp assistant</h2>
     <div className="mt-3 flex flex-wrap items-end gap-3">
       <div className="w-full space-y-1 sm:w-60">
-        <label className="text-xs text-muted-foreground" id="whatsapp-mode-label">Mode</label>
+        <label className="text-xs text-muted-foreground" id="whatsapp-mode-label">Default assistant</label>
         <Select value={value.mode} disabled={saving} onValueChange={mode => setDraft({ mode: mode as WhatsAppMode["mode"], clinic_id: mode === "business" ? query.data.businesses[0]?.id ?? null : null })}>
           <SelectTrigger aria-labelledby="whatsapp-mode-label"><SelectValue /></SelectTrigger>
-          <SelectContent><SelectItem value="manual">Manual — no automatic replies</SelectItem><SelectItem value="mira">Mira — Aura demo</SelectItem><SelectItem value="business">Selected business</SelectItem></SelectContent>
+          <SelectContent><SelectItem value="mira">Aura Health Clinic</SelectItem><SelectItem value="business">Configured business</SelectItem></SelectContent>
         </Select>
       </div>
       {value.mode === "business" && <div className="w-full space-y-1 sm:w-64">
@@ -66,7 +66,7 @@ export function WhatsAppModeSettings() {
       </div>}
       <Button loading={saving} loadingLabel="Saving…" disabled={!valid || (!changed && query.data.explicit)} onClick={() => void apply()}>Save mode</Button>
     </div>
-    <p className="mt-3 text-xs text-muted-foreground">{value.mode === "manual" ? "Incoming messages and audio notes are recorded. Mira stays silent; messages received in manual mode won't be answered automatically later." : "Mira replies automatically. TRY codes and EXIT remain available."} Website and phone settings are unchanged.</p>
+    <p className="mt-3 text-xs text-muted-foreground">TRY codes and EXIT remain available. Website and phone settings are unchanged.</p>
     {!query.data.explicit && <p className="mt-1 text-xs text-muted-foreground">Currently follows the shared demo default. Saving makes WhatsApp independent.</p>}
   </section>;
 }
