@@ -20,16 +20,24 @@ export const Route = createFileRoute("/api/public/whatsapp/webhook")({
         const event = request.headers.get("X-Lovable-Event")?.trim();
         if (!deliveryId || !event) return new Response("Missing delivery headers", { status: 400 });
 
-        // Show "typing…" right away, in parallel with storing the delivery, before any model work.
         const wa = await import("@/lib/server/whatsapp.server");
-        const typing = event === "whatsapp.message" ? wa.typingForPayload(payload) : Promise.resolve();
         const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
         const { error } = await supabaseAdmin.from("whatsapp_webhook_events")
           .upsert({ delivery_id: deliveryId, event, payload: payload as never }, { onConflict: "delivery_id", ignoreDuplicates: true });
-        await typing;
         if (error) {
           console.error("whatsapp inbox write failed", error);
           return new Response("Storage failed", { status: 500 });
+        }
+        try {
+          // Persist incoming messages before acknowledging, including manual-mode audio media IDs.
+          if (event === "whatsapp.message") {
+            await wa.handleMessages(supabaseAdmin, payload as Record<string, unknown>);
+            const { loadWhatsAppMode } = await import("@/lib/server/whatsapp-mode.server");
+            if ((await loadWhatsAppMode(supabaseAdmin)).mode !== "manual") await wa.typingForPayload(payload);
+          }
+        } catch (error) {
+          console.error("whatsapp inbound write failed", error);
+          return new Response("Incoming message storage failed", { status: 500 });
         }
         // The gateway drops the connection after ~5s, which cancels any work still awaited here.
         // So acknowledge right away and let Mira reply in the background via the runtime's waitUntil.

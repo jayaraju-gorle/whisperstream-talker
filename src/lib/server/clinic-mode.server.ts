@@ -118,12 +118,18 @@ export const EXIT_TEXT =
 /** Resolves the active TRY/EXIT state from history for every public channel (web chat/voice, phone, WhatsApp).
  *  AURA keeps the public sample; any other saved business code switches to that business's assistant.
  *  Unknown codes are ignored so ordinary phrases like "try again" stay normal Mira messages. */
-export async function resolveTrial(db: Db, messages: UIMessage[], channel: ClinicChannel) {
+export async function resolveTrial(db: Db, messages: UIMessage[], channel: ClinicChannel, defaultBusinessId?: string | null) {
   const cmd = activeClinicCommand(messages);
   const isCommand = cmd.index === messages.length - 1;
   const after = cmd.index >= 0 ? messages.slice(cmd.index + 1) : messages;
   const aura = (notice: string | null, history = after) => ({ notice, session: null, history });
   const adminDefault = async (history: UIMessage[]) => {
+    if (defaultBusinessId !== undefined) {
+      if (!defaultBusinessId || defaultBusinessId === PUBLIC_SAMPLE_BUSINESS_ID) return aura(null, history);
+      const session = await loadClinicSession(db, defaultBusinessId, channel);
+      if (!session) throw new Error("The selected WhatsApp business is unavailable");
+      return { notice: null, session, history };
+    }
     const { data, error } = await db
       .from("app_settings")
       .select("value")
