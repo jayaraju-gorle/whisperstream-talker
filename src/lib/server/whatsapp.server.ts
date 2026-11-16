@@ -322,7 +322,7 @@ async function replyTo(db: Db, msgId: string) {
 }
 
 /** Bounded recovery pass: pending inbox events, then pending replies. Safe to run concurrently. */
-async function suppressPendingReplies(db: Db) {
+export async function suppressPendingReplies(db: Db) {
   const { error } = await db.from("whatsapp_messages")
     .update({ reply_state: "manual", reply_error: null, updated_at: new Date().toISOString() })
     .eq("direction", "in").in("reply_state", ["pending", "failed"]);
