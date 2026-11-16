@@ -1,3 +1,4 @@
+import { loadRecentCallContext } from "./phone-context.server";
 import { convertToModelMessages, isStepCount, streamText, type UIMessage } from "ai";
 import { publicAssistantInstructions } from "@/lib/server/public-clinic.server";
 import { floTools } from "@/lib/server/flo.server";
@@ -195,7 +196,7 @@ async function generateReply(db: Db, conversationId: string, history: UIMessage[
     const result = streamText({
       model,
       instructions: trial.session ? trial.session.instructions : await publicAssistantInstructions(db) + WHATSAPP_INSTRUCTIONS,
-      messages: await convertToModelMessages(history.slice(-HISTORY_LIMIT)),
+      messages: await convertToModelMessages([...await loadRecentCallContext(db, phone), ...history.slice(-HISTORY_LIMIT)]),
       stopWhen: isStepCount(4),
       tools: trial.session ? clinicAppointmentTools(db, trial.session.id, "WhatsApp", phone) : floTools(db, conversationId, "WhatsApp"),
       providerOptions,
