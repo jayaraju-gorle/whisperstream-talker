@@ -15,6 +15,7 @@ import { ASSISTANT_VOICE_MODEL, ASSISTANT_VOICE_NAME } from "@/lib/assistant-voi
 import { CurrencySelect } from "@/components/CurrencySelect";
 import { matchWhatsAppMetrics } from "@/lib/whatsapp-metrics";
 import { Switch } from "@/components/ui/switch";
+import { WhatsAppModeSettings } from "@/components/WhatsAppModeSettings";
 import { isLikelyTestLead } from "@/lib/lead-filters";
 import { latestMessagePreview, messageText, viewConversations, visiblePages, type ActivityWindow, type ContactFilter, type ConversationSort } from "@/lib/web-conversations";
 
@@ -413,7 +414,7 @@ type WaMessage = {
   conversation_id: string | null;
 };
 
-const REPLY_LABEL: Record<string, string> = { pending: "Reply waiting", sending: "Replying…", sent: "Replied", failed: "Reply failed", unknown: "Reply needs review", expired: "Not answered (too old)" };
+const REPLY_LABEL: Record<string, string> = { manual: "Manual — no automatic reply", pending: "Reply waiting", sending: "Replying…", sent: "Replied", failed: "Reply failed", unknown: "Reply needs review", expired: "Not answered (too old)" };
 
 function WaThread({ msgs }: { msgs: WaMessage[] }) {
   const { format } = useTimezone();
@@ -535,6 +536,7 @@ function WhatsAppMessages() {
   };
   return (
     <div className="mt-6">
+      <WhatsAppModeSettings />
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h2 className="font-medium">WhatsApp{data ? ` · ${allThreads.length}` : ""}</h2>
