@@ -1,0 +1,2 @@
+- Legacy WhatsApp reply metrics match successful WhatsApp turn logs by conversation and nearest preceding completion timestamp, never array index; this keeps unlogged older replies and failed attempts from shifting metrics onto the wrong messages.
+- Bolna routes share Mira's handler and server-owned instructions/tools; verify BOLNA_API_TOKEN before storage/model work, namespace sessions, and expose public aliases. Downstream cancellation aborts paid generation; fresh model/facts/history setup runs concurrently without caching editable sample facts.
