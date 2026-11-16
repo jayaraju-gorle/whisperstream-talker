@@ -1,4 +1,5 @@
 import { publicTrialHistory } from "@/lib/public-clinic-demo";
+import { WEB_GREETING_RULES } from "@/lib/web-assistant";
 import { z } from "zod";
 import {
   convertToModelMessages,
@@ -128,6 +129,7 @@ export async function handleAssistantPost({
     model,
     instructions:
       instructions +
+      (channel === "Bolna" ? "" : `\n${WEB_GREETING_RULES}`) +
       (voice
         ? `\nVOICE: Respond in English unless the caller explicitly speaks another language. Keep answers to one or two short sentences, asking one question at a time. Start with the direct answer; avoid repeated introductions, filler and recaps. ${trial.session ? "" : "After the fictional disclosure in the greeting, use Aura or the clinic; keep brief demo context for fees, appointments and illustrative directions. "}If interrupted, address the caller's latest question without restarting your earlier answer. ${ASSISTANT_SPEECH_RULES} Require explicit confirmation of the exact details before saving contact details. ${trial.session ? "Appointments are requests for the team to confirm, never confirmed bookings. " : "Appointments are simulated requests only, never saved or confirmed real bookings. "}Preserve completed tool results and never repeat a completed action for late transcript fragments.`
         : ""),
@@ -177,16 +179,14 @@ export async function handleAssistantGet({ request }: { request: Request }) {
   const id = VisitorId.safeParse(new URL(request.url).searchParams.get("visitorId"));
   if (!id.success || id.data.startsWith("bolna_")) return json({ messages: [] });
   const db = await admin();
-  const [{ data, error }, trial] = await Promise.all([
-    db
+  const { data, error } = await db
       .from("assistant_conversations")
       .select("messages,created_at")
       .eq("visitor_id", id.data)
-      .maybeSingle(),
-    resolveTrial(db, [], "Website"),
-  ]);
+      .maybeSingle();
   if (error) return json({ error: "Couldn't load the conversation" }, 500);
   const history = (Array.isArray(data?.messages) ? data.messages : []) as unknown as UIMessage[];
+  const trial = await resolveTrial(db, history, "Website");
   return json({
     messages: publicTrialHistory(history).length === history.length ? history : [],
     createdAt: data?.created_at ?? null,
