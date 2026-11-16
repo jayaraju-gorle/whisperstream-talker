@@ -2,11 +2,10 @@ import { describe, expect, it, vi, afterEach } from "vitest";
 import { parseWhatsAppMode } from "../whatsapp-mode";
 import { loadWhatsAppMode } from "./whatsapp-mode.server";
 import { drainWhatsApp, handleMessages } from "./whatsapp.server";
-import { resolveTrial } from "./clinic-mode.server";
 
 afterEach(() => vi.unstubAllGlobals());
 const id = "ddba5e0f-a003-4d8b-9af6-339712f5564e";
-function storage(mode: unknown = { mode: "mira" }) {
+function storage(mode: unknown = { mode: "mira" }, demoBusiness: string | null = null) {
   const saved: Record<string, unknown>[] = [];
   const updates: Record<string, unknown>[] = [];
   const tables: string[] = [];
@@ -15,7 +14,7 @@ function storage(mode: unknown = { mode: "mira" }) {
     let response: { data: unknown; error: null } = { data: [], error: null };
     const chain: Record<string, unknown> = {};
     for (const method of ["select", "eq", "is", "lt", "lte", "order", "limit", "in"]) chain[method] = vi.fn(() => {
-      if (table === "app_settings") response = { data: [{ key: "whatsapp_mode", value: mode }], error: null };
+      if (table === "app_settings") response = { data: [{ key: "whatsapp_mode", value: mode }, { key: "public_demo_business", value: { clinic_id: demoBusiness } }], error: null };
       return chain;
     });
     chain["upsert"] = vi.fn((row: Record<string, unknown>) => { saved.push(row); return chain; });
@@ -66,10 +65,12 @@ describe("WhatsApp modes", () => {
     const db = { from: () => ({ select: () => ({ in: () => Promise.resolve({ error: { message: "Unavailable" } }) }) }) } as unknown as Parameters<typeof loadWhatsAppMode>[0];
     await expect(loadWhatsAppMode(db)).rejects.toThrow("WhatsApp mode lookup failed");
   });
-  it("explicit Mira stays with Aura despite the all-channel business switch", async () => {
-    const { db, tables } = storage({ mode: "mira" });
-    const trial = await resolveTrial(db, [{ id: "question", role: "user", parts: [{ type: "text", text: "Hours?" }] }], "WhatsApp", null);
-    expect(trial.session).toBeNull();
-    expect(tables).toEqual([]);
+  it.each(["mira", "business", "manual"])("uses the Businesses default despite retired WhatsApp %s settings", async mode => {
+    const { db } = storage({ mode, clinic_id: "24aebef9-14ee-4f71-b969-846cd455ab39" }, id);
+    expect(await loadWhatsAppMode(db)).toEqual({ mode: "business", clinic_id: id });
+  });
+  it("returns to Aura when Businesses turns off the demo, ignoring a retired WhatsApp business", async () => {
+    const { db } = storage({ mode: "business", clinic_id: id }, null);
+    expect(await loadWhatsAppMode(db)).toEqual({ mode: "mira", clinic_id: null });
   });
 });

@@ -15,7 +15,6 @@ import { ASSISTANT_VOICE_MODEL, ASSISTANT_VOICE_NAME } from "@/lib/assistant-voi
 import { CurrencySelect } from "@/components/CurrencySelect";
 import { matchWhatsAppMetrics } from "@/lib/whatsapp-metrics";
 import { Switch } from "@/components/ui/switch";
-import { WhatsAppModeSettings } from "@/components/WhatsAppModeSettings";
 import { isLikelyTestLead } from "@/lib/lead-filters";
 import { latestMessagePreview, messageText, viewConversations, visiblePages, type ActivityWindow, type ContactFilter, type ConversationSort } from "@/lib/web-conversations";
 
@@ -536,7 +535,6 @@ function WhatsAppMessages() {
   };
   return (
     <div className="mt-6">
-      <WhatsAppModeSettings />
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h2 className="font-medium">WhatsApp{data ? ` · ${allThreads.length}` : ""}</h2>
