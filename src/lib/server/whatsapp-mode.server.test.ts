@@ -6,7 +6,7 @@ import { resolveTrial } from "./clinic-mode.server";
 
 afterEach(() => vi.unstubAllGlobals());
 const id = "ddba5e0f-a003-4d8b-9af6-339712f5564e";
-function storage(mode: unknown = { mode: "manual" }) {
+function storage(mode: unknown = { mode: "mira" }) {
   const saved: Record<string, unknown>[] = [];
   const updates: Record<string, unknown>[] = [];
   const tables: string[] = [];
@@ -14,7 +14,7 @@ function storage(mode: unknown = { mode: "manual" }) {
     tables.push(table);
     let response: { data: unknown; error: null } = { data: [], error: null };
     const chain: Record<string, unknown> = {};
-    for (const method of ["select", "eq", "is", "lte", "order", "limit", "in"]) chain[method] = vi.fn(() => {
+    for (const method of ["select", "eq", "is", "lt", "lte", "order", "limit", "in"]) chain[method] = vi.fn(() => {
       if (table === "app_settings") response = { data: [{ key: "whatsapp_mode", value: mode }], error: null };
       return chain;
     });
@@ -27,27 +27,35 @@ function storage(mode: unknown = { mode: "manual" }) {
   return { db, saved, updates, tables };
 }
 describe("WhatsApp modes", () => {
-  it("validates all three modes and fails closed on corrupt business settings", () => {
-    expect(parseWhatsAppMode({ mode: "manual" })).toEqual({ mode: "manual", clinic_id: null });
+  it("keeps Aura as an automatic assistant option", () => {
     expect(parseWhatsAppMode({ mode: "mira" })).toEqual({ mode: "mira", clinic_id: null });
+  });
+  it("keeps a configured business as the other assistant option", () => {
     expect(parseWhatsAppMode({ mode: "business", clinic_id: id })).toEqual({ mode: "business", clinic_id: id });
-    expect(parseWhatsAppMode({ mode: "business", clinic_id: "missing" }).mode).toBe("manual");
   });
-  it.each(["text", "audio"])("records manual %s input with terminal reply state and its media id", async type => {
-    const { db, saved } = storage();
+  it("returns retired manual settings to Aura", async () => {
+    const { db } = storage({ mode: "manual" });
+    expect(await loadWhatsAppMode(db)).toEqual({ mode: "mira", clinic_id: null });
+  });
+  it("returns invalid business settings to Aura", () => {
+    expect(parseWhatsAppMode({ mode: "business", clinic_id: "missing" })).toEqual({ mode: "mira", clinic_id: null });
+  });
+  it.each(["mira", "business", "manual"])("queues new text and audio even with saved %s settings", async mode => {
+    const { db, saved } = storage({ mode, clinic_id: id });
+    for (const type of ["text", "audio"]) {
     await handleMessages(db, { entry: [{ changes: [{ value: { messages: [{ id: `incoming-${type}`, from: "919999999999", type, timestamp: "1794794400", text: { body: "Hours?" }, audio: { id: "media123", mime_type: "audio/ogg" } }] } }] }] });
-    expect(saved).toHaveLength(1);
-    expect(saved[0]?.["reply_state"]).toBe("manual");
-    expect(saved[0]?.["media_id"]).toBe(type === "audio" ? "media123" : null);
+    }
+    expect(saved.map(row => row["reply_state"])).toEqual(["pending", "pending"]);
+    expect(saved.map(row => row["media_id"])).toEqual([null, "media123"]);
   });
-  it("manual recovery skips AI, transcription, typing, outbound writes and automatic queue reads", async () => {
-    const { db, tables, updates } = storage();
+  it("retired manual settings no longer suppress the automatic queue", async () => {
+    const { db, tables, updates } = storage({ mode: "manual" });
     const fetch = vi.fn(); vi.stubGlobal("fetch", fetch);
     await drainWhatsApp(db);
     expect(fetch).not.toHaveBeenCalled();
     expect(tables).not.toContain("assistant_conversations");
-    expect(updates.map(row => row["reply_state"])).toEqual(["manual", "unknown"]);
-    expect(tables.filter(table => table === "whatsapp_messages")).toHaveLength(2);
+    expect(updates.map(row => row["reply_state"])).toEqual(["expired"]);
+    expect(tables.filter(table => table === "whatsapp_messages")).toHaveLength(3);
   });
   it("automatic Mira mode queues new text for the existing reply path", async () => {
     const { db, saved } = storage({ mode: "mira" });
