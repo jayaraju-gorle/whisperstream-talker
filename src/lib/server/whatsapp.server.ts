@@ -259,6 +259,11 @@ async function replyTo(db: Db, msgId: string) {
     .select("id,phone,body,wa_message_id,reply_attempts,message_type,media_id,transcription_state").maybeSingle();
   if (claimErr) throw new Error(`claim failed: ${claimErr.message}`);
   if (!claimed) return;
+  if ((await loadWhatsAppMode(db)).mode === "manual") {
+    const { error } = await db.from("whatsapp_messages").update({ reply_state: "manual", reply_error: null }).eq("id", claimed.id);
+    if (error) throw new Error(error.message);
+    return;
+  }
   const fail = async (state: "failed" | "unknown", err: string) => {
     await db.from("whatsapp_messages").update({
       reply_state: state, reply_error: err.slice(0, 1000), reply_attempts: claimed.reply_attempts + 1, updated_at: new Date().toISOString(),
@@ -327,6 +332,11 @@ export async function suppressPendingReplies(db: Db) {
     .update({ reply_state: "manual", reply_error: null, updated_at: new Date().toISOString() })
     .eq("direction", "in").in("reply_state", ["pending", "failed"]);
   if (error) throw new Error(`Manual reply suppression failed: ${error.message}`);
+  // Already-claimed work may have an ambiguous send outcome: never release it into automatic retries.
+  const { error: claimedError } = await db.from("whatsapp_messages")
+    .update({ reply_state: "unknown", reply_error: "Interrupted by manual mode; check for a sent reply", updated_at: new Date().toISOString() })
+    .eq("direction", "in").eq("reply_state", "sending");
+  if (claimedError) throw new Error(`Manual claimed-reply suppression failed: ${claimedError.message}`);
 }
 
 export async function drainWhatsApp(db?: Db) {
