@@ -13,7 +13,11 @@ import {
   Stethoscope,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { PHONE_ASSISTANT_DISPLAY, PHONE_ASSISTANT_URL, WHATSAPP_ASSISTANT_URL } from "@/lib/flo-voice";
+import {
+  PHONE_ASSISTANT_DISPLAY,
+  PHONE_ASSISTANT_URL,
+  WHATSAPP_ASSISTANT_URL,
+} from "@/lib/flo-voice";
 
 const PAGE_URL = "https://conversationalaistudio.online/web-agent";
 const PAGE_TITLE = "Sample Clinic Website — 24/7 Web Assistant Bubble Demo";
@@ -118,10 +122,19 @@ function WebAgentDemo() {
               </p>
             </div>
           </div>
-          <nav aria-label="Clinic website" className="hidden items-center gap-5 text-sm text-muted-foreground sm:flex">
-            <a href="#services" className="hover:text-foreground">Services</a>
-            <a href="#doctors" className="hover:text-foreground">Doctors</a>
-            <a href="#visit" className="hover:text-foreground">Hours &amp; Location</a>
+          <nav
+            aria-label="Clinic website"
+            className="hidden items-center gap-5 text-sm text-muted-foreground sm:flex"
+          >
+            <a href="#services" className="hover:text-foreground">
+              Services
+            </a>
+            <a href="#doctors" className="hover:text-foreground">
+              Doctors
+            </a>
+            <a href="#visit" className="hover:text-foreground">
+              Hours &amp; Location
+            </a>
           </nav>
           <Button size="sm" className="shrink-0" onClick={openAssistantBubble}>
             <MessageCircle className="h-4 w-4" />
@@ -142,9 +155,9 @@ function WebAgentDemo() {
               Compassionate family care, with 24/7 appointment assistance.
             </h1>
             <p className="text-base leading-relaxed text-muted-foreground sm:text-lg">
-              This is how your clinic&apos;s own website looks once our assistant is embedded. Patients can tap the
-              expandable chat &amp; voice bubble in the bottom-right corner at any hour — or reach you on WhatsApp
-              and phone.
+              This is how your clinic&apos;s own website looks once our assistant is embedded.
+              Patients can tap the expandable chat &amp; voice bubble in the bottom-right corner at
+              any hour — or reach you on WhatsApp and phone.
             </p>
             <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap">
               <Button size="lg" className="h-12" onClick={openAssistantBubble}>
@@ -167,15 +180,17 @@ function WebAgentDemo() {
           </div>
 
           <div className="rounded-2xl border border-border bg-card p-6 shadow-lg">
-            <p className="font-mono text-xs uppercase tracking-[0.18em] text-primary">How to test this page</p>
+            <p className="font-mono text-xs uppercase tracking-[0.18em] text-primary">
+              How to test this page
+            </p>
             <ol className="mt-4 space-y-3 text-sm text-muted-foreground">
               <li className="flex gap-3">
                 <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary/15 font-mono text-xs font-semibold text-primary">
                   1
                 </span>
                 <span>
-                  Tap the <strong className="text-foreground">Ask Mira</strong> bubble in the bottom-right corner to
-                  expand it.
+                  Tap the <strong className="text-foreground">Ask Mira</strong> bubble in the
+                  bottom-right corner to expand it.
                 </span>
               </li>
               <li className="flex gap-3">
@@ -183,8 +198,8 @@ function WebAgentDemo() {
                   2
                 </span>
                 <span>
-                  Ask about doctor timings, fees, or tap <strong className="text-foreground">Talk to Mira</strong> for
-                  live browser voice.
+                  Ask about doctor timings, fees, or tap{" "}
+                  <strong className="text-foreground">Talk to Mira</strong> for live browser voice.
                 </span>
               </li>
               <li className="flex gap-3">
@@ -192,7 +207,8 @@ function WebAgentDemo() {
                   3
                 </span>
                 <span>
-                  Share your phone number to see WhatsApp and phone call context carry over seamlessly.
+                  Share your phone number to see WhatsApp and phone call context carry over
+                  seamlessly.
                 </span>
               </li>
             </ol>
@@ -204,7 +220,10 @@ function WebAgentDemo() {
           <h2 className="text-2xl font-semibold tracking-tight">Clinic Services</h2>
           <div className="grid gap-4 md:grid-cols-3">
             {SERVICES.map((service) => (
-              <div key={service.title} className="space-y-2.5 rounded-xl border border-border bg-card/70 p-5">
+              <div
+                key={service.title}
+                className="space-y-2.5 rounded-xl border border-border bg-card/70 p-5"
+              >
                 <service.icon className="h-5 w-5 text-primary" />
                 <h3 className="font-semibold">{service.title}</h3>
                 <p className="text-sm leading-relaxed text-muted-foreground">{service.text}</p>
@@ -222,7 +241,10 @@ function WebAgentDemo() {
             </div>
             <ul className="divide-y divide-border">
               {DOCTORS.map((doc) => (
-                <li key={doc.name} className="flex items-start justify-between gap-4 py-3 first:pt-0 last:pb-0">
+                <li
+                  key={doc.name}
+                  className="flex items-start justify-between gap-4 py-3 first:pt-0 last:pb-0"
+                >
                   <div className="min-w-0">
                     <p className="font-medium">{doc.name}</p>
                     <p className="text-xs text-muted-foreground">{doc.specialty}</p>
@@ -241,16 +263,20 @@ function WebAgentDemo() {
             </div>
             <div className="space-y-2 text-sm text-muted-foreground">
               <p>
-                <strong className="text-foreground">Monday – Saturday:</strong> 10:00 AM – 1:00 PM &amp; 5:00 PM – 8:00
-                PM
+                <strong className="text-foreground">Monday – Saturday:</strong> 10:00 AM – 1:00 PM
+                &amp; 5:00 PM – 8:00 PM
               </p>
               <p>
-                <strong className="text-foreground">Sunday:</strong> Closed (24/7 assistant still captures requests)
+                <strong className="text-foreground">Sunday:</strong> Closed (24/7 assistant still
+                captures requests)
               </p>
             </div>
             <div className="flex items-start gap-2.5 border-t border-border pt-4 text-sm text-muted-foreground">
               <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
-              <span>Suite 204, Willow Health Centre, Green Park Neighbourhood, Hyderabad (Illustrative address)</span>
+              <span>
+                Suite 204, Willow Health Centre, Green Park Neighbourhood, Hyderabad (Illustrative
+                address)
+              </span>
             </div>
           </div>
         </section>

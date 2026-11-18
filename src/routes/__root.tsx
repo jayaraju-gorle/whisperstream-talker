@@ -106,7 +106,11 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
   component: RootComponent,
   pendingMs: 0,
   pendingMinMs: 0,
-  pendingComponent: () => <div className="flex min-h-screen items-center justify-center"><LoadingIndicator label="Opening studio…" /></div>,
+  pendingComponent: () => (
+    <div className="flex min-h-screen items-center justify-center">
+      <LoadingIndicator label="Opening studio…" />
+    </div>
+  ),
   notFoundComponent: NotFoundComponent,
   errorComponent: ErrorComponent,
 });
@@ -128,7 +132,9 @@ function RootShell({ children }: { children: ReactNode }) {
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
   const router = useRouter();
-  const embedded = useRouterState({ select: (state) => state.location.pathname === "/embed/assistant" });
+  const embedded = useRouterState({
+    select: (state) => state.location.pathname === "/embed/assistant",
+  });
 
   useEffect(() => {
     initAnalytics();

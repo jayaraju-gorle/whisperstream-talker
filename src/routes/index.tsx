@@ -25,7 +25,11 @@ import {
 import { LeadForm } from "@/components/LeadForm";
 import { PublicSiteFooter, PublicSiteHeader } from "@/components/PublicSiteChrome";
 import { Button } from "@/components/ui/button";
-import { PHONE_ASSISTANT_DISPLAY, PHONE_ASSISTANT_URL, WHATSAPP_ASSISTANT_URL } from "@/lib/flo-voice";
+import {
+  PHONE_ASSISTANT_DISPLAY,
+  PHONE_ASSISTANT_URL,
+  WHATSAPP_ASSISTANT_URL,
+} from "@/lib/flo-voice";
 
 const TITLE = "24/7 Appointment Assistant for Clinics — Phone, WhatsApp & Website";
 const DESCRIPTION =
@@ -56,7 +60,8 @@ export const Route = createFileRoute("/")({
               url: "https://conversationalaistudio.online/",
               name: "Conversational Flows Studio",
               alternateName: ["Conversational AI Studio", "conversationalaistudio.online"],
-              description: "Done-for-you 24/7 appointment assistant for clinics across phone, WhatsApp, and web.",
+              description:
+                "Done-for-you 24/7 appointment assistant for clinics across phone, WhatsApp, and web.",
               inLanguage: "en",
               publisher: { "@id": "https://conversationalaistudio.online/#organization" },
             },
@@ -66,7 +71,8 @@ export const Route = createFileRoute("/")({
               name: "Conversational Flows Studio",
               alternateName: ["Conversational AI Studio", "conversationalaistudio.online"],
               url: "https://conversationalaistudio.online",
-              description: "Done-for-you 24/7 appointment assistant for clinics across phone, WhatsApp, and web.",
+              description:
+                "Done-for-you 24/7 appointment assistant for clinics across phone, WhatsApp, and web.",
             },
           ],
         }),
@@ -121,12 +127,24 @@ const CHANNELS = [
 ] as const;
 
 const HANDLES = [
-  { icon: CalendarCheck, t: "Appointment requests", d: "Collects patient name, phone, doctor and preferred slot." },
+  {
+    icon: CalendarCheck,
+    t: "Appointment requests",
+    d: "Collects patient name, phone, doctor and preferred slot.",
+  },
   { icon: Clock3, t: "Doctor timings", d: "Shares each doctor's days and consulting hours." },
   { icon: Wallet, t: "Consultation fees", d: "Answers fee questions from your approved list." },
   { icon: MapPin, t: "Directions", d: "Sends your address and Google Maps link." },
-  { icon: Layers, t: "One memory, three channels", d: "A patient who messaged on WhatsApp isn't asked again on the phone." },
-  { icon: Siren, t: "Emergency safe", d: "Directs emergencies to 108 — never gives medical advice." },
+  {
+    icon: Layers,
+    t: "One memory, three channels",
+    d: "A patient who messaged on WhatsApp isn't asked again on the phone.",
+  },
+  {
+    icon: Siren,
+    t: "Emergency safe",
+    d: "Directs emergencies to 108 — never gives medical advice.",
+  },
 ] as const;
 
 const STEPS = [
@@ -189,13 +207,13 @@ function Index() {
                 Built for clinics &amp; doctors
               </p>
               <h1 className="mt-5 text-[2.1rem] font-semibold leading-[1.1] tracking-tight sm:text-5xl lg:text-[3.4rem]">
-                Your clinic&apos;s <span className="text-primary">24/7 appointment assistant</span> — on WhatsApp,
-                website &amp; phone.
+                Your clinic&apos;s <span className="text-primary">24/7 appointment assistant</span>{" "}
+                — on WhatsApp, website &amp; phone.
               </h1>
               <p className="mt-5 text-base leading-relaxed text-muted-foreground sm:text-lg">
-                Mira answers every patient WhatsApp message, website chat and phone call — shares doctor timings and
-                fees, and captures appointment requests for your staff to confirm. Even at midnight. Even during the
-                morning rush.
+                Mira answers every patient WhatsApp message, website chat and phone call — shares
+                doctor timings and fees, and captures appointment requests for your staff to
+                confirm. Even at midnight. Even during the morning rush.
               </p>
               <div className="mt-7 flex flex-col gap-3 sm:flex-row">
                 <Button asChild size="lg" className="h-12 text-base">
@@ -212,12 +230,14 @@ function Index() {
                 </Button>
               </div>
               <ul className="mt-6 grid gap-2 text-sm text-muted-foreground sm:grid-cols-3">
-                {["Done-for-you setup", "No new software", "Staff confirm every booking"].map((item) => (
-                  <li key={item} className="flex items-center gap-2">
-                    <CheckCircle2 className="h-4 w-4 shrink-0 text-primary" />
-                    {item}
-                  </li>
-                ))}
+                {["Done-for-you setup", "No new software", "Staff confirm every booking"].map(
+                  (item) => (
+                    <li key={item} className="flex items-center gap-2">
+                      <CheckCircle2 className="h-4 w-4 shrink-0 text-primary" />
+                      {item}
+                    </li>
+                  ),
+                )}
               </ul>
             </div>
 
@@ -232,10 +252,15 @@ function Index() {
                 { icon: Globe, t: "Website" },
                 { icon: Phone, t: "Phone calls" },
               ].map(({ icon: Icon, t }) => (
-                <div key={t} className="flex flex-col items-center gap-1.5 px-2 py-4 text-center sm:flex-row sm:justify-center sm:gap-2.5">
+                <div
+                  key={t}
+                  className="flex flex-col items-center gap-1.5 px-2 py-4 text-center sm:flex-row sm:justify-center sm:gap-2.5"
+                >
                   <Icon className="h-5 w-5 text-primary" />
                   <span className="text-xs font-medium sm:text-sm">{t}</span>
-                  <span className="hidden text-xs text-muted-foreground md:inline">· answered 24/7</span>
+                  <span className="hidden text-xs text-muted-foreground md:inline">
+                    · answered 24/7
+                  </span>
                 </div>
               ))}
             </div>
@@ -269,17 +294,22 @@ function Index() {
               One assistant. Three channels. Always on.
             </h2>
             <p className="mt-3 max-w-2xl text-muted-foreground">
-              Patients reach your clinic however they like — Mira answers on all three with the same doctor timings,
-              fees and booking rules.
+              Patients reach your clinic however they like — Mira answers on all three with the same
+              doctor timings, fees and booking rules.
             </p>
             <div className="mt-8 grid gap-4 md:grid-cols-3">
               {CHANNELS.map(({ icon: Icon, title, text, action }) => (
-                <div key={title} className="flex flex-col rounded-xl border border-border bg-card p-6">
+                <div
+                  key={title}
+                  className="flex flex-col rounded-xl border border-border bg-card p-6"
+                >
                   <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-primary/15 text-primary">
                     <Icon className="h-5 w-5" />
                   </span>
                   <h3 className="mt-4 text-lg font-semibold">{title}</h3>
-                  <p className="mt-2 flex-1 text-sm leading-relaxed text-muted-foreground">{text}</p>
+                  <p className="mt-2 flex-1 text-sm leading-relaxed text-muted-foreground">
+                    {text}
+                  </p>
                   <Button asChild variant="outline" className="mt-5 h-11 w-full">
                     {"to" in action ? (
                       <Link to={action.to}>
@@ -289,7 +319,9 @@ function Index() {
                     ) : (
                       <a
                         href={action.href}
-                        {...("external" in action ? { target: "_blank", rel: "noopener noreferrer" } : {})}
+                        {...("external" in action
+                          ? { target: "_blank", rel: "noopener noreferrer" }
+                          : {})}
                       >
                         {action.label}
                         <ArrowRight className="h-4 w-4" />
@@ -302,21 +334,25 @@ function Index() {
           </section>
 
           {/* WHAT MIRA HANDLES */}
-          <section aria-labelledby="handles" className="grid gap-10 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)] lg:items-center">
+          <section
+            aria-labelledby="handles"
+            className="grid gap-10 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)] lg:items-center"
+          >
             <div>
               <SectionEyebrow>What Mira handles</SectionEyebrow>
               <h2 id="handles" className="mt-2 text-2xl font-semibold tracking-tight sm:text-3xl">
                 The questions your front desk answers all day.
               </h2>
               <p className="mt-3 text-muted-foreground">
-                Mira answers only from the information you approve, and hands anything clinical back to your
-                doctors.
+                Mira answers only from the information you approve, and hands anything clinical back
+                to your doctors.
               </p>
               <div className="mt-6 flex items-start gap-3 rounded-xl border border-primary/30 bg-primary/5 p-4 text-sm">
                 <ShieldCheck className="mt-0.5 h-5 w-5 shrink-0 text-primary" />
                 <p className="text-muted-foreground">
-                  <span className="font-medium text-foreground">No medical advice, ever.</span> Symptoms and treatment
-                  questions are deferred to your doctors; emergencies are directed to 108.
+                  <span className="font-medium text-foreground">No medical advice, ever.</span>{" "}
+                  Symptoms and treatment questions are deferred to your doctors; emergencies are
+                  directed to 108.
                 </p>
               </div>
             </div>
@@ -334,7 +370,10 @@ function Index() {
           </section>
 
           {/* FOR DOCTORS & MANAGERS */}
-          <section aria-labelledby="control" className="grid gap-10 rounded-2xl border border-border bg-card/50 p-6 sm:p-10 lg:grid-cols-2 lg:items-center">
+          <section
+            aria-labelledby="control"
+            className="grid gap-10 rounded-2xl border border-border bg-card/50 p-6 sm:p-10 lg:grid-cols-2 lg:items-center"
+          >
             <div>
               <SectionEyebrow>For chief doctors &amp; clinic managers</SectionEyebrow>
               <h2 id="control" className="mt-2 text-2xl font-semibold tracking-tight sm:text-3xl">
@@ -369,6 +408,14 @@ function Index() {
                   </li>
                 ))}
               </ul>
+              <div className="mt-6">
+                <Button asChild variant="outline" className="h-11">
+                  <Link to="/aura-portal">
+                    Try Aura portal demo (Admin &amp; Staff)
+                    <ArrowRight className="h-4 w-4" />
+                  </Link>
+                </Button>
+              </div>
             </div>
             <PortalPreview />
           </section>
@@ -402,8 +449,10 @@ function Index() {
               Talk to Mira as a patient would.
             </h2>
             <p className="mt-3 max-w-2xl text-sm leading-relaxed text-muted-foreground sm:text-base">
-              Our live demo runs <span className="font-medium text-foreground">Aura Health Clinic</span> — a fictional
-              clinic with made-up doctors, hours and fees. Ask about timings, fees, or request an appointment.
+              Our live demo runs{" "}
+              <span className="font-medium text-foreground">Aura Health Clinic</span> — a fictional
+              clinic with made-up doctors, hours and fees. Ask about timings, fees, or request an
+              appointment.
             </p>
             <div className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
               <Button asChild size="lg" className="h-12">
@@ -432,7 +481,10 @@ function Index() {
           </section>
 
           {/* FAQ */}
-          <section aria-labelledby="faq" className="grid gap-8 lg:grid-cols-[minmax(0,0.8fr)_minmax(0,1.2fr)]">
+          <section
+            aria-labelledby="faq"
+            className="grid gap-8 lg:grid-cols-[minmax(0,0.8fr)_minmax(0,1.2fr)]"
+          >
             <div>
               <SectionEyebrow>Questions doctors ask us</SectionEyebrow>
               <h2 id="faq" className="mt-2 text-2xl font-semibold tracking-tight sm:text-3xl">
@@ -441,7 +493,10 @@ function Index() {
             </div>
             <div className="divide-y divide-border rounded-xl border border-border bg-card/50">
               {FAQS.map(({ q, a }) => (
-                <details key={q} className="group px-5 py-1 [&_summary::-webkit-details-marker]:hidden">
+                <details
+                  key={q}
+                  className="group px-5 py-1 [&_summary::-webkit-details-marker]:hidden"
+                >
                   <summary className="flex min-h-14 cursor-pointer list-none items-center justify-between gap-4 py-3 font-medium">
                     {q}
                     <span className="text-xl leading-none text-muted-foreground transition-transform group-open:rotate-45">
@@ -455,15 +510,22 @@ function Index() {
           </section>
 
           {/* GET STARTED */}
-          <section id="get-started" aria-labelledby="get-started-title" className="scroll-mt-20 grid gap-8 lg:grid-cols-[minmax(0,0.8fr)_minmax(0,1.2fr)]">
+          <section
+            id="get-started"
+            aria-labelledby="get-started-title"
+            className="scroll-mt-20 grid gap-8 lg:grid-cols-[minmax(0,0.8fr)_minmax(0,1.2fr)]"
+          >
             <div>
               <SectionEyebrow>Get started</SectionEyebrow>
-              <h2 id="get-started-title" className="mt-2 text-2xl font-semibold tracking-tight sm:text-3xl">
+              <h2
+                id="get-started-title"
+                className="mt-2 text-2xl font-semibold tracking-tight sm:text-3xl"
+              >
                 Get a 24/7 assistant for your clinic.
               </h2>
               <p className="mt-3 text-muted-foreground">
-                Tell us about your clinic. We&apos;ll walk you through a live demo and set up Mira with your doctors,
-                timings and fees.
+                Tell us about your clinic. We&apos;ll walk you through a live demo and set up Mira
+                with your doctors, timings and fees.
               </p>
               <ul className="mt-6 space-y-2 text-sm text-muted-foreground">
                 {[
@@ -479,7 +541,10 @@ function Index() {
               </ul>
             </div>
             <div className="rounded-2xl border border-border bg-card p-5 sm:p-6">
-              <LeadForm businessPlaceholder="e.g. children's clinic, dental clinic" submitLabel="Request my free demo" />
+              <LeadForm
+                businessPlaceholder="e.g. children's clinic, dental clinic"
+                submitLabel="Request my free demo"
+              />
             </div>
           </section>
 
@@ -493,8 +558,8 @@ function Index() {
                     For technical teams
                   </h2>
                   <p className="text-sm text-muted-foreground">
-                    Mira is tuned in our voice AI studio — compare speech, model and voice providers with latency and
-                    cost per turn.
+                    Mira is tuned in our voice AI studio — compare speech, model and voice providers
+                    with latency and cost per turn.
                   </p>
                 </div>
               </div>
@@ -525,9 +590,15 @@ function SectionEyebrow({ children }: { children: React.ReactNode }) {
 function HeroConversation() {
   const lines: { from: "patient" | "mira"; text: string }[] = [
     { from: "patient", text: "Hi, is the doctor available tomorrow evening? My son has a fever." },
-    { from: "mira", text: "Yes — Dr. Rao consults from 5 to 8 PM tomorrow. The fee is ₹600. Shall I request a slot?" },
+    {
+      from: "mira",
+      text: "Yes — Dr. Rao consults from 5 to 8 PM tomorrow. The fee is ₹600. Shall I request a slot?",
+    },
     { from: "patient", text: "6 PM please. Name is Arjun." },
-    { from: "mira", text: "Done ✅ I've sent your 6 PM request to the clinic team. They'll confirm on this number shortly." },
+    {
+      from: "mira",
+      text: "Done ✅ I've sent your 6 PM request to the clinic team. They'll confirm on this number shortly.",
+    },
   ];
   return (
     <div className="mx-auto w-full max-w-sm lg:max-w-none">
@@ -541,11 +612,16 @@ function HeroConversation() {
               <p className="truncate text-sm font-semibold">Your Clinic · Mira</p>
               <p className="text-[11px] text-primary">online · replies instantly</p>
             </div>
-            <span className="rounded-full bg-muted px-2 py-0.5 font-mono text-[10px] text-muted-foreground">11:42 PM</span>
+            <span className="rounded-full bg-muted px-2 py-0.5 font-mono text-[10px] text-muted-foreground">
+              11:42 PM
+            </span>
           </div>
           <div className="space-y-2.5 px-2 py-4">
             {lines.map((line, i) => (
-              <div key={i} className={line.from === "patient" ? "flex justify-end" : "flex justify-start"}>
+              <div
+                key={i}
+                className={line.from === "patient" ? "flex justify-end" : "flex justify-start"}
+              >
                 <p
                   className={
                     line.from === "patient"
@@ -564,7 +640,9 @@ function HeroConversation() {
           New appointment request sent to staff
         </div>
       </div>
-      <p className="mt-3 text-center text-[11px] text-muted-foreground">Illustrative conversation</p>
+      <p className="mt-3 text-center text-[11px] text-muted-foreground">
+        Illustrative conversation
+      </p>
     </div>
   );
 }
@@ -579,7 +657,9 @@ function PortalPreview() {
     <div className="mx-auto w-full max-w-sm rounded-2xl border border-border bg-background p-4 shadow-xl lg:max-w-none">
       <div className="flex items-center justify-between">
         <p className="text-xs text-muted-foreground">Staff portal</p>
-        <span className="rounded-full bg-primary/15 px-2 py-0.5 text-[11px] font-medium text-primary">2 new</span>
+        <span className="rounded-full bg-primary/15 px-2 py-0.5 text-[11px] font-medium text-primary">
+          2 new
+        </span>
       </div>
       <p className="mt-1 font-semibold">Appointment requests</p>
       <ul className="mt-4 space-y-2.5">
@@ -603,7 +683,9 @@ function PortalPreview() {
             <div className="mt-2.5 flex items-center justify-between text-[11px] text-muted-foreground">
               <span>via {r.channel}</span>
               {r.status === "New" && (
-                <span className="rounded-md bg-primary px-2 py-1 font-medium text-primary-foreground">Confirm</span>
+                <span className="rounded-md bg-primary px-2 py-1 font-medium text-primary-foreground">
+                  Confirm
+                </span>
               )}
             </div>
           </li>

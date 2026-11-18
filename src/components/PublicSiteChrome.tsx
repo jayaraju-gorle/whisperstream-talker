@@ -47,10 +47,14 @@ export function PublicSiteFooter() {
             <p className="text-sm font-medium">Conversational Flows Studio</p>
           </div>
           <p className="mt-2 max-w-md text-sm text-muted-foreground">
-            A done-for-you 24/7 appointment assistant for clinics — on your phone line, WhatsApp, and website.
+            A done-for-you 24/7 appointment assistant for clinics — on your phone line, WhatsApp,
+            and website.
           </p>
           <div className="mt-4 flex flex-wrap gap-x-4 gap-y-1 text-sm">
-            <Link to="/demo" className="inline-flex min-h-11 items-center text-muted-foreground hover:text-foreground">
+            <Link
+              to="/demo"
+              className="inline-flex min-h-11 items-center text-muted-foreground hover:text-foreground"
+            >
               Studio demo
             </Link>
             <Link
@@ -62,7 +66,9 @@ export function PublicSiteFooter() {
           </div>
         </div>
         <nav aria-label="Solutions" className="min-w-0">
-          <p className="font-mono text-xs uppercase tracking-[0.2em] text-muted-foreground">Solutions</p>
+          <p className="font-mono text-xs uppercase tracking-[0.2em] text-muted-foreground">
+            Solutions
+          </p>
           <ul className="mt-2">
             {FOOTER_LINKS.map((link) => (
               <li key={link.to}>
