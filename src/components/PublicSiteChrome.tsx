@@ -72,6 +72,14 @@ export function PublicSiteFooter() {
             </li>
             <li>
               <Link
+                to="/web-agent"
+                className="inline-flex min-h-11 items-center text-sm text-muted-foreground underline-offset-4 hover:text-foreground hover:underline"
+              >
+                Web agent demo — website, WhatsApp, and phone
+              </Link>
+            </li>
+            <li>
+              <Link
                 to="/tiny-stars"
                 className="inline-flex min-h-11 items-center text-sm text-muted-foreground underline-offset-4 hover:text-foreground hover:underline"
               >

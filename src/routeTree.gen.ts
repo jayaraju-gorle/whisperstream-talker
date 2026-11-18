@@ -17,6 +17,7 @@ import { Route as DemoRouteImport } from './routes/demo'
 import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as TinyStarsRouteImport } from './routes/tiny-stars'
 import { Route as VirtualReceptionistRouteImport } from './routes/virtual-receptionist'
+import { Route as WebAgentRouteImport } from './routes/web-agent'
 import { Route as WhatsappAppointmentBookingRouteImport } from './routes/whatsapp-appointment-booking'
 import { Route as AuthenticatedBusinessesRouteImport } from './routes/_authenticated/businesses'
 import { Route as AuthenticatedHistoryRouteImport } from './routes/_authenticated/history'
@@ -80,6 +81,11 @@ const TinyStarsRoute = TinyStarsRouteImport.update({
 const VirtualReceptionistRoute = VirtualReceptionistRouteImport.update({
   id: '/virtual-receptionist',
   path: '/virtual-receptionist',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const WebAgentRoute = WebAgentRouteImport.update({
+  id: '/web-agent',
+  path: '/web-agent',
   getParentRoute: () => rootRouteImport,
 } as any)
 const WhatsappAppointmentBookingRoute =
@@ -223,6 +229,7 @@ export interface FileRoutesByFullPath {
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/tiny-stars': typeof TinyStarsRoute
   '/virtual-receptionist': typeof VirtualReceptionistRoute
+  '/web-agent': typeof WebAgentRoute
   '/whatsapp-appointment-booking': typeof WhatsappAppointmentBookingRoute
   '/businesses': typeof AuthenticatedBusinessesRoute
   '/history': typeof AuthenticatedHistoryRouteWithChildren
@@ -257,6 +264,7 @@ export interface FileRoutesByTo {
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/tiny-stars': typeof TinyStarsRoute
   '/virtual-receptionist': typeof VirtualReceptionistRoute
+  '/web-agent': typeof WebAgentRoute
   '/whatsapp-appointment-booking': typeof WhatsappAppointmentBookingRoute
   '/businesses': typeof AuthenticatedBusinessesRoute
   '/history': typeof AuthenticatedHistoryRouteWithChildren
@@ -293,6 +301,7 @@ export interface FileRoutesById {
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/tiny-stars': typeof TinyStarsRoute
   '/virtual-receptionist': typeof VirtualReceptionistRoute
+  '/web-agent': typeof WebAgentRoute
   '/whatsapp-appointment-booking': typeof WhatsappAppointmentBookingRoute
   '/_authenticated/businesses': typeof AuthenticatedBusinessesRoute
   '/_authenticated/history': typeof AuthenticatedHistoryRouteWithChildren
@@ -329,6 +338,7 @@ export interface FileRouteTypes {
     | '/sitemap.xml'
     | '/tiny-stars'
     | '/virtual-receptionist'
+    | '/web-agent'
     | '/whatsapp-appointment-booking'
     | '/businesses'
     | '/history'
@@ -363,6 +373,7 @@ export interface FileRouteTypes {
     | '/sitemap.xml'
     | '/tiny-stars'
     | '/virtual-receptionist'
+    | '/web-agent'
     | '/whatsapp-appointment-booking'
     | '/businesses'
     | '/history'
@@ -398,6 +409,7 @@ export interface FileRouteTypes {
     | '/sitemap.xml'
     | '/tiny-stars'
     | '/virtual-receptionist'
+    | '/web-agent'
     | '/whatsapp-appointment-booking'
     | '/_authenticated/businesses'
     | '/_authenticated/history'
@@ -434,6 +446,7 @@ export interface RootRouteChildren {
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   TinyStarsRoute: typeof TinyStarsRoute
   VirtualReceptionistRoute: typeof VirtualReceptionistRoute
+  WebAgentRoute: typeof WebAgentRoute
   WhatsappAppointmentBookingRoute: typeof WhatsappAppointmentBookingRoute
   ApiLlmRoute: typeof ApiLlmRoute
   ApiProvidersRoute: typeof ApiProvidersRoute
@@ -508,6 +521,13 @@ declare module '@tanstack/react-router' {
       path: '/virtual-receptionist'
       fullPath: '/virtual-receptionist'
       preLoaderRoute: typeof VirtualReceptionistRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/web-agent': {
+      id: '/web-agent'
+      path: '/web-agent'
+      fullPath: '/web-agent'
+      preLoaderRoute: typeof WebAgentRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/whatsapp-appointment-booking': {
@@ -733,6 +753,7 @@ const rootRouteChildren: RootRouteChildren = {
   SitemapDotxmlRoute: SitemapDotxmlRoute,
   TinyStarsRoute: TinyStarsRoute,
   VirtualReceptionistRoute: VirtualReceptionistRoute,
+  WebAgentRoute: WebAgentRoute,
   WhatsappAppointmentBookingRoute: WhatsappAppointmentBookingRoute,
   ApiLlmRoute: ApiLlmRoute,
   ApiProvidersRoute: ApiProvidersRoute,

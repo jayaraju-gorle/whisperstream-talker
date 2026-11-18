@@ -129,7 +129,10 @@ function RootComponent() {
   const { queryClient } = Route.useRouteContext();
   const router = useRouter();
   const embedded = useRouterState({
-    select: (state) => state.location.pathname === "/embed/assistant" || state.location.pathname === "/tiny-stars",
+    select: (state) =>
+      state.location.pathname === "/embed/assistant" ||
+      state.location.pathname === "/tiny-stars" ||
+      state.location.pathname === "/web-agent",
   });
 
   useEffect(() => {
