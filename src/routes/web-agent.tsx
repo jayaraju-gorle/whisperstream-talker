@@ -122,7 +122,7 @@ function WebAgentDemo() {
                 </Link>
               </Button>
               <Button asChild variant="outline">
-                <Link to="/tiny-stars">View sample clinic storefront</Link>
+                <Link to="/virtual-receptionist">24/7 Virtual Receptionist</Link>
               </Button>
             </div>
           </div>
