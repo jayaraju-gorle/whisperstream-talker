@@ -6,6 +6,6 @@ export const getClinicPresets = createServerFn({ method: "POST" })
   .handler(async ({ context }) => {
     const { data: allowed, error } = await context.supabase.rpc("has_role", { _user_id: context.userId, _role: "admin" });
     if (error || !allowed) throw new Error("Only signed-in admins can access business presets.");
-    const { IVY_PRESET, IYASHI_PRESET, SSK_PRESET } = await import("@/lib/clinic-presets");
-    return [IVY_PRESET, IYASHI_PRESET, SSK_PRESET].map(preset => ({ preset, label: preset.name }));
+    const { IVY_PRESET, IYASHI_PRESET, SSK_PRESET, TINY_STARS_PRESET } = await import("@/lib/clinic-presets");
+    return [IVY_PRESET, IYASHI_PRESET, SSK_PRESET, TINY_STARS_PRESET].map(preset => ({ preset, label: preset.name }));
   });

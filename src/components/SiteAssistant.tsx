@@ -6,6 +6,7 @@ import { DefaultChatTransport, type UIMessage } from "ai";
 import { MessageCircle, Phone, RotateCcw, UserCheck, X } from "lucide-react";
 import { toast } from "sonner";
 import { Logo } from "@/components/Logo";
+import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import {
   Conversation,
@@ -137,11 +138,11 @@ function RestartConversation({
   );
 }
 
-export function EmbeddedClinicAssistant() {
+export function EmbeddedClinicAssistant({ className }: { className?: string }) {
   const { id, initial, demoBusiness, busy, setBusy, restart } = useFloSession(true);
   return (
     <section
-      className="flex h-dvh min-h-0 flex-col bg-card text-card-foreground"
+      className={cn("flex h-dvh min-h-0 flex-col bg-card text-card-foreground", className)}
       aria-label="Mira conversation"
     >
       <header className="flex items-center gap-2 border-b border-border px-4 py-3">

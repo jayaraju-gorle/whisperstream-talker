@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { stepError } from "./clinic";
-import { IVY_PRESET, IYASHI_PRESET, SSK_PRESET } from "./clinic-presets";
+import { IVY_PRESET, IYASHI_PRESET, SSK_PRESET, TINY_STARS_PRESET } from "./clinic-presets";
 
 describe("Ivy Women and Fertility Centre preset", () => {
   it("passes every wizard validation step", () => {
@@ -82,5 +82,30 @@ describe("SSK & Associates preset", () => {
     expect(SSK_PRESET.doctors).toHaveLength(1);
     expect(SSK_PRESET.doctors[0]?.name).toBe("CA Sasumana Saikumar");
     expect(SSK_PRESET.doctors[0]?.fee).toBe("₹500");
+  });
+});
+
+describe("Tiny Stars Children's Clinic preset", () => {
+  it("passes every wizard validation step", () => {
+    expect(stepError(0, TINY_STARS_PRESET)).toBeNull();
+    expect(stepError(1, TINY_STARS_PRESET)).toBeNull();
+    expect(stepError(2, TINY_STARS_PRESET)).toBeNull();
+  });
+
+  it("carries the Google Business Profile hours, phone, address, and doctor", () => {
+    expect(TINY_STARS_PRESET.name).toBe("Tiny Stars Children's Clinic");
+    expect(TINY_STARS_PRESET.phone).toBe("+91 94943 96378");
+    expect(TINY_STARS_PRESET.address).toContain("Kondapur");
+    expect(TINY_STARS_PRESET.hours.find((h) => h.day === "Monday")).toEqual({
+      day: "Monday",
+      open: true,
+      slots: [{ from: "16:00", to: "21:00" }],
+    });
+    expect(TINY_STARS_PRESET.hours.find((h) => h.day === "Sunday")).toEqual({
+      day: "Sunday",
+      open: true,
+      slots: [{ from: "10:00", to: "13:00" }],
+    });
+    expect(TINY_STARS_PRESET.doctors[0]?.name).toBe("Dr. Sainath Reddy Ellanki");
   });
 });
