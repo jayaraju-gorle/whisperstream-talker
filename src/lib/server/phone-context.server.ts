@@ -155,7 +155,7 @@ export async function loadRecentWhatsAppNote(db: Db, phone: string, now = Date.n
     text: `[Context only, not a new request: this visitor recently messaged Mira on WhatsApp from the same phone number. Before disclosing personal details, briefly confirm they want to continue their WhatsApp inquiry.]\n${turns.join("\n")}`.slice(0, 6000) }] }];
 }
 
-/** Extracts a normalized phone number from saved tool inputs in a conversation history. */
+/** Extracts a normalized phone number from saved tool inputs or user messages in a conversation history. */
 export function phoneFromMessages(messages: UIMessage[]): string | null {
   for (let i = messages.length - 1; i >= 0; i--) {
     const parts = messages[i]?.parts ?? [];
@@ -163,6 +163,18 @@ export function phoneFromMessages(messages: UIMessage[]): string | null {
       const part = parts[j] as { type?: string; input?: { phone?: unknown } } | undefined;
       if (part?.type?.startsWith("tool-") && typeof part.input?.phone === "string") {
         const normalized = normalizeCallerPhone(part.input.phone);
+        if (normalized) return normalized;
+      }
+    }
+  }
+  for (let i = messages.length - 1; i >= 0; i--) {
+    const message = messages[i];
+    if (message?.role !== "user") continue;
+    for (const part of message.parts ?? []) {
+      if (part.type !== "text") continue;
+      const matches = (part as { text: string }).text.match(/\+?\d[\d\s().-]{8,16}\d/g) ?? [];
+      for (let k = matches.length - 1; k >= 0; k--) {
+        const normalized = normalizeCallerPhone(matches[k]);
         if (normalized) return normalized;
       }
     }

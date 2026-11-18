@@ -117,10 +117,13 @@ describe("web and whatsapp cross-channel helpers", () => {
     expect(text).toContain("Visitor (2026-11-16T06:00:00Z): Can I see Dr Rao at 5 PM?");
     expect(text).toContain("Mira (2026-11-16T06:05:00Z): Sure, 5 PM works.");
   });
-  it("extracts normalized phone from tool call inputs in message history", async () => {
+  it("extracts normalized phone from tool call inputs or user text in message history", async () => {
     const { phoneFromMessages } = await import("./phone-context.server");
     expect(phoneFromMessages([
       { id: "a1", role: "assistant", parts: [{ type: "tool-request_appointment", input: { name: "Arun", phone: "9876543210" } } as never] },
     ])).toBe("919876543210");
+    expect(phoneFromMessages([
+      { id: "u1", role: "user", parts: [{ type: "text", text: "hi pls save my contact number as 7406497408" }] },
+    ])).toBe("917406497408");
   });
 });
