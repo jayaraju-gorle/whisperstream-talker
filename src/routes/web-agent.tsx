@@ -1,38 +1,62 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { ArrowRight, Globe, Layers, MessageCircle, Mic, Phone, Sparkles } from "lucide-react";
-import { EmbeddedClinicAssistant } from "@/components/SiteAssistant";
-import { PublicSiteFooter, PublicSiteHeader } from "@/components/PublicSiteChrome";
+import {
+  ArrowLeft,
+  CalendarCheck,
+  Clock3,
+  Globe,
+  MapPin,
+  MessageCircle,
+  Mic,
+  Phone,
+  ShieldCheck,
+  Sparkles,
+  Stethoscope,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { PHONE_ASSISTANT_DISPLAY, PHONE_ASSISTANT_URL, WHATSAPP_ASSISTANT_URL } from "@/lib/flo-voice";
 
 const PAGE_URL = "https://conversationalaistudio.online/web-agent";
-const PAGE_TITLE = "24/7 Web Agent Demo — Website, WhatsApp & Phone Assistant";
+const PAGE_TITLE = "Sample Clinic Website — 24/7 Web Assistant Bubble Demo";
 const PAGE_DESCRIPTION =
-  "Live demonstration of how our 24/7 conversational widget integrates into your website alongside WhatsApp and phone calls with shared context.";
+  "Interactive preview of a clinic website with our 24/7 expandable Web Assistant bubble at the bottom right, connected with WhatsApp and Phone.";
 
-const CHANNELS = [
+const DOCTORS = [
   {
-    icon: Globe,
-    title: "1. Website Widget (Text & Voice)",
-    description:
-      "Embeds directly on your clinic or business website. Visitors can type questions or click Talk to Mira for instant browser voice — no app download needed.",
-    badge: "Live on this page",
+    name: "Dr. Anika Rao",
+    specialty: "Family Medicine & General Physician",
+    hours: "Mon–Sat · 10:00 AM – 1:00 PM, 5:00 PM – 8:00 PM",
+    fee: "₹600",
   },
   {
-    icon: MessageCircle,
-    title: "2. WhatsApp Business",
-    description:
-      "Answers patient messages and voice notes 24/7 on WhatsApp, shares timings and fees, and collects appointment requests automatically.",
-    badge: "24/7 Messaging",
-  },
-  {
-    icon: Phone,
-    title: "3. Phone Receptionist",
-    description:
-      "Picks up incoming phone calls in natural spoken voice, handles routine inquiries during busy hours, and continues recent WhatsApp or web conversations.",
-    badge: "Inbound Voice",
+    name: "Dr. Rohan Mehta",
+    specialty: "Child Health & Paediatrics",
+    hours: "Mon–Sat · 5:00 PM – 8:00 PM",
+    fee: "₹700",
   },
 ] as const;
+
+const SERVICES = [
+  {
+    icon: Stethoscope,
+    title: "Outpatient Consultations",
+    text: "Routine check-ups, fever & acute care, and chronic condition follow-ups with minimal wait time.",
+  },
+  {
+    icon: ShieldCheck,
+    title: "Preventive Care & Vaccinations",
+    text: "Annual health screenings, immunisations, and family wellness plans.",
+  },
+  {
+    icon: CalendarCheck,
+    title: "24/7 Appointment Requests",
+    text: "Patients can request slots any time via the website bubble, WhatsApp, or phone.",
+  },
+] as const;
+
+function openAssistantBubble() {
+  const toggle = document.querySelector<HTMLButtonElement>("[data-site-assistant-toggle]");
+  if (toggle && toggle.getAttribute("aria-label") !== "Close chat") toggle.click();
+}
 
 export const Route = createFileRoute("/web-agent")({
   staticData: { sitemap: true, sitemapPriority: 0.9 },
@@ -53,120 +77,184 @@ export const Route = createFileRoute("/web-agent")({
 
 function WebAgentDemo() {
   return (
-    <div className="min-h-screen bg-background text-foreground">
-      <PublicSiteHeader />
-
-      <main className="mx-auto max-w-6xl space-y-14 px-4 py-8 sm:px-6 sm:py-12">
-        <section className="grid items-start gap-8 lg:grid-cols-[minmax(0,1.05fr)_minmax(0,0.95fr)]">
-          <div className="space-y-6">
-            <div className="inline-flex items-center gap-2 rounded-full border border-border bg-card px-3 py-1 text-xs text-muted-foreground">
-              <Sparkles className="h-3.5 w-3.5 text-primary" />
-              Interactive Web Agent Demo · 3-Channel Integration
-            </div>
-
-            <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">
-              One 24/7 assistant across your Website, WhatsApp, and Phone.
-            </h1>
-
-            <p className="text-base leading-relaxed text-muted-foreground">
-              See exactly how our conversational widget looks and works once embedded on a clinic or business website.
-              It shares the same hours, doctor profiles, and live conversation context with your WhatsApp and phone
-              channels.
-            </p>
-
-            <div className="grid gap-3 sm:grid-cols-3">
-              <a
-                href="#widget-preview"
-                className="rounded-xl border border-primary/40 bg-primary/5 p-3.5 transition-colors hover:bg-primary/10"
+    <div className="min-h-screen overflow-x-hidden bg-background text-foreground">
+      {/* Demo preview bar */}
+      <div className="border-b border-primary/30 bg-primary/10 px-4 py-2.5 text-xs sm:px-6">
+        <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-2">
+          <p className="flex items-center gap-2 font-medium text-foreground">
+            <Sparkles className="h-3.5 w-3.5 shrink-0 text-primary" />
+            <span>
+              Placeholder clinic website preview — click the{" "}
+              <button
+                type="button"
+                onClick={openAssistantBubble}
+                className="underline decoration-primary underline-offset-4 hover:text-primary"
               >
-                <Globe className="h-4 w-4 text-primary" />
-                <p className="mt-2 text-sm font-medium">Web Widget</p>
-                <p className="mt-0.5 text-xs text-muted-foreground">Try live chat &amp; voice →</p>
-              </a>
-              <a
-                href={WHATSAPP_ASSISTANT_URL}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="rounded-xl border border-border bg-card p-3.5 transition-colors hover:bg-accent/50"
-              >
-                <MessageCircle className="h-4 w-4 text-primary" />
-                <p className="mt-2 text-sm font-medium">WhatsApp</p>
-                <p className="mt-0.5 text-xs text-muted-foreground">Open WhatsApp chat ↗</p>
-              </a>
-              <a
-                href={PHONE_ASSISTANT_URL}
-                className="rounded-xl border border-border bg-card p-3.5 transition-colors hover:bg-accent/50"
-              >
-                <Phone className="h-4 w-4 text-primary" />
-                <p className="mt-2 text-sm font-medium">Phone Call</p>
-                <p className="mt-0.5 text-xs text-muted-foreground">{PHONE_ASSISTANT_DISPLAY}</p>
-              </a>
-            </div>
+                Ask Mira bubble at the bottom right
+              </button>{" "}
+              to test chat &amp; voice.
+            </span>
+          </p>
+          <Button asChild variant="ghost" size="sm" className="h-8 px-2 text-xs">
+            <Link to="/">
+              <ArrowLeft className="h-3.5 w-3.5" />
+              Back to Studio
+            </Link>
+          </Button>
+        </div>
+      </div>
 
-            <div className="space-y-2 rounded-xl border border-border bg-card p-4 text-sm">
-              <div className="flex items-center gap-2 font-medium">
-                <Layers className="h-4 w-4 text-primary" />
-                Shared context across every channel
-              </div>
-              <p className="text-xs leading-relaxed text-muted-foreground">
-                If a visitor messages on WhatsApp, calls your clinic number, and later opens the website widget with
-                their phone number, Mira keeps the conversation continuous without making them repeat themselves.
+      {/* Placeholder clinic website header */}
+      <header className="border-b border-border bg-card/40">
+        <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 py-4 sm:px-6">
+          <div className="flex min-w-0 items-center gap-2.5">
+            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-primary/15 text-primary">
+              <Stethoscope className="h-5 w-5" />
+            </span>
+            <div className="min-w-0">
+              <p className="truncate font-semibold">Your Clinic Website</p>
+              <p className="truncate text-xs text-muted-foreground">
+                Fictional preview (Aura Health Clinic)
               </p>
             </div>
+          </div>
+          <nav aria-label="Clinic website" className="hidden items-center gap-5 text-sm text-muted-foreground sm:flex">
+            <a href="#services" className="hover:text-foreground">Services</a>
+            <a href="#doctors" className="hover:text-foreground">Doctors</a>
+            <a href="#visit" className="hover:text-foreground">Hours &amp; Location</a>
+          </nav>
+          <Button size="sm" className="shrink-0" onClick={openAssistantBubble}>
+            <MessageCircle className="h-4 w-4" />
+            Book / Ask
+          </Button>
+        </div>
+      </header>
 
-            <div className="flex flex-wrap gap-3">
-              <Button asChild>
-                <Link to="/clinics">
-                  Get this for your clinic
-                  <ArrowRight className="h-4 w-4" />
-                </Link>
+      <main className="mx-auto max-w-6xl space-y-16 px-4 pb-28 pt-10 sm:px-6 sm:pt-14">
+        {/* Placeholder clinic hero */}
+        <section className="grid items-center gap-8 lg:grid-cols-[minmax(0,1.15fr)_minmax(0,0.85fr)]">
+          <div className="space-y-5">
+            <p className="inline-flex items-center gap-2 rounded-full border border-border bg-card px-3 py-1 text-xs text-muted-foreground">
+              <Globe className="h-3.5 w-3.5 text-primary" />
+              Sample clinic storefront · Fictional details
+            </p>
+            <h1 className="text-3xl font-semibold leading-[1.12] tracking-tight sm:text-5xl">
+              Compassionate family care, with 24/7 appointment assistance.
+            </h1>
+            <p className="text-base leading-relaxed text-muted-foreground sm:text-lg">
+              This is how your clinic&apos;s own website looks once our assistant is embedded. Patients can tap the
+              expandable chat &amp; voice bubble in the bottom-right corner at any hour — or reach you on WhatsApp
+              and phone.
+            </p>
+            <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap">
+              <Button size="lg" className="h-12" onClick={openAssistantBubble}>
+                <Mic className="h-4 w-4" />
+                Open Web Assistant Bubble
               </Button>
-              <Button asChild variant="outline">
-                <Link to="/virtual-receptionist">24/7 Virtual Receptionist</Link>
+              <Button asChild size="lg" variant="outline" className="h-12">
+                <a href={WHATSAPP_ASSISTANT_URL} target="_blank" rel="noopener noreferrer">
+                  <MessageCircle className="h-4 w-4" />
+                  Try on WhatsApp
+                </a>
+              </Button>
+              <Button asChild size="lg" variant="outline" className="h-12">
+                <a href={PHONE_ASSISTANT_URL}>
+                  <Phone className="h-4 w-4" />
+                  Call {PHONE_ASSISTANT_DISPLAY}
+                </a>
               </Button>
             </div>
           </div>
 
-          <div
-            id="widget-preview"
-            className="overflow-hidden rounded-2xl border border-border bg-card shadow-2xl"
-          >
-            <div className="flex items-center justify-between border-b border-border bg-muted/40 px-4 py-2.5 text-xs text-muted-foreground">
-              <span className="inline-flex items-center gap-1.5 font-medium text-foreground">
-                <Mic className="h-3.5 w-3.5 text-primary" />
-                Integrated Website Widget Preview
-              </span>
-              <span>Text &amp; Voice</span>
-            </div>
-            <EmbeddedClinicAssistant className="h-[580px]" />
+          <div className="rounded-2xl border border-border bg-card p-6 shadow-lg">
+            <p className="font-mono text-xs uppercase tracking-[0.18em] text-primary">How to test this page</p>
+            <ol className="mt-4 space-y-3 text-sm text-muted-foreground">
+              <li className="flex gap-3">
+                <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary/15 font-mono text-xs font-semibold text-primary">
+                  1
+                </span>
+                <span>
+                  Tap the <strong className="text-foreground">Ask Mira</strong> bubble in the bottom-right corner to
+                  expand it.
+                </span>
+              </li>
+              <li className="flex gap-3">
+                <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary/15 font-mono text-xs font-semibold text-primary">
+                  2
+                </span>
+                <span>
+                  Ask about doctor timings, fees, or tap <strong className="text-foreground">Talk to Mira</strong> for
+                  live browser voice.
+                </span>
+              </li>
+              <li className="flex gap-3">
+                <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary/15 font-mono text-xs font-semibold text-primary">
+                  3
+                </span>
+                <span>
+                  Share your phone number to see WhatsApp and phone call context carry over seamlessly.
+                </span>
+              </li>
+            </ol>
           </div>
         </section>
 
-        <section className="space-y-5">
-          <div className="space-y-1">
-            <h2 className="text-2xl font-semibold tracking-tight">How the 3 channels work together</h2>
-            <p className="text-sm text-muted-foreground">
-              Every channel uses your approved business hours, fees, and appointment-request rules.
-            </p>
-          </div>
+        {/* Placeholder services */}
+        <section id="services" className="space-y-5">
+          <h2 className="text-2xl font-semibold tracking-tight">Clinic Services</h2>
           <div className="grid gap-4 md:grid-cols-3">
-            {CHANNELS.map((channel) => (
-              <div key={channel.title} className="space-y-3 rounded-xl border border-border bg-card p-5">
-                <div className="flex items-center justify-between">
-                  <channel.icon className="h-5 w-5 text-primary" />
-                  <span className="rounded-full bg-secondary px-2.5 py-0.5 text-[11px] font-medium text-secondary-foreground">
-                    {channel.badge}
-                  </span>
-                </div>
-                <h3 className="font-semibold">{channel.title}</h3>
-                <p className="text-sm leading-relaxed text-muted-foreground">{channel.description}</p>
+            {SERVICES.map((service) => (
+              <div key={service.title} className="space-y-2.5 rounded-xl border border-border bg-card/70 p-5">
+                <service.icon className="h-5 w-5 text-primary" />
+                <h3 className="font-semibold">{service.title}</h3>
+                <p className="text-sm leading-relaxed text-muted-foreground">{service.text}</p>
               </div>
             ))}
           </div>
         </section>
-      </main>
 
-      <PublicSiteFooter />
+        {/* Placeholder doctors & hours */}
+        <section id="doctors" className="grid gap-6 lg:grid-cols-2">
+          <div className="space-y-4 rounded-xl border border-border bg-card p-5 sm:p-6">
+            <div className="flex items-center gap-2">
+              <Stethoscope className="h-5 w-5 text-primary" />
+              <h2 className="text-lg font-semibold">Consulting Doctors (Sample)</h2>
+            </div>
+            <ul className="divide-y divide-border">
+              {DOCTORS.map((doc) => (
+                <li key={doc.name} className="flex items-start justify-between gap-4 py-3 first:pt-0 last:pb-0">
+                  <div className="min-w-0">
+                    <p className="font-medium">{doc.name}</p>
+                    <p className="text-xs text-muted-foreground">{doc.specialty}</p>
+                    <p className="mt-1 text-xs text-muted-foreground">{doc.hours}</p>
+                  </div>
+                  <span className="shrink-0 font-mono text-sm font-medium">{doc.fee}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          <div id="visit" className="space-y-4 rounded-xl border border-border bg-card p-5 sm:p-6">
+            <div className="flex items-center gap-2">
+              <Clock3 className="h-5 w-5 text-primary" />
+              <h2 className="text-lg font-semibold">Hours &amp; Location (Sample)</h2>
+            </div>
+            <div className="space-y-2 text-sm text-muted-foreground">
+              <p>
+                <strong className="text-foreground">Monday – Saturday:</strong> 10:00 AM – 1:00 PM &amp; 5:00 PM – 8:00
+                PM
+              </p>
+              <p>
+                <strong className="text-foreground">Sunday:</strong> Closed (24/7 assistant still captures requests)
+              </p>
+            </div>
+            <div className="flex items-start gap-2.5 border-t border-border pt-4 text-sm text-muted-foreground">
+              <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
+              <span>Suite 204, Willow Health Centre, Green Park Neighbourhood, Hyderabad (Illustrative address)</span>
+            </div>
+          </div>
+        </section>
+      </main>
     </div>
   );
 }

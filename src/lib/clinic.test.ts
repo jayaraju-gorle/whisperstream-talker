@@ -50,6 +50,8 @@ describe("clinic onboarding", () => {
     expect(parseClinicCommand("try me please")).toBeNull();
     expect(parseClinicCommand("try ivy")).toEqual({ kind: "try", code: "IVY" });
     expect(parseClinicCommand("TRY Iyashi")).toEqual({ kind: "try", code: "IYASHI" });
+    expect(parseClinicCommand("Start TINY")).toEqual({ kind: "try", code: "TINY" });
+    expect(parseClinicCommand("Hi, I'd like to book an appointment (Code: TINY)")).toEqual({ kind: "try", code: "TINY" });
     expect(parseClinicCommand("try ab")).toBeNull();
   });
   it("validates test codes as 3-10 uppercase letters or digits", () => {

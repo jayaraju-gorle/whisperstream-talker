@@ -128,12 +128,7 @@ function RootShell({ children }: { children: ReactNode }) {
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
   const router = useRouter();
-  const embedded = useRouterState({
-    select: (state) =>
-      state.location.pathname === "/embed/assistant" ||
-      state.location.pathname === "/tiny-stars" ||
-      state.location.pathname === "/web-agent",
-  });
+  const embedded = useRouterState({ select: (state) => state.location.pathname === "/embed/assistant" });
 
   useEffect(() => {
     initAnalytics();

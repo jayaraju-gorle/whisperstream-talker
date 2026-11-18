@@ -91,30 +91,3 @@ export const SSK_PRESET: ClinicInput = {
   notes:
     "Full taxation and compliance services: ITR filing, presumptive taxation (44AD/ADA), capital gains computation, TDS returns & Form 26AS reconciliation, GST registration & returns, PAN/TAN/DSC, advance tax calculation, income tax notice representation, and tax planning.",
 };
-
-export const TINY_STARS_PRESET_LABEL = "Tiny Stars Children's Clinic";
-
-export const TINY_STARS_PRESET: ClinicInput = {
-  name: TINY_STARS_PRESET_LABEL,
-  phone: "+91 94943 96378",
-  emergency_phone: "",
-  email: "",
-  address:
-    "First Floor, Venkata Sai Classic Apartment, 101, Naren Estate Rd, near Indis Viva City, Kanthivanam Colony, Kondapur, Serilingampalle (M), Telangana 500084",
-  map_url: "https://share.google/hT4e7JrGMOuxV8r1u",
-  hours: [
-    ...OPEN_DAYS.map((day) => ({ day, open: true, slots: [{ from: "16:00", to: "21:00" }] })),
-    { day: "Sunday", open: true, slots: [{ from: "10:00", to: "13:00" }] },
-  ],
-  doctors: [
-    {
-      name: "Dr. Sainath Reddy Ellanki",
-      specialty: "Consultant Pediatrician",
-      days: "Mon–Sat 16:00–21:00, Sun 10:00–13:00",
-      fee: "Ask clinic",
-    },
-  ],
-  insurance: "",
-  notes:
-    "Tiny Stars Children's Clinic in Kondapur (5.0★ from 135 Google reviews). Services include general paediatrics, child vaccinations & immunisations, newborn & well-baby check-ups, and acute paediatric care (such as pulled elbow and seasonal illnesses). Child-friendly clinic with clear explanations and ample main-road parking near Indis Viva City.",
-};

@@ -12,10 +12,8 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as AuthRouteImport } from './routes/auth'
-import { Route as ClinicsRouteImport } from './routes/clinics'
 import { Route as DemoRouteImport } from './routes/demo'
 import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
-import { Route as TinyStarsRouteImport } from './routes/tiny-stars'
 import { Route as VirtualReceptionistRouteImport } from './routes/virtual-receptionist'
 import { Route as WebAgentRouteImport } from './routes/web-agent'
 import { Route as WhatsappAppointmentBookingRouteImport } from './routes/whatsapp-appointment-booking'
@@ -58,11 +56,6 @@ const AuthRoute = AuthRouteImport.update({
   path: '/auth',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ClinicsRoute = ClinicsRouteImport.update({
-  id: '/clinics',
-  path: '/clinics',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const DemoRoute = DemoRouteImport.update({
   id: '/demo',
   path: '/demo',
@@ -71,11 +64,6 @@ const DemoRoute = DemoRouteImport.update({
 const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
   id: '/sitemap.xml',
   path: '/sitemap.xml',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const TinyStarsRoute = TinyStarsRouteImport.update({
-  id: '/tiny-stars',
-  path: '/tiny-stars',
   getParentRoute: () => rootRouteImport,
 } as any)
 const VirtualReceptionistRoute = VirtualReceptionistRouteImport.update({
@@ -224,10 +212,8 @@ const ApiPublicBolnaV1ChatCompletionsRoute =
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
-  '/clinics': typeof ClinicsRoute
   '/demo': typeof DemoRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
-  '/tiny-stars': typeof TinyStarsRoute
   '/virtual-receptionist': typeof VirtualReceptionistRoute
   '/web-agent': typeof WebAgentRoute
   '/whatsapp-appointment-booking': typeof WhatsappAppointmentBookingRoute
@@ -259,10 +245,8 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
-  '/clinics': typeof ClinicsRoute
   '/demo': typeof DemoRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
-  '/tiny-stars': typeof TinyStarsRoute
   '/virtual-receptionist': typeof VirtualReceptionistRoute
   '/web-agent': typeof WebAgentRoute
   '/whatsapp-appointment-booking': typeof WhatsappAppointmentBookingRoute
@@ -296,10 +280,8 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/auth': typeof AuthRoute
-  '/clinics': typeof ClinicsRoute
   '/demo': typeof DemoRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
-  '/tiny-stars': typeof TinyStarsRoute
   '/virtual-receptionist': typeof VirtualReceptionistRoute
   '/web-agent': typeof WebAgentRoute
   '/whatsapp-appointment-booking': typeof WhatsappAppointmentBookingRoute
@@ -333,10 +315,8 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/auth'
-    | '/clinics'
     | '/demo'
     | '/sitemap.xml'
-    | '/tiny-stars'
     | '/virtual-receptionist'
     | '/web-agent'
     | '/whatsapp-appointment-booking'
@@ -368,10 +348,8 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/auth'
-    | '/clinics'
     | '/demo'
     | '/sitemap.xml'
-    | '/tiny-stars'
     | '/virtual-receptionist'
     | '/web-agent'
     | '/whatsapp-appointment-booking'
@@ -404,10 +382,8 @@ export interface FileRouteTypes {
     | '/'
     | '/_authenticated'
     | '/auth'
-    | '/clinics'
     | '/demo'
     | '/sitemap.xml'
-    | '/tiny-stars'
     | '/virtual-receptionist'
     | '/web-agent'
     | '/whatsapp-appointment-booking'
@@ -441,10 +417,8 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
   AuthRoute: typeof AuthRoute
-  ClinicsRoute: typeof ClinicsRoute
   DemoRoute: typeof DemoRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
-  TinyStarsRoute: typeof TinyStarsRoute
   VirtualReceptionistRoute: typeof VirtualReceptionistRoute
   WebAgentRoute: typeof WebAgentRoute
   WhatsappAppointmentBookingRoute: typeof WhatsappAppointmentBookingRoute
@@ -488,13 +462,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/clinics': {
-      id: '/clinics'
-      path: '/clinics'
-      fullPath: '/clinics'
-      preLoaderRoute: typeof ClinicsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/demo': {
       id: '/demo'
       path: '/demo'
@@ -507,13 +474,6 @@ declare module '@tanstack/react-router' {
       path: '/sitemap.xml'
       fullPath: '/sitemap.xml'
       preLoaderRoute: typeof SitemapDotxmlRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/tiny-stars': {
-      id: '/tiny-stars'
-      path: '/tiny-stars'
-      fullPath: '/tiny-stars'
-      preLoaderRoute: typeof TinyStarsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/virtual-receptionist': {
@@ -748,10 +708,8 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   AuthRoute: AuthRoute,
-  ClinicsRoute: ClinicsRoute,
   DemoRoute: DemoRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
-  TinyStarsRoute: TinyStarsRoute,
   VirtualReceptionistRoute: VirtualReceptionistRoute,
   WebAgentRoute: WebAgentRoute,
   WhatsappAppointmentBookingRoute: WhatsappAppointmentBookingRoute,

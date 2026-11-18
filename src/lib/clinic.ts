@@ -120,9 +120,11 @@ export function testCommand(code: string) {
 
 export function parseClinicCommand(body: string): { kind: "try"; code: string } | { kind: "exit" } | null {
   const t = body.trim();
-  // Also accepts spoken/spelled forms such as "Try Iyashi." or "try I-Y-A-S-H-I".
-  const m = /^try[\s,]+([a-z0-9]{3,10}|(?:[a-z0-9][\s.-]){2,9}[a-z0-9])[.!?]?$/i.exec(t);
+  // Also accepts spoken/spelled forms such as "Try Iyashi." or "try I-Y-A-S-H-I", plus friendly "Start/Connect <CODE>" or "(Code: <CODE>)".
+  const m = /^(?:try|start|connect)[\s,]+([a-z0-9]{3,10}|(?:[a-z0-9][\s.-]){2,9}[a-z0-9])[.!?]?$/i.exec(t);
   if (m) return { kind: "try", code: m[1]!.replace(/[^a-z0-9]/gi, "").toUpperCase() };
+  const friendly = /\((?:code|ref)\s*:\s*([a-z0-9]{3,10})\)\s*[.!?]?$/i.exec(t);
+  if (friendly) return { kind: "try", code: friendly[1]!.toUpperCase() };
   if (/^exit[.!?]?$/i.test(t)) return { kind: "exit" };
   return null;
 }
