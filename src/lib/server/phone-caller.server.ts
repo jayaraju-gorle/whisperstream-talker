@@ -1,5 +1,5 @@
 import { verifyBolnaBearer } from "./bolna.server";
-import { loadRecentWhatsAppContext, normalizeCallerPhone, phoneContextToken, phoneVisitorId } from "./phone-context.server";
+import { loadRecentWebContext, loadRecentWhatsAppContext, normalizeCallerPhone, phoneContextToken, phoneVisitorId } from "./phone-context.server";
 
 /** Bolna inbound caller lookup: returns only a signed reference, never private conversation text. */
 export async function handlePhoneCaller(request: Request) {
@@ -19,7 +19,11 @@ export async function handlePhoneCaller(request: Request) {
     const { data: existing, error } = await db.from("assistant_conversations").select("messages").eq("visitor_id", visitorId).maybeSingle();
     if (error) throw new Error("Could not load phone conversation");
     if (!existing) {
-      const messages = await loadRecentWhatsAppContext(db, phone);
+      const [waMessages, webMessages] = await Promise.all([
+        loadRecentWhatsAppContext(db, phone),
+        loadRecentWebContext(db, phone).catch(() => []),
+      ]);
+      const messages = [...waMessages, ...webMessages];
       const { error: saveError } = await db.from("assistant_conversations").upsert({ visitor_id: visitorId, messages: messages as never }, { onConflict: "visitor_id", ignoreDuplicates: true });
       if (saveError) throw new Error("Could not save phone context");
     }

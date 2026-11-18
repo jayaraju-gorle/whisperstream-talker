@@ -119,4 +119,19 @@ describe("Bolna protocol", () => {
     expect(eq).toHaveBeenCalledWith("visitor_id", id);
     expect(mocks.send.mock.calls[0]?.[0].messages).toEqual([prior, expect.objectContaining({ role: "user", parts: [{ type: "text", text: "Continue please" }] })]);
   });
+  it("falls back to the most recent phone_call_links entry when no token or call id is sent", async () => {
+    vi.stubEnv("BOLNA_API_TOKEN", token);
+    const id = await phoneVisitorId("recent-inbound-call");
+    const prior = { id: "phone-wa-booking", role: "user", parts: [{ type: "text", text: "Need Dr Rao at 5 PM" }] };
+    const linkChain = { select: vi.fn().mockReturnThis(), gte: vi.fn().mockReturnThis(), order: vi.fn().mockReturnThis(), limit: vi.fn().mockReturnThis(), maybeSingle: vi.fn().mockResolvedValue({ data: { visitor_id: id } }) };
+    const convoEq = vi.fn().mockReturnThis();
+    const convoChain = { select: vi.fn().mockReturnThis(), eq: convoEq, maybeSingle: vi.fn().mockResolvedValue({ data: { messages: [prior] } }) };
+    mocks.from.mockImplementation((table: string) => table === "phone_call_links" ? linkChain : convoChain);
+    mocks.send.mockResolvedValue({});
+    mocks.read.mockImplementation(async function* () { yield { parts: [{ type: "text", text: "Continuing your WhatsApp request." }] }; });
+    const response = await handleBolnaChat(request({ messages: [{ role: "system", content: "Default Bolna prompt without token" }, { role: "user", content: "What did I ask on WhatsApp?" }] }));
+    expect(response.status).toBe(200);
+    expect(convoEq).toHaveBeenCalledWith("visitor_id", id);
+    expect(mocks.send.mock.calls[0]?.[0].messages).toEqual([prior, expect.objectContaining({ role: "user", parts: [{ type: "text", text: "What did I ask on WhatsApp?" }] })]);
+  });
 });

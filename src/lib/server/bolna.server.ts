@@ -1,7 +1,7 @@
 import { timingSafeEqual } from "node:crypto";
 import { DefaultChatTransport, readUIMessageStream, type UIMessage } from "ai";
 import { z } from "zod";
-import { loadRecentWhatsAppContext, normalizeCallerPhone, phoneVisitorId, resolvePhoneContextToken } from "./phone-context.server";
+import { loadRecentWebContext, loadRecentWhatsAppContext, normalizeCallerPhone, phoneVisitorId, resolvePhoneContextToken } from "./phone-context.server";
 
 export const BOLNA_MODEL = "flo-assistant";
 const Message = z.object({ role: z.enum(["system", "user", "assistant"]), content: z.string().max(4000) });
@@ -80,11 +80,21 @@ export async function handleBolnaChat(request: Request): Promise<Response> {
   // Namespacing prevents access to web or WhatsApp conversations even with a known visitor ID.
   const secret = process.env["BOLNA_API_TOKEN"];
   const contextId = secret ? await resolvePhoneContextToken(input.messages.filter(m => m.role === "system").map(m => m.content).join("\n"), secret) : null;
-  const visitorId = contextId ?? await phoneVisitorId(session ?? crypto.randomUUID());
+  let recentCallVisitorId: string | null = null;
+  if (!contextId && !session) {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const cutoff = new Date(Date.now() - 15 * 60_000).toISOString();
+    const linkQuery = supabaseAdmin.from("phone_call_links")?.select?.("visitor_id");
+    if (linkQuery) {
+      const { data: link } = await linkQuery.gte("created_at", cutoff).order("created_at", { ascending: false }).limit(1).maybeSingle();
+      if (link?.visitor_id) recentCallVisitorId = link.visitor_id;
+    }
+  }
+  const visitorId = contextId ?? recentCallVisitorId ?? await phoneVisitorId(session ?? crypto.randomUUID());
   let messages: UIMessage[] = input.messages.filter((m) => m.role !== "system").map((m) => ({
     id: crypto.randomUUID(), role: m.role as "user" | "assistant", parts: [{ type: "text", text: m.content }],
   }));
-  if (session || contextId) {
+  if (session || contextId || recentCallVisitorId) {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { data, error } = await supabaseAdmin.from("assistant_conversations").select("messages").eq("visitor_id", visitorId).maybeSingle();
     if (error) return apiError("Could not load the conversation", 500, "server_error");
@@ -95,8 +105,11 @@ export async function handleBolnaChat(request: Request): Promise<Response> {
       const phone = normalizeCallerPhone(input.metadata?.caller_number ?? input.metadata?.contact_number);
       if (phone) {
         try {
-          const context = await loadRecentWhatsAppContext(supabaseAdmin, phone);
-          messages = [...context, ...messages];
+          const [waContext, webContext] = await Promise.all([
+            loadRecentWhatsAppContext(supabaseAdmin, phone),
+            loadRecentWebContext(supabaseAdmin, phone).catch(() => []),
+          ]);
+          messages = [...waContext, ...webContext, ...messages];
         } catch {
           return apiError("Could not load caller context", 503, "server_error");
         }

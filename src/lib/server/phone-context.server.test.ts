@@ -91,3 +91,36 @@ describe("loadRecentCallContext", () => {
     expect(text).not.toContain("old whatsapp");
   });
 });
+describe("web and whatsapp cross-channel helpers", () => {
+  it("loads recent website chat turns for a normalized phone number via leads", async () => {
+    const { loadRecentWebContext } = await import("./phone-context.server");
+    const leads = { select: () => leads, gte: () => leads, order: () => leads, limit: async () => ({ data: [{ conversation_id: "web-1", phone: "+91 98765 43210", created_at: "2026-11-16T06:00:00Z" }], error: null }) };
+    const convos = { select: () => convos, in: async () => ({ data: [{ id: "web-1", updated_at: "2026-11-16T06:05:00Z", messages: [
+      { id: "wa-note-1", role: "user", parts: [{ type: "text", text: "old wa" }] },
+      { id: "u1", role: "user", parts: [{ type: "text", text: "What are your clinic hours?" }] },
+      { id: "a1", role: "assistant", parts: [{ type: "text", text: "Open 10 AM to 8 PM." }] }] }], error: null }) };
+    const db = { from: (t: string) => t === "leads" ? leads : convos } as never;
+    const [note] = await loadRecentWebContext(db, "919876543210", Date.parse("2026-11-16T07:00:00Z"));
+    const text = (note!.parts[0] as { text: string }).text;
+    expect(text).toContain("Visitor: What are your clinic hours?");
+    expect(text).toContain("Mira: Open 10 AM to 8 PM.");
+    expect(text).not.toContain("old wa");
+  });
+  it("loads recent WhatsApp turns as a note for website chat/voice", async () => {
+    const { loadRecentWhatsAppNote } = await import("./phone-context.server");
+    const wa = { select: () => wa, eq: () => wa, gte: () => wa, order: () => wa, limit: async () => ({ data: [
+      { id: "2", direction: "out", body: "Sure, 5 PM works.", created_at: "2026-11-16T06:05:00Z", provider_ts: null, message_type: "text", transcription_state: null, status: "delivered" },
+      { id: "1", direction: "in", body: "Can I see Dr Rao at 5 PM?", created_at: "2026-11-16T06:00:00Z", provider_ts: null, message_type: "text", transcription_state: null, status: "received" },
+    ], error: null }) };
+    const [note] = await loadRecentWhatsAppNote({ from: () => wa } as never, "919876543210", Date.parse("2026-11-16T07:00:00Z"));
+    const text = (note!.parts[0] as { text: string }).text;
+    expect(text).toContain("Visitor (2026-11-16T06:00:00Z): Can I see Dr Rao at 5 PM?");
+    expect(text).toContain("Mira (2026-11-16T06:05:00Z): Sure, 5 PM works.");
+  });
+  it("extracts normalized phone from tool call inputs in message history", async () => {
+    const { phoneFromMessages } = await import("./phone-context.server");
+    expect(phoneFromMessages([
+      { id: "a1", role: "assistant", parts: [{ type: "tool-request_appointment", input: { name: "Arun", phone: "9876543210" } } as never] },
+    ])).toBe("919876543210");
+  });
+});

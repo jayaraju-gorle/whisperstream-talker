@@ -13,7 +13,13 @@ import { clinicAppointmentTools, resolveTrial } from "@/lib/server/clinic-mode.s
 import { publicAssistantInstructions } from "@/lib/server/public-clinic.server";
 import { floTools } from "@/lib/server/flo.server";
 import { ASSISTANT_SPEECH_RULES } from "@/lib/assistant-speech";
-import { phoneContextDetails } from "./phone-context.server";
+import {
+  loadRecentCallContext,
+  loadRecentWhatsAppNote,
+  normalizeCallerPhone,
+  phoneContextDetails,
+  phoneFromMessages,
+} from "./phone-context.server";
 import { floLanguageModel, loadFloModel, logFloTurn } from "@/lib/server/flo-model.server";
 import {
   createLovableAiGatewayRunIdFetch,
@@ -109,13 +115,28 @@ export async function handleAssistantPost({
   }
   const history = trial.history;
   const phoneContext = channel === "Bolna" ? phoneContextDetails(messages) : undefined;
+  let webCrossChannel: UIMessage[] = [];
+  if (channel !== "Bolna") {
+    let webPhone = phoneFromMessages(messages);
+    if (!webPhone) {
+      const leadRow = await db.from("leads")?.select("phone")?.eq("conversation_id", convo.id)?.order("created_at", { ascending: false })?.limit(1)?.maybeSingle();
+      webPhone = normalizeCallerPhone(leadRow?.data?.phone ?? undefined);
+    }
+    if (webPhone) {
+      const [waNote, callNote] = await Promise.all([
+        loadRecentWhatsAppNote(db, webPhone).catch(() => []),
+        loadRecentCallContext(db, webPhone).catch(() => []),
+      ]);
+      webCrossChannel = [...waNote, ...callNote];
+    }
+  }
 
   const runIdFetch = createLovableAiGatewayRunIdFetch(getLovableAiGatewayRunId(request));
   // Independent, fresh per-turn reads run together; never cache editable Aura facts.
   const [choice, instructions, modelMessages] = await Promise.all([
     loadFloModel(db),
     trial.session ? Promise.resolve(trial.session.instructions) : publicAssistantInstructions(db),
-    convertToModelMessages(history),
+    convertToModelMessages([...webCrossChannel, ...history]),
   ]);
   const { model, providerOptions } = floLanguageModel(choice, apiKey, runIdFetch.fetch);
   const started = Date.now();

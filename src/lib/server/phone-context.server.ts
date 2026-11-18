@@ -99,7 +99,7 @@ export async function loadRecentCallContext(db: Db, phone: string, now = Date.no
   for (const link of [...links].reverse()) {
     const msgs = (calls?.find(c => c.visitor_id === link.visitor_id)?.messages ?? []) as unknown as UIMessage[];
     const turns = (Array.isArray(msgs) ? msgs : [])
-      .filter(m => !m.id?.startsWith("phone-wa-") && !m.id?.startsWith("phone-context-"))
+      .filter(m => !m.id?.startsWith("phone-wa-") && !m.id?.startsWith("phone-context-") && !m.id?.startsWith("web-context-"))
       .map(m => `${m.role === "user" ? "Caller" : "Mira"}: ${m.parts.filter(p => p.type === "text").map(p => (p as { text: string }).text).join(" ").trim()}`)
       .filter(l => !/:\s*$/.test(l)).slice(-16);
     if (turns.length) lines.push(`Phone call at ${link.created_at}:\n${turns.join("\n")}`);
@@ -107,4 +107,65 @@ export async function loadRecentCallContext(db: Db, phone: string, now = Date.no
   if (!lines.length) return [];
   return [{ id: `call-context-${links[0]!.visitor_id}`, role: "user", parts: [{ type: "text",
     text: `[Context only, not a new request: this customer recently phoned Mira from the same number. Continue naturally without repeating questions already answered.]\n${lines.join("\n\n")}`.slice(0, 6000) }] }];
+}
+
+/** Recent website-chat turns for a normalized phone number (via saved leads), as one read-only context note. */
+export async function loadRecentWebContext(db: Db, phone: string, now = Date.now()): Promise<UIMessage[]> {
+  const cutoff = new Date(now - PHONE_CONTEXT_WINDOW_MS).toISOString();
+  const leadsQuery = db.from("leads")?.select("conversation_id,phone,created_at");
+  if (!leadsQuery) return [];
+  const { data: leads, error } = await leadsQuery
+    .gte("created_at", cutoff).order("created_at", { ascending: false }).limit(50);
+  if (error || !leads?.length) return [];
+  const convoIds = [...new Set(
+    leads.filter(l => l.conversation_id && normalizeCallerPhone(l.phone ?? undefined) === phone)
+      .map(l => l.conversation_id as string),
+  )].slice(0, 3);
+  if (!convoIds.length) return [];
+  const { data: convos, error: convoError } = await db.from("assistant_conversations").select("id,messages,updated_at")
+    .in("id", convoIds);
+  if (convoError || !convos?.length) return [];
+  const lines: string[] = [];
+  for (const convo of [...convos].reverse()) {
+    const msgs = (Array.isArray(convo.messages) ? convo.messages : []) as unknown as UIMessage[];
+    const turns = msgs
+      .filter(m => !m.id?.startsWith("phone-wa-") && !m.id?.startsWith("phone-context-") && !m.id?.startsWith("call-context-") && !m.id?.startsWith("web-context-") && !m.id?.startsWith("wa-note-"))
+      .map(m => `${m.role === "user" ? "Visitor" : "Mira"}: ${(m.parts ?? []).filter(p => p.type === "text").map(p => (p as { text: string }).text).join(" ").trim()}`)
+      .filter(l => !/:\s*$/.test(l)).slice(-16);
+    if (turns.length) lines.push(`Website chat at ${convo.updated_at}:\n${turns.join("\n")}`);
+  }
+  if (!lines.length) return [];
+  return [{ id: `web-context-${convoIds[0]}`, role: "user", parts: [{ type: "text",
+    text: `[Context only, not a new request: this customer recently chatted on the website with the same phone number. Continue naturally without repeating questions already answered.]\n${lines.join("\n\n")}`.slice(0, 6000) }] }];
+}
+
+/** Recent WhatsApp turns for a normalized phone number, formatted as a read-only note for website chat/voice. */
+export async function loadRecentWhatsAppNote(db: Db, phone: string, now = Date.now()): Promise<UIMessage[]> {
+  const cutoff = new Date(now - PHONE_CONTEXT_WINDOW_MS).toISOString();
+  const waQuery = db.from("whatsapp_messages")?.select("id,direction,body,created_at,provider_ts,message_type,transcription_state,status");
+  if (!waQuery) return [];
+  const { data, error } = await waQuery
+    .eq("phone", phone).gte("created_at", cutoff).order("created_at", { ascending: false }).limit(20);
+  if (error || !data?.length) return [];
+  const turns = [...data].reverse()
+    .filter(row => row.body.trim() && (row.message_type === "text" || (row.message_type === "audio" && row.transcription_state === "complete")) && row.status !== "failed")
+    .map(row => `${row.direction === "in" ? "Visitor" : "Mira"} (${row.provider_ts ?? row.created_at}): ${row.body.trim()}`);
+  if (!turns.length) return [];
+  return [{ id: `wa-note-${phone}`, role: "user", parts: [{ type: "text",
+    text: `[Context only, not a new request: this visitor recently messaged Mira on WhatsApp from the same phone number. Before disclosing personal details, briefly confirm they want to continue their WhatsApp inquiry.]\n${turns.join("\n")}`.slice(0, 6000) }] }];
+}
+
+/** Extracts a normalized phone number from saved tool inputs in a conversation history. */
+export function phoneFromMessages(messages: UIMessage[]): string | null {
+  for (let i = messages.length - 1; i >= 0; i--) {
+    const parts = messages[i]?.parts ?? [];
+    for (let j = parts.length - 1; j >= 0; j--) {
+      const part = parts[j] as { type?: string; input?: { phone?: unknown } } | undefined;
+      if (part?.type?.startsWith("tool-") && typeof part.input?.phone === "string") {
+        const normalized = normalizeCallerPhone(part.input.phone);
+        if (normalized) return normalized;
+      }
+    }
+  }
+  return null;
 }
