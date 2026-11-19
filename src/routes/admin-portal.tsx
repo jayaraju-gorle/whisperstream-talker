@@ -9,7 +9,12 @@ import { ClinicPortalView, type PortalRequest } from "@/components/clinic/Clinic
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { getAuraDemoPortal, saveAuraDemoClinic, setAuraDemoStatus } from "@/lib/portal.functions";
+import {
+  deleteAuraDemoRequest,
+  getAuraDemoPortal,
+  saveAuraDemoClinic,
+  setAuraDemoStatus,
+} from "@/lib/portal.functions";
 
 export const Route = createFileRoute("/admin-portal")({
   staticData: { sitemap: false },
@@ -115,6 +120,7 @@ function AdminPortalDemo() {
   const [localShortCode, setLocalShortCode] = useState<string | null>(null);
   const load = useServerFn(getAuraDemoPortal);
   const updateStatus = useServerFn(setAuraDemoStatus);
+  const removeRequest = useServerFn(deleteAuraDemoRequest);
   const saveDetails = useServerFn(saveAuraDemoClinic);
   const qc = useQueryClient();
 
@@ -267,6 +273,18 @@ function AdminPortalDemo() {
           await updateStatus({ data: { code: activeCode, id, status } });
           await qc.invalidateQueries({ queryKey: ["aura-demo-portal"] });
         }}
+        onDeleteRequest={
+          q.data.role === "admin"
+            ? async (id) => {
+                if (id.startsWith("demo-")) {
+                  setSampleRequests((prev) => prev.filter((r) => r.id !== id));
+                  return;
+                }
+                await removeRequest({ data: { code: activeCode, id } });
+                await qc.invalidateQueries({ queryKey: ["aura-demo-portal"] });
+              }
+            : undefined
+        }
         onSaveDetails={
           q.data.role === "admin"
             ? async (clinic, shortCode) => {

@@ -192,12 +192,7 @@ export const savePortalClinic = createServerFn({ method: "POST" })
         updated_at: new Date().toISOString(),
       })
       .eq("id", clinic.id);
-    if (error)
-      throw new Error(
-        error.code === "23505"
-          ? `Assistant code ${nextCode} is already in use.`
-          : "Couldn't save clinic details.",
-      );
+    if (error) throw new Error(error.code === "23505" ? `Assistant code ${nextCode} is already in use.` : "Couldn't save clinic details.");
     return { ok: true, clinic: clean, shortCode: nextCode ?? clinic.test_code };
   });
 
@@ -222,8 +217,7 @@ function auraRoleForCode(code?: string): "admin" | "staff" | null {
 }
 
 export const getAuraPublicInfo = createServerFn({ method: "POST" }).handler(async () => {
-  if (!process.env["SUPABASE_SERVICE_ROLE_KEY"])
-    return { ...AURA_FALLBACK_DETAILS, shortCode: "AURA" };
+  if (!process.env["SUPABASE_SERVICE_ROLE_KEY"]) return { ...AURA_FALLBACK_DETAILS, shortCode: "AURA" };
   const { supabaseAdmin: db } = await import("@/integrations/supabase/client.server");
   const { data: clinic } = await db
     .from("clinics")
@@ -295,6 +289,21 @@ export const setAuraDemoStatus = createServerFn({ method: "POST" })
     return { ok: true };
   });
 
+export const deleteAuraDemoRequest = createServerFn({ method: "POST" })
+  .inputValidator((d) => z.object({ code: z.string().min(1).max(40), id: z.string().uuid() }).parse(d))
+  .handler(async ({ data }) => {
+    if (auraRoleForCode(data.code) !== "admin") throw new Error("Admin access code required.");
+    if (!process.env["SUPABASE_SERVICE_ROLE_KEY"]) return { ok: true };
+    const { supabaseAdmin: db } = await import("@/integrations/supabase/client.server");
+    const { error } = await db
+      .from("clinic_appointment_requests")
+      .delete()
+      .eq("id", data.id)
+      .eq("clinic_id", PUBLIC_SAMPLE_BUSINESS_ID);
+    if (error) throw new Error("Couldn't delete the request.");
+    return { ok: true };
+  });
+
 export const saveAuraDemoClinic = createServerFn({ method: "POST" })
   .inputValidator((d) =>
     z
@@ -329,9 +338,7 @@ export const saveAuraDemoClinic = createServerFn({ method: "POST" })
       .eq("id", PUBLIC_SAMPLE_BUSINESS_ID);
     if (error) {
       throw new Error(
-        error.code === "23505"
-          ? `Assistant code ${nextCode} is already in use.`
-          : "Couldn't save clinic details.",
+        error.code === "23505" ? `Assistant code ${nextCode} is already in use.` : "Couldn't save clinic details.",
       );
     }
     return { ok: true, clinic: clean, shortCode: nextCode };

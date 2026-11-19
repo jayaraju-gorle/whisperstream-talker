@@ -42,6 +42,7 @@ export function ClinicPortalView({
   details,
   shortCode,
   onStatusChange,
+  onDeleteRequest,
   onSaveDetails,
   headerExtra,
 }: {
@@ -51,6 +52,7 @@ export function ClinicPortalView({
   details?: ClinicInput | null;
   shortCode?: string | null;
   onStatusChange: (id: string, status: "confirmed" | "cancelled" | "new") => Promise<void>;
+  onDeleteRequest?: ((id: string) => Promise<void>) | undefined;
   onSaveDetails?: ((clinic: ClinicInput, shortCode?: string) => Promise<void>) | undefined;
   headerExtra?: React.ReactNode;
 }) {
@@ -75,6 +77,18 @@ export function ClinicPortalView({
       );
     } catch {
       toast.error("Couldn't update. Please try again.");
+    } finally {
+      setBusy(null);
+    }
+  }
+
+  async function remove(id: string) {
+    setBusy(id + "delete");
+    try {
+      await onDeleteRequest?.(id);
+      toast.success("Appointment request removed");
+    } catch {
+      toast.error("Couldn't remove. Please try again.");
     } finally {
       setBusy(null);
     }
@@ -245,6 +259,17 @@ export function ClinicPortalView({
                         loadingLabel="Undoing…"
                       >
                         Undo
+                      </Button>
+                    )}
+                    {role === "admin" && onDeleteRequest && (
+                      <Button
+                        variant="ghost"
+                        className="min-h-11 text-destructive hover:text-destructive"
+                        onClick={() => remove(r.id)}
+                        loading={busy === r.id + "delete"}
+                        loadingLabel="Removing…"
+                      >
+                        <Trash2 className="h-4 w-4" /> Remove
                       </Button>
                     )}
                   </div>
