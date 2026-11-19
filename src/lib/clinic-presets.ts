@@ -16,15 +16,47 @@ export const IVY_PRESET: ClinicInput = {
     "3rd Floor, Above Coal Spark Restaurant, Gachibowli–Miyapur Rd, Banjara Basthi, Anjaiah Nagar, Gachibowli, Hyderabad, Telangana 500084",
   map_url: "https://maps.app.goo.gl/iy6xNvqdDzBdanBs6",
   hours: [
-    ...OPEN_DAYS.map((day) => ({ day, open: true, slots: [{ from: "10:00", to: "15:00" }, { from: "17:00", to: "20:00" }] })),
+    ...OPEN_DAYS.map((day) => ({
+      day,
+      open: true,
+      slots: [
+        { from: "10:00", to: "15:00" },
+        { from: "17:00", to: "20:00" },
+      ],
+    })),
     { day: "Sunday", open: true, slots: [{ from: "10:00", to: "14:00" }] },
   ],
   doctors: [
-    { name: "Dr. Bharathi Sudha A", specialty: "Infertility specialist, obstetrician & gynaecologist (founder)", days: "Mon–Sat 10:00–20:00, Sun 10:00–14:00", fee: "₹600" },
-    { name: "Dr. Sravya Buggana", specialty: "Gynaecologist, infertility specialist & laparoscopic surgeon", days: "Mon–Sat 10:30–15:00", fee: "₹600" },
-    { name: "Dr. Bharath Chidige", specialty: "Orthopaedic surgeon & pain management", days: "Mon–Sat 17:00–20:00, Sun 10:00–13:00", fee: "₹600" },
-    { name: "Dr. Havisha", specialty: "Internal medicine & general physician", days: "Mon–Sat 12:00–15:00", fee: "₹600" },
-    { name: "Dr. Harish Chandra Reddy", specialty: "Psychiatrist (adult & child)", days: "Mon–Wed, Fri–Sat 15:00–17:00", fee: "₹3,000" },
+    {
+      name: "Dr. Bharathi Sudha A",
+      specialty: "Infertility specialist, obstetrician & gynaecologist (founder)",
+      days: "Mon–Sat 10:00–20:00, Sun 10:00–14:00",
+      fee: "₹600",
+    },
+    {
+      name: "Dr. Sravya Buggana",
+      specialty: "Gynaecologist, infertility specialist & laparoscopic surgeon",
+      days: "Mon–Sat 10:30–15:00",
+      fee: "₹600",
+    },
+    {
+      name: "Dr. Bharath Chidige",
+      specialty: "Orthopaedic surgeon & pain management",
+      days: "Mon–Sat 17:00–20:00, Sun 10:00–13:00",
+      fee: "₹600",
+    },
+    {
+      name: "Dr. Havisha",
+      specialty: "Internal medicine & general physician",
+      days: "Mon–Sat 12:00–15:00",
+      fee: "₹600",
+    },
+    {
+      name: "Dr. Harish Chandra Reddy",
+      specialty: "Psychiatrist (adult & child)",
+      days: "Mon–Wed, Fri–Sat 15:00–17:00",
+      fee: "₹3,000",
+    },
   ],
   insurance: "",
   notes:
@@ -50,13 +82,15 @@ export const IYASHI_PRESET: ClinicInput = {
   doctors: [
     {
       name: "Dr. Chaitra Rachamalla",
-      specialty: "Consultant gynaecologist & obstetrician, infertility specialist (Gold Medalist; MBBS, MS-OBGYN, Diploma in ART & RM, APPR London)",
+      specialty:
+        "Consultant gynaecologist & obstetrician, infertility specialist (Gold Medalist; MBBS, MS-OBGYN, Diploma in ART & RM, APPR London)",
       days: "Mon–Sat 10:00–21:00",
       fee: "₹800",
     },
     {
       name: "Dr. S.V.S. Yashwant",
-      specialty: "Consultant paediatrician & neonatologist (MBBS, MD-PAEDS Niloufer, MRCPCH UK, PGPN-PRO)",
+      specialty:
+        "Consultant paediatrician & neonatologist (MBBS, MD-PAEDS Niloufer, MRCPCH UK, PGPN-PRO)",
       days: "Mon–Sat 10:00–21:00",
       fee: "₹800",
     },
@@ -82,7 +116,8 @@ export const SSK_PRESET: ClinicInput = {
   doctors: [
     {
       name: "CA Sasumana Saikumar",
-      specialty: "Founder · Chartered Accountant — Personal & business taxation, ITR filing, GST, TDS, notices, tax planning",
+      specialty:
+        "Founder · Chartered Accountant — Personal & business taxation, ITR filing, GST, TDS, notices, tax planning",
       days: "Mon–Sat 10:00–19:00",
       fee: "₹500",
     },
@@ -90,4 +125,31 @@ export const SSK_PRESET: ClinicInput = {
   insurance: "",
   notes:
     "Full taxation and compliance services: ITR filing, presumptive taxation (44AD/ADA), capital gains computation, TDS returns & Form 26AS reconciliation, GST registration & returns, PAN/TAN/DSC, advance tax calculation, income tax notice representation, and tax planning.",
+};
+
+export const HANVIS_PRESET_LABEL = "Hanvi's Kondapur Dental Hospital";
+
+const ALL_WEEK_DAYS = [...OPEN_DAYS, "Sunday"];
+
+export const HANVIS_PRESET: ClinicInput = {
+  name: HANVIS_PRESET_LABEL,
+  phone: "+91 99596 39696",
+  emergency_phone: "",
+  email: "",
+  address: "63B, sbi bank lane, Kondapur, Sri Ram Nagar, Gachibowli, Hyderabad, Telangana 500084",
+  map_url:
+    "https://www.google.com/maps/search/?api=1&query=Hanvi%27s+Kondapur+Dental+Hospital+Kondapur+Hyderabad+500084",
+  hours: ALL_WEEK_DAYS.map((day) => ({ day, open: true, slots: [{ from: "11:00", to: "20:00" }] })),
+  doctors: [
+    {
+      name: "Dental Specialist Team",
+      specialty:
+        "Painless Dentistry, Cosmetic Dentistry, Aligners, Braces, Implants, Kids & Digital Dentistry",
+      days: "Mon–Sun 11:00–20:00",
+      fee: "Ask clinic",
+    },
+  ],
+  insurance: "",
+  notes:
+    "Hanvi's Kondapur Dental Hospital - Premier painless dentistry. Experience expert dental care specialised in anxiety-free treatments, cosmetic dentistry, aligners, braces, implants, kids dentistry, and digital dentistry. Your comfort is our priority. WhatsApp Business lists 11:00 AM - 8:00 PM daily (Google Maps / clinic board notes 10:00 AM opening — confirm exact doctor names, consultation fee, and opening time with the clinic).",
 };

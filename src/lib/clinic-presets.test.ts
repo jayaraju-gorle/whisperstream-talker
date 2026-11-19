@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { stepError } from "./clinic";
-import { IVY_PRESET, IYASHI_PRESET, SSK_PRESET } from "./clinic-presets";
+import { IVY_PRESET, IYASHI_PRESET, SSK_PRESET, HANVIS_PRESET } from "./clinic-presets";
 
 describe("Ivy Women and Fertility Centre preset", () => {
   it("passes every wizard validation step", () => {
@@ -11,7 +11,14 @@ describe("Ivy Women and Fertility Centre preset", () => {
 
   it("carries the client's split hours", () => {
     const mon = IVY_PRESET.hours.find((h) => h.day === "Monday");
-    expect(mon).toEqual({ day: "Monday", open: true, slots: [{ from: "10:00", to: "15:00" }, { from: "17:00", to: "20:00" }] });
+    expect(mon).toEqual({
+      day: "Monday",
+      open: true,
+      slots: [
+        { from: "10:00", to: "15:00" },
+        { from: "17:00", to: "20:00" },
+      ],
+    });
     const sun = IVY_PRESET.hours.find((h) => h.day === "Sunday");
     expect(sun).toEqual({ day: "Sunday", open: true, slots: [{ from: "10:00", to: "14:00" }] });
   });
@@ -69,8 +76,16 @@ describe("SSK & Associates preset", () => {
   });
 
   it("is open Mon–Sat 10:00–19:00 and closed Sunday", () => {
-    expect(SSK_PRESET.hours.find((h) => h.day === "Monday")).toEqual({ day: "Monday", open: true, slots: [{ from: "10:00", to: "19:00" }] });
-    expect(SSK_PRESET.hours.find((h) => h.day === "Saturday")).toEqual({ day: "Saturday", open: true, slots: [{ from: "10:00", to: "19:00" }] });
+    expect(SSK_PRESET.hours.find((h) => h.day === "Monday")).toEqual({
+      day: "Monday",
+      open: true,
+      slots: [{ from: "10:00", to: "19:00" }],
+    });
+    expect(SSK_PRESET.hours.find((h) => h.day === "Saturday")).toEqual({
+      day: "Saturday",
+      open: true,
+      slots: [{ from: "10:00", to: "19:00" }],
+    });
     expect(SSK_PRESET.hours.find((h) => h.day === "Sunday")?.open).toBe(false);
   });
 
@@ -82,5 +97,25 @@ describe("SSK & Associates preset", () => {
     expect(SSK_PRESET.doctors).toHaveLength(1);
     expect(SSK_PRESET.doctors[0]?.name).toBe("CA Sasumana Saikumar");
     expect(SSK_PRESET.doctors[0]?.fee).toBe("₹500");
+  });
+});
+
+describe("HANVIS_PRESET", () => {
+  it("passes every wizard step validation", () => {
+    expect(stepError(0, HANVIS_PRESET)).toBeNull();
+    expect(stepError(1, HANVIS_PRESET)).toBeNull();
+    expect(stepError(2, HANVIS_PRESET)).toBeNull();
+  });
+
+  it("carries the confirmed contact details and 7-day hours", () => {
+    expect(HANVIS_PRESET.name).toBe("Hanvi's Kondapur Dental Hospital");
+    expect(HANVIS_PRESET.phone).toBe("+91 99596 39696");
+    expect(HANVIS_PRESET.address).toBe(
+      "63B, sbi bank lane, Kondapur, Sri Ram Nagar, Gachibowli, Hyderabad, Telangana 500084",
+    );
+    expect(HANVIS_PRESET.hours).toHaveLength(7);
+    expect(HANVIS_PRESET.hours.every((h) => h.open)).toBe(true);
+    expect(HANVIS_PRESET.doctors).toHaveLength(1);
+    expect(HANVIS_PRESET.doctors[0]?.fee).toBe("Ask clinic");
   });
 });
