@@ -119,11 +119,19 @@ export function floTools(db: Db, conversationId: string, channel?: string, fallb
         reason: z.string().max(500).optional(),
       }),
       execute: async (i) => {
+        const phone = (i.phone || fallbackPhone).trim();
+        if (!phone) {
+          return {
+            ok: false,
+            error:
+              "Phone number is required. Ask the visitor for their phone number before saving the appointment request.",
+          };
+        }
         const { error } = await db.from("clinic_appointment_requests").insert({
           clinic_id: PUBLIC_SAMPLE_BUSINESS_ID,
           channel: requestChannel,
           patient_name: i.name,
-          phone: i.phone || fallbackPhone,
+          phone,
           doctor: i.professional ?? "",
           preferred_time: i.preferred_time ?? "",
           reason: i.reason ?? "",
