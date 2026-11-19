@@ -110,7 +110,7 @@ export function floTools(db: Db, conversationId: string, channel?: string, fallb
     }),
     request_appointment: tool({
       description:
-        "Save a simulated demo appointment request so it appears in the demo clinic portal.",
+        "Save a simulated demo appointment request so it appears in the demo clinic portal. Always include the visitor's phone number (ask for it on Website if not yet known).",
       inputSchema: z.object({
         name: z.string().min(1).max(120),
         phone: z.string().max(40).optional(),

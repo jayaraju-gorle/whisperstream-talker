@@ -170,7 +170,7 @@ export async function handleAssistantPost({
     stopWhen: isStepCount(4),
     tools: trial.session
       ? clinicAppointmentTools(db, trial.session.id, "Website", phoneContext?.phone)
-      : floTools(db, convo.id, channel, phoneContext?.phone),
+      : floTools(db, convo.id, channel, phoneContext?.phone ?? (phoneFromMessages(messages) ?? "")),
     providerOptions,
     onChunk: ({ chunk }) => {
       if (firstToken == null && chunk.type === "text-delta") firstToken = Date.now();
