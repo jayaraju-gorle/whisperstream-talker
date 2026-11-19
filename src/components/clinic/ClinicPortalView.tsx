@@ -331,7 +331,7 @@ function ClinicAdminEditor({
               <Input id="admin-name" value={c.name} onChange={(e) => set("name", e.target.value)} />
             </div>
             <div>
-              <Label htmlFor="admin-shortcode">Short code (WhatsApp)</Label>
+              <Label htmlFor="admin-shortcode">Assistant short code</Label>
               <Input
                 id="admin-shortcode"
                 value={code}
