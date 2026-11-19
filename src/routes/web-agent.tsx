@@ -1,4 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { useQuery } from "@tanstack/react-query";
+import { useServerFn } from "@tanstack/react-start";
 import {
   ArrowLeft,
   CalendarCheck,
@@ -13,31 +15,43 @@ import {
   Stethoscope,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { assistantClock } from "@/lib/assistant-speech";
+import { DAYS } from "@/lib/clinic";
 import {
   PHONE_ASSISTANT_DISPLAY,
   PHONE_ASSISTANT_URL,
   WHATSAPP_ASSISTANT_URL,
 } from "@/lib/flo-voice";
+import { getAuraPublicInfo } from "@/lib/portal.functions";
 
 const PAGE_URL = "https://conversationalaistudio.online/web-agent";
 const PAGE_TITLE = "Sample Clinic Website — 24/7 Web Assistant Bubble Demo";
 const PAGE_DESCRIPTION =
   "Interactive preview of a clinic website with our 24/7 expandable Web Assistant bubble at the bottom right, connected with WhatsApp and Phone.";
 
-const DOCTORS = [
+const DEFAULT_DOCTORS = [
   {
     name: "Dr. Anika Rao",
     specialty: "Family Medicine & General Physician",
-    hours: "Mon–Sat · 10:00 AM – 1:00 PM, 5:00 PM – 8:00 PM",
+    days: "Mon–Sat · 10:00 AM – 1:00 PM, 5:00 PM – 8:00 PM",
     fee: "₹600",
   },
   {
     name: "Dr. Rohan Mehta",
     specialty: "Child Health & Paediatrics",
-    hours: "Mon–Sat · 5:00 PM – 8:00 PM",
+    days: "Mon–Sat · 5:00 PM – 8:00 PM",
     fee: "₹700",
   },
-] as const;
+];
+
+const DEFAULT_HOURS = DAYS.map((day) => ({
+  day,
+  open: day !== "Sunday",
+  slots: [
+    { from: "10:00", to: "13:00" },
+    { from: "17:00", to: "20:00" },
+  ],
+}));
 
 const SERVICES = [
   {
@@ -80,6 +94,20 @@ export const Route = createFileRoute("/web-agent")({
 });
 
 function WebAgentDemo() {
+  const fetchAura = useServerFn(getAuraPublicInfo);
+  const { data: clinic } = useQuery({
+    queryKey: ["aura-public-info"],
+    queryFn: () => fetchAura(),
+    refetchInterval: 20000,
+    retry: false,
+  });
+
+  const doctors = clinic?.doctors?.length ? clinic.doctors : DEFAULT_DOCTORS;
+  const hours = clinic?.hours?.length ? clinic.hours : DEFAULT_HOURS;
+  const address =
+    clinic?.address?.trim() ||
+    "Suite 204, Willow Health Centre, Green Park Neighbourhood, Hyderabad (Illustrative address)";
+
   return (
     <div className="min-h-screen overflow-x-hidden bg-background text-foreground">
       {/* Demo preview bar */}
@@ -240,7 +268,7 @@ function WebAgentDemo() {
               <h2 className="text-lg font-semibold">Consulting Doctors (Sample)</h2>
             </div>
             <ul className="divide-y divide-border">
-              {DOCTORS.map((doc) => (
+              {doctors.map((doc) => (
                 <li
                   key={doc.name}
                   className="flex items-start justify-between gap-4 py-3 first:pt-0 last:pb-0"
@@ -248,7 +276,7 @@ function WebAgentDemo() {
                   <div className="min-w-0">
                     <p className="font-medium">{doc.name}</p>
                     <p className="text-xs text-muted-foreground">{doc.specialty}</p>
-                    <p className="mt-1 text-xs text-muted-foreground">{doc.hours}</p>
+                    <p className="mt-1 text-xs text-muted-foreground">{doc.days}</p>
                   </div>
                   <span className="shrink-0 font-mono text-sm font-medium">{doc.fee}</span>
                 </li>
@@ -261,22 +289,23 @@ function WebAgentDemo() {
               <Clock3 className="h-5 w-5 text-primary" />
               <h2 className="text-lg font-semibold">Hours &amp; Location (Sample)</h2>
             </div>
-            <div className="space-y-2 text-sm text-muted-foreground">
-              <p>
-                <strong className="text-foreground">Monday – Saturday:</strong> 10:00 AM – 1:00 PM
-                &amp; 5:00 PM – 8:00 PM
-              </p>
-              <p>
-                <strong className="text-foreground">Sunday:</strong> Closed (24/7 assistant still
-                captures requests)
-              </p>
-            </div>
+            <ul className="space-y-1.5 text-sm text-muted-foreground">
+              {hours.map((h) => (
+                <li key={h.day} className="flex justify-between gap-3">
+                  <strong className="font-medium text-foreground">{h.day}:</strong>
+                  <span className="text-right">
+                    {h.open
+                      ? h.slots
+                          .map((s) => `${assistantClock(s.from)} – ${assistantClock(s.to)}`)
+                          .join(", ")
+                      : "Closed (24/7 assistant still captures requests)"}
+                  </span>
+                </li>
+              ))}
+            </ul>
             <div className="flex items-start gap-2.5 border-t border-border pt-4 text-sm text-muted-foreground">
               <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
-              <span>
-                Suite 204, Willow Health Centre, Green Park Neighbourhood, Hyderabad (Illustrative
-                address)
-              </span>
+              <span>{address}</span>
             </div>
           </div>
         </section>

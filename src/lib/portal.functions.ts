@@ -197,40 +197,71 @@ export const getClinicAdminKey = createServerFn({ method: "POST" })
     return { adminKey: await portalAdminSignature(clinic.portal_token) };
   });
 
-export const getAuraDemoPortal = createServerFn({ method: "POST" }).handler(async () => {
-  if (!process.env["SUPABASE_SERVICE_ROLE_KEY"]) {
-    return {
-      localPreview: true,
-      clinic: { name: PUBLIC_CLINIC_NAME },
-      details: AURA_FALLBACK_DETAILS,
-      requests: [],
-    };
-  }
+function auraRoleForCode(code?: string): "admin" | "staff" | null {
+  const normalized = code?.trim().toUpperCase();
+  if (normalized === "AURA-ADMIN") return "admin";
+  if (normalized === "AURA-STAFF") return "staff";
+  return null;
+}
+
+export const getAuraPublicInfo = createServerFn({ method: "POST" }).handler(async () => {
+  if (!process.env["SUPABASE_SERVICE_ROLE_KEY"]) return AURA_FALLBACK_DETAILS;
   const { supabaseAdmin: db } = await import("@/integrations/supabase/client.server");
-  const [{ data: clinic, error: cErr }, { data: requests, error: rErr }] = await Promise.all([
-    db.from("clinics").select(CLINIC_COLUMNS).eq("id", PUBLIC_SAMPLE_BUSINESS_ID).maybeSingle(),
-    db
-      .from("clinic_appointment_requests")
-      .select("id,channel,patient_name,phone,doctor,preferred_time,reason,status,created_at")
-      .eq("clinic_id", PUBLIC_SAMPLE_BUSINESS_ID)
-      .order("created_at", { ascending: false })
-      .limit(100),
-  ]);
-  if (cErr || !clinic) throw new Error("Aura Health Clinic demo is unavailable.");
-  if (rErr) throw new Error("Couldn't load Aura appointment requests.");
-  return {
-    localPreview: false,
-    clinic: { name: clinic.name },
-    details: toClinicInput(clinic as unknown as ClinicRow),
-    requests: requests ?? [],
-  };
+  const { data: clinic } = await db
+    .from("clinics")
+    .select(CLINIC_COLUMNS)
+    .eq("id", PUBLIC_SAMPLE_BUSINESS_ID)
+    .maybeSingle();
+  return clinic ? toClinicInput(clinic as unknown as ClinicRow) : AURA_FALLBACK_DETAILS;
 });
+
+export const getAuraDemoPortal = createServerFn({ method: "POST" })
+  .inputValidator((d) => z.object({ code: z.string().min(1).max(40) }).parse(d))
+  .handler(async ({ data }) => {
+    const role = auraRoleForCode(data.code);
+    if (!role) throw new Error("Invalid access code.");
+    if (!process.env["SUPABASE_SERVICE_ROLE_KEY"]) {
+      return {
+        localPreview: true,
+        role,
+        clinic: { name: PUBLIC_CLINIC_NAME },
+        details: role === "admin" ? AURA_FALLBACK_DETAILS : null,
+        requests: [],
+      };
+    }
+    const { supabaseAdmin: db } = await import("@/integrations/supabase/client.server");
+    const [{ data: clinic, error: cErr }, { data: requests, error: rErr }] = await Promise.all([
+      db.from("clinics").select(CLINIC_COLUMNS).eq("id", PUBLIC_SAMPLE_BUSINESS_ID).maybeSingle(),
+      db
+        .from("clinic_appointment_requests")
+        .select("id,channel,patient_name,phone,doctor,preferred_time,reason,status,created_at")
+        .eq("clinic_id", PUBLIC_SAMPLE_BUSINESS_ID)
+        .order("created_at", { ascending: false })
+        .limit(100),
+    ]);
+    if (cErr || !clinic) throw new Error("Aura Health Clinic demo is unavailable.");
+    if (rErr) throw new Error("Couldn't load Aura appointment requests.");
+    return {
+      localPreview: false,
+      role,
+      clinic: { name: clinic.name },
+      details: role === "admin" ? toClinicInput(clinic as unknown as ClinicRow) : null,
+      requests: requests ?? [],
+    };
+  });
 
 export const setAuraDemoStatus = createServerFn({ method: "POST" })
   .inputValidator((d) =>
-    z.object({ id: z.string().uuid(), status: z.enum(["new", "confirmed", "cancelled"]) }).parse(d),
+    z
+      .object({
+        code: z.string().min(1).max(40),
+        id: z.string().uuid(),
+        status: z.enum(["new", "confirmed", "cancelled"]),
+      })
+      .parse(d),
   )
   .handler(async ({ data }) => {
+    if (!auraRoleForCode(data.code)) throw new Error("Invalid access code.");
     if (!process.env["SUPABASE_SERVICE_ROLE_KEY"]) return { ok: true };
     const { supabaseAdmin: db } = await import("@/integrations/supabase/client.server");
     const { error } = await db
@@ -243,8 +274,11 @@ export const setAuraDemoStatus = createServerFn({ method: "POST" })
   });
 
 export const saveAuraDemoClinic = createServerFn({ method: "POST" })
-  .inputValidator((d) => z.object({ clinic: ClinicUpdateSchema }).parse(d))
+  .inputValidator((d) =>
+    z.object({ code: z.string().min(1).max(40), clinic: ClinicUpdateSchema }).parse(d),
+  )
   .handler(async ({ data }) => {
+    if (auraRoleForCode(data.code) !== "admin") throw new Error("Admin access code required.");
     const clean = validateClinicPayload(data.clinic, true);
     if (!process.env["SUPABASE_SERVICE_ROLE_KEY"]) {
       return { ok: true, clinic: clean };
