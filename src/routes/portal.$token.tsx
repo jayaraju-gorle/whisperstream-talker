@@ -68,14 +68,17 @@ function Portal() {
       role={q.data.role}
       requests={q.data.requests}
       details={q.data.details}
+      shortCode={q.data.shortCode}
       onStatusChange={async (id, status) => {
         await updateStatus({ data: { token, id, status } });
         await qc.invalidateQueries({ queryKey: ["portal", token] });
       }}
       onSaveDetails={
         q.data.role === "admin" && admin
-          ? async (clinic) => {
-              await saveDetails({ data: { token, adminKey: admin, clinic } });
+          ? async (clinic, shortCode) => {
+              await saveDetails({
+                data: { token, adminKey: admin, clinic, ...(shortCode ? { shortCode } : {}) },
+              });
               await qc.invalidateQueries({ queryKey: ["portal", token] });
             }
           : undefined

@@ -17,7 +17,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
-import { stepError, type ClinicInput, type DayHours } from "@/lib/clinic";
+import { stepError, testCodeError, type ClinicInput, type DayHours } from "@/lib/clinic";
 import { cn } from "@/lib/utils";
 
 export type PortalRequest = {
@@ -40,7 +40,7 @@ export function ClinicPortalView({
   role,
   requests,
   details,
-  isPublicSample = false,
+  shortCode,
   onStatusChange,
   onSaveDetails,
   headerExtra,
@@ -49,9 +49,9 @@ export function ClinicPortalView({
   role: "admin" | "staff";
   requests: PortalRequest[];
   details?: ClinicInput | null;
-  isPublicSample?: boolean;
+  shortCode?: string | null;
   onStatusChange: (id: string, status: "confirmed" | "cancelled" | "new") => Promise<void>;
-  onSaveDetails?: ((clinic: ClinicInput) => Promise<void>) | undefined;
+  onSaveDetails?: ((clinic: ClinicInput, shortCode?: string) => Promise<void>) | undefined;
   headerExtra?: React.ReactNode;
 }) {
   const [adminTab, setAdminTab] = useState<AdminTab>("appointments");
@@ -257,9 +257,9 @@ export function ClinicPortalView({
 
       {role === "admin" && adminTab === "settings" && details && onSaveDetails && (
         <ClinicAdminEditor
-          key={JSON.stringify(details)}
+          key={JSON.stringify({ details, shortCode })}
           initial={details}
-          isPublicSample={isPublicSample}
+          initialShortCode={shortCode ?? ""}
           onSave={onSaveDetails}
         />
       )}
@@ -269,14 +269,15 @@ export function ClinicPortalView({
 
 function ClinicAdminEditor({
   initial,
-  isPublicSample,
+  initialShortCode,
   onSave,
 }: {
   initial: ClinicInput;
-  isPublicSample: boolean;
-  onSave: (clinic: ClinicInput) => Promise<void>;
+  initialShortCode: string;
+  onSave: (clinic: ClinicInput, shortCode?: string) => Promise<void>;
 }) {
   const [c, setC] = useState<ClinicInput>(initial);
+  const [code, setCode] = useState(initialShortCode);
   const [saving, setSaving] = useState(false);
 
   const set = <K extends keyof ClinicInput>(k: K, v: ClinicInput[K]) =>
@@ -300,9 +301,17 @@ function ClinicAdminEditor({
         return;
       }
     }
+    const cleanCode = code.trim().toUpperCase();
+    if (cleanCode) {
+      const codeErr = testCodeError(cleanCode);
+      if (codeErr) {
+        toast.error(codeErr);
+        return;
+      }
+    }
     setSaving(true);
     try {
-      await onSave(c);
+      await onSave(c, cleanCode || undefined);
       toast.success("Clinic info saved — Mira uses this on the very next reply.");
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Couldn't save clinic info.");
@@ -316,14 +325,22 @@ function ClinicAdminEditor({
       <div className="space-y-4 rounded-xl border border-border bg-card p-4">
         <h2 className="font-semibold">Clinic details</h2>
         <div className="space-y-3">
-          <div>
-            <Label htmlFor="admin-name">Clinic name</Label>
-            <Input
-              id="admin-name"
-              value={c.name}
-              disabled={isPublicSample}
-              onChange={(e) => set("name", e.target.value)}
-            />
+          <div className="grid gap-3 sm:grid-cols-[minmax(0,1fr)_12rem]">
+            <div>
+              <Label htmlFor="admin-name">Clinic name</Label>
+              <Input id="admin-name" value={c.name} onChange={(e) => set("name", e.target.value)} />
+            </div>
+            <div>
+              <Label htmlFor="admin-shortcode">Short code (WhatsApp)</Label>
+              <Input
+                id="admin-shortcode"
+                value={code}
+                maxLength={10}
+                placeholder="e.g. AURA or XYZ"
+                className="font-mono uppercase"
+                onChange={(e) => setCode(e.target.value.toUpperCase())}
+              />
+            </div>
           </div>
           <div className="grid gap-3 sm:grid-cols-2">
             <div>

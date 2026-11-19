@@ -268,14 +268,14 @@ function AuraPortalDemo() {
         onSaveDetails={
           q.data.role === "admin"
             ? async (clinic) => {
-                const res = await saveDetails({ data: { code: activeCode, clinic } });
-                if (q.data.localPreview) {
-                  setLocalDetails(res.clinic);
-                  return;
-                }
-                await qc.invalidateQueries({ queryKey: ["aura-demo-portal"] });
-                await qc.invalidateQueries({ queryKey: ["aura-public-info"] });
+              const res = await saveDetails({ data: { code: activeCode, clinic } });
+              if (q.data.localPreview) {
+                setLocalDetails(res.clinic);
+                return;
               }
+              await qc.invalidateQueries({ queryKey: ["aura-demo-portal"] });
+              await qc.invalidateQueries({ queryKey: ["aura-public-info"] });
+            }
             : undefined
         }
       />

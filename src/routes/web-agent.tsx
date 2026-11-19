@@ -104,6 +104,7 @@ function WebAgentDemo() {
 
   const doctors = clinic?.doctors?.length ? clinic.doctors : DEFAULT_DOCTORS;
   const hours = clinic?.hours?.length ? clinic.hours : DEFAULT_HOURS;
+  const clinicName = clinic?.name?.trim() || "Your Clinic Website";
   const address =
     clinic?.address?.trim() ||
     "Suite 204, Willow Health Centre, Green Park Neighbourhood, Hyderabad (Illustrative address)";
@@ -144,9 +145,9 @@ function WebAgentDemo() {
               <Stethoscope className="h-5 w-5" />
             </span>
             <div className="min-w-0">
-              <p className="truncate font-semibold">Your Clinic Website</p>
+              <p className="truncate font-semibold">{clinicName}</p>
               <p className="truncate text-xs text-muted-foreground">
-                Fictional preview (Aura Health Clinic)
+                Fictional preview{clinic?.shortCode ? ` · Code: ${clinic.shortCode}` : ""}
               </p>
             </div>
           </div>

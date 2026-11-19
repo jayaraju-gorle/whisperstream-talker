@@ -14,7 +14,7 @@ export async function publicAssistantInstructions(db: Db) {
   if (error) throw new Error("Couldn't load the sample clinic settings.");
   if (!data) return ASSISTANT_INSTRUCTIONS;
   const clinic = toClinicInput(data);
-  const details = clinicKnowledge({ ...clinic, name: "Aura Health Clinic" });
+  const details = clinicKnowledge({ ...clinic, name: clinic.name || "Aura Health Clinic" });
   // Replace facts, not safety/setup rules; old conversation facts never override current settings.
   return ASSISTANT_INSTRUCTIONS.replace(
     PUBLIC_CLINIC_KNOWLEDGE,

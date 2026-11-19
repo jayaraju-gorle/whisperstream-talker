@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
+import { Route as AdminPortalRouteImport } from './routes/admin-portal'
 import { Route as AuraPortalRouteImport } from './routes/aura-portal'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as DemoRouteImport } from './routes/demo'
@@ -50,6 +51,11 @@ const IndexRoute = IndexRouteImport.update({
 } as any)
 const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
   id: '/_authenticated',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminPortalRoute = AdminPortalRouteImport.update({
+  id: '/admin-portal',
+  path: '/admin-portal',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuraPortalRoute = AuraPortalRouteImport.update({
@@ -217,6 +223,7 @@ const ApiPublicBolnaV1ChatCompletionsRoute =
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/admin-portal': typeof AdminPortalRoute
   '/aura-portal': typeof AuraPortalRoute
   '/auth': typeof AuthRoute
   '/demo': typeof DemoRoute
@@ -251,6 +258,7 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/admin-portal': typeof AdminPortalRoute
   '/aura-portal': typeof AuraPortalRoute
   '/auth': typeof AuthRoute
   '/demo': typeof DemoRoute
@@ -287,6 +295,7 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
+  '/admin-portal': typeof AdminPortalRoute
   '/aura-portal': typeof AuraPortalRoute
   '/auth': typeof AuthRoute
   '/demo': typeof DemoRoute
@@ -323,6 +332,7 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/admin-portal'
     | '/aura-portal'
     | '/auth'
     | '/demo'
@@ -357,6 +367,7 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/admin-portal'
     | '/aura-portal'
     | '/auth'
     | '/demo'
@@ -392,6 +403,7 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/_authenticated'
+    | '/admin-portal'
     | '/aura-portal'
     | '/auth'
     | '/demo'
@@ -428,6 +440,7 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
+  AdminPortalRoute: typeof AdminPortalRoute
   AuraPortalRoute: typeof AuraPortalRoute
   AuthRoute: typeof AuthRoute
   DemoRoute: typeof DemoRoute
@@ -466,6 +479,13 @@ declare module '@tanstack/react-router' {
       path: ''
       fullPath: '/'
       preLoaderRoute: typeof AuthenticatedRouteRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin-portal': {
+      id: '/admin-portal'
+      path: '/admin-portal'
+      fullPath: '/admin-portal'
+      preLoaderRoute: typeof AdminPortalRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/aura-portal': {
@@ -727,6 +747,7 @@ const AuthenticatedRouteRouteWithChildren =
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
+  AdminPortalRoute: AdminPortalRoute,
   AuraPortalRoute: AuraPortalRoute,
   AuthRoute: AuthRoute,
   DemoRoute: DemoRoute,

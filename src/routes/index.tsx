@@ -410,8 +410,8 @@ function Index() {
               </ul>
               <div className="mt-6">
                 <Button asChild variant="outline" className="h-11">
-                  <Link to="/aura-portal">
-                    Try Aura portal demo (Admin &amp; Staff)
+                  <Link to="/admin-portal">
+                    Try Admin Portal demo (Admin &amp; Staff)
                     <ArrowRight className="h-4 w-4" />
                   </Link>
                 </Button>
