@@ -48,16 +48,20 @@ function Portal() {
 
   if (q.isLoading) {
     return (
-      <main className="p-6">
-        <LoadingIndicator />
+      <main className="flex min-h-screen items-center justify-center p-6">
+        <LoadingIndicator label="Opening clinic portal…" />
       </main>
     );
   }
   if (q.isError || !q.data) {
     return (
-      <main className="mx-auto max-w-md p-6 text-center text-sm text-destructive">
-        This portal link is invalid or has been replaced. Ask your business admin for the current
-        link.
+      <main className="flex min-h-screen items-center justify-center p-6">
+        <div className="max-w-sm rounded-2xl border border-border bg-card p-6 text-center shadow-sm">
+          <p className="font-semibold">This portal link is no longer valid</p>
+          <p className="mt-2 text-sm text-muted-foreground">
+            It may have been replaced. Ask your clinic admin to share the current portal link.
+          </p>
+        </div>
       </main>
     );
   }

@@ -210,8 +210,8 @@ function AdminPortalDemo() {
 
   if (q.isLoading || !q.data) {
     return (
-      <main className="p-6">
-        <LoadingIndicator label="Opening portal…" />
+      <main className="flex min-h-screen items-center justify-center p-6">
+        <LoadingIndicator label="Opening clinic portal…" />
       </main>
     );
   }
@@ -223,10 +223,12 @@ function AdminPortalDemo() {
 
   return (
     <div className="min-h-screen bg-background">
-      <div className="border-b border-primary/30 bg-primary/10 px-4 py-2.5 text-xs">
-        <div className="mx-auto flex max-w-2xl flex-wrap items-center justify-between gap-2">
-          <span className="font-medium text-foreground">
-            Clinic Portal · <span className="font-mono">{activeCode.toUpperCase()}</span>
+      <div className="border-b border-border bg-card px-4 py-2 text-xs">
+        <div className="mx-auto flex max-w-3xl flex-wrap items-center justify-between gap-2">
+          <span className="inline-flex items-center gap-1.5 font-medium text-muted-foreground">
+            <span className="h-2 w-2 rounded-full bg-emerald-500" aria-hidden="true" />
+            Demo portal ·{" "}
+            <span className="font-mono text-foreground">{activeCode.toUpperCase()}</span>
           </span>
           <div className="flex items-center gap-1.5">
             <Button
@@ -254,7 +256,7 @@ function AdminPortalDemo() {
       </div>
 
       {showQr && (
-        <div className="mx-auto max-w-2xl px-4 pt-4">
+        <div className="mx-auto max-w-3xl px-4 pt-4">
           <PortalQrCards />
         </div>
       )}
