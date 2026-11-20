@@ -78,4 +78,11 @@ describe("App routing", () => {
     expect(matches.some((match) => match.routeId === "/web-agent")).toBe(true);
     expect(matches.some((match) => match.routeId.startsWith("/_authenticated"))).toBe(false);
   });
+
+  it("loads a dedicated clinic web-agent storefront route without an authenticated parent", async () => {
+    const matches = await loadAt("/web-agent/HANVI");
+    expect(failedMatches(matches)).toEqual([]);
+    expect(matches.some((match) => match.routeId === "/web-agent_/$id")).toBe(true);
+    expect(matches.some((match) => match.routeId.startsWith("/_authenticated"))).toBe(false);
+  });
 });

@@ -192,7 +192,12 @@ export const savePortalClinic = createServerFn({ method: "POST" })
         updated_at: new Date().toISOString(),
       })
       .eq("id", clinic.id);
-    if (error) throw new Error(error.code === "23505" ? `Assistant code ${nextCode} is already in use.` : "Couldn't save clinic details.");
+    if (error)
+      throw new Error(
+        error.code === "23505"
+          ? `Assistant code ${nextCode} is already in use.`
+          : "Couldn't save clinic details.",
+      );
     return { ok: true, clinic: clean, shortCode: nextCode ?? clinic.test_code };
   });
 
@@ -217,7 +222,8 @@ function auraRoleForCode(code?: string): "admin" | "staff" | null {
 }
 
 export const getAuraPublicInfo = createServerFn({ method: "POST" }).handler(async () => {
-  if (!process.env["SUPABASE_SERVICE_ROLE_KEY"]) return { ...AURA_FALLBACK_DETAILS, shortCode: "AURA" };
+  if (!process.env["SUPABASE_SERVICE_ROLE_KEY"])
+    return { ...AURA_FALLBACK_DETAILS, shortCode: "AURA" };
   const { supabaseAdmin: db } = await import("@/integrations/supabase/client.server");
   const { data: clinic } = await db
     .from("clinics")
@@ -228,6 +234,32 @@ export const getAuraPublicInfo = createServerFn({ method: "POST" }).handler(asyn
     ? { ...toClinicInput(clinic as unknown as ClinicRow), shortCode: clinic.test_code ?? "AURA" }
     : { ...AURA_FALLBACK_DETAILS, shortCode: "AURA" };
 });
+
+export type PublicClinicInfo = ClinicInput & {
+  id: string;
+  shortCode: string;
+};
+
+export const getClinicPublicInfo = createServerFn({ method: "POST" })
+  .inputValidator((d) => z.object({ id: z.string().trim().min(1).max(160) }).parse(d))
+  .handler(async ({ data }): Promise<PublicClinicInfo | null> => {
+    const raw = data.id.trim();
+    if (!process.env["SUPABASE_SERVICE_ROLE_KEY"]) {
+      if (raw === PUBLIC_SAMPLE_BUSINESS_ID || raw.toUpperCase() === "AURA") {
+        return { id: PUBLIC_SAMPLE_BUSINESS_ID, ...AURA_FALLBACK_DETAILS, shortCode: "AURA" };
+      }
+      return null;
+    }
+    const { supabaseAdmin: db } = await import("@/integrations/supabase/client.server");
+    const { resolveClinicByIdOrCode } = await import("@/lib/server/clinic-mode.server");
+    const clinic = await resolveClinicByIdOrCode(db, raw);
+    if (!clinic) return null;
+    return {
+      id: clinic.id,
+      ...toClinicInput(clinic as unknown as ClinicRow),
+      shortCode: clinic.test_code,
+    };
+  });
 
 export const getAuraDemoPortal = createServerFn({ method: "POST" })
   .inputValidator((d) => z.object({ code: z.string().min(1).max(40) }).parse(d))
@@ -290,7 +322,9 @@ export const setAuraDemoStatus = createServerFn({ method: "POST" })
   });
 
 export const deleteAuraDemoRequest = createServerFn({ method: "POST" })
-  .inputValidator((d) => z.object({ code: z.string().min(1).max(40), id: z.string().uuid() }).parse(d))
+  .inputValidator((d) =>
+    z.object({ code: z.string().min(1).max(40), id: z.string().uuid() }).parse(d),
+  )
   .handler(async ({ data }) => {
     if (auraRoleForCode(data.code) !== "admin") throw new Error("Admin access code required.");
     if (!process.env["SUPABASE_SERVICE_ROLE_KEY"]) return { ok: true };
@@ -338,7 +372,9 @@ export const saveAuraDemoClinic = createServerFn({ method: "POST" })
       .eq("id", PUBLIC_SAMPLE_BUSINESS_ID);
     if (error) {
       throw new Error(
-        error.code === "23505" ? `Assistant code ${nextCode} is already in use.` : "Couldn't save clinic details.",
+        error.code === "23505"
+          ? `Assistant code ${nextCode} is already in use.`
+          : "Couldn't save clinic details.",
       );
     }
     return { ok: true, clinic: clean, shortCode: nextCode };

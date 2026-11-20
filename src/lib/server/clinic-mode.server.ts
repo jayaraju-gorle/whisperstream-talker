@@ -38,6 +38,22 @@ const CHANNEL_RULES: Record<ClinicChannel, string> = {
 - The visitor can type EXIT to go back to Mira. Never describe yourself or this conversation as a test.`,
 };
 
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+export async function resolveClinicByIdOrCode(db: Db, idOrCode: string) {
+  const trimmed = idOrCode.trim();
+  if (!trimmed) return null;
+  const query = db
+    .from("clinics")
+    .select(
+      "id,name,phone,emergency_phone,email,address,map_url,hours,doctors,insurance,notes,test_code",
+    );
+  const { data } = UUID_RE.test(trimmed)
+    ? await query.eq("id", trimmed).maybeSingle()
+    : await query.eq("test_code", trimmed.toUpperCase()).maybeSingle();
+  return data ?? null;
+}
+
 export async function loadClinicSession(
   db: Db,
   id: string,
@@ -118,14 +134,27 @@ export const EXIT_TEXT =
 /** Resolves the active TRY/EXIT state from history for every public channel (web chat/voice, phone, WhatsApp).
  *  AURA keeps the public sample; any other saved business code switches to that business's assistant.
  *  Unknown codes are ignored so ordinary phrases like "try again" stay normal Mira messages. */
-export async function resolveTrial(db: Db, messages: UIMessage[], channel: ClinicChannel, defaultBusinessId?: string | null) {
+export async function resolveTrial(
+  db: Db,
+  messages: UIMessage[],
+  channel: ClinicChannel,
+  defaultBusinessId?: string | null,
+  scopedClinicId?: string | null,
+) {
   const cmd = activeClinicCommand(messages);
   const isCommand = cmd.index === messages.length - 1;
   const after = cmd.index >= 0 ? messages.slice(cmd.index + 1) : messages;
   const aura = (notice: string | null, history = after) => ({ notice, session: null, history });
   const adminDefault = async (history: UIMessage[]) => {
+    if (scopedClinicId) {
+      const clinic = await resolveClinicByIdOrCode(db, scopedClinicId);
+      if (!clinic || clinic.id === PUBLIC_SAMPLE_BUSINESS_ID) return aura(null, history);
+      const session = await loadClinicSession(db, clinic.id, channel);
+      return session ? { notice: null, session, history } : aura(null, history);
+    }
     if (defaultBusinessId !== undefined) {
-      if (!defaultBusinessId || defaultBusinessId === PUBLIC_SAMPLE_BUSINESS_ID) return aura(null, history);
+      if (!defaultBusinessId || defaultBusinessId === PUBLIC_SAMPLE_BUSINESS_ID)
+        return aura(null, history);
       const session = await loadClinicSession(db, defaultBusinessId, channel);
       if (!session) throw new Error("The selected WhatsApp business is unavailable");
       return { notice: null, session, history };

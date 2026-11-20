@@ -31,7 +31,9 @@ async function verifyToken(token: string): Promise<boolean> {
   const url = process.env["SUPABASE_URL"];
   const key = process.env["SUPABASE_PUBLISHABLE_KEY"];
   if (!url || !key) return false;
-  const supabase = createClient(url, key, { auth: { persistSession: false, autoRefreshToken: false } });
+  const supabase = createClient(url, key, {
+    auth: { persistSession: false, autoRefreshToken: false },
+  });
   const { data, error } = await supabase.auth.getClaims(token);
   return !error && !!data?.claims?.sub;
 }
@@ -46,7 +48,11 @@ export type LiveSocket = {
 };
 
 export type LiveExecutionContext = { waitUntil(task: Promise<unknown>): void };
-export type LiveConnector = (url: string, headers: Record<string, string>, signal: AbortSignal) => Promise<LiveSocket>;
+export type LiveConnector = (
+  url: string,
+  headers: Record<string, string>,
+  signal: AbortSignal,
+) => Promise<LiveSocket>;
 
 type WorkerSocket = WebSocket & { accept(): void };
 declare const WebSocketPair: { new (): { 0: WorkerSocket; 1: WorkerSocket } };
@@ -90,7 +96,10 @@ async function gatewayRejection(response: Response) {
   return new Error(message || `Voice gateway rejected the connection (${response.status})`);
 }
 
-export function validateLiveUpgrade(request: Request, options: { allowMissingOrigin?: boolean } = {}): Response | null {
+export function validateLiveUpgrade(
+  request: Request,
+  options: { allowMissingOrigin?: boolean } = {},
+): Response | null {
   const origin = request.headers.get("origin");
   if (origin === null ? !options.allowMissingOrigin : origin !== new URL(request.url).origin) {
     return new Response("Voice connection origin rejected", { status: 403 });
@@ -135,7 +144,10 @@ export function handleLiveRequest(request: Request, flo = false): Response {
 }
 
 function conversationInstructions(persona: string, language: string) {
-  const lang = language && language !== "auto" ? `Speak in the language with ISO code "${language}".` : "Reply in the caller's language.";
+  const lang =
+    language && language !== "auto"
+      ? `Speak in the language with ISO code "${language}".`
+      : "Reply in the caller's language.";
   return `${persona}
 ${lang}
 Speak naturally in brief replies. Ask a focused question when details are unclear.
@@ -240,9 +252,15 @@ async function answerQuestion(
   // Drain through HTTP EOF so successful work is not recorded as cancelled by the Gateway.
   for await (const part of result.fullStream) {
     if (part.type === "start-step") stepCompleted = false;
-    if (part.type === "raw" && part.rawValue && typeof part.rawValue === "object" && "type" in part.rawValue) {
+    if (
+      part.type === "raw" &&
+      part.rawValue &&
+      typeof part.rawValue === "object" &&
+      "type" in part.rawValue
+    ) {
       if (part.rawValue.type === "response.completed") stepCompleted = true;
-      if (part.rawValue.type === "response.failed" || part.rawValue.type === "response.incomplete") failed = true;
+      if (part.rawValue.type === "response.failed" || part.rawValue.type === "response.incomplete")
+        failed = true;
     }
     if (part.type === "finish-step" && !stepCompleted) failed = true;
     if (part.type === "error" || part.type === "abort") failed = true;
@@ -297,6 +315,7 @@ export function bindLiveConnection(
   let finished = false;
   let flo: Awaited<ReturnType<typeof createFloVoice>> | undefined;
   let visitor: unknown;
+  let clinicId: string | undefined;
   let revision = 0;
   let task: AbortController | undefined;
   const pendingDelegations: Array<{
@@ -352,13 +371,19 @@ export function bindLiveConnection(
     if (!content || !browserReady || !sessionID || greetingRequested || closing) return;
     greetingRequested = true;
     if (new TextEncoder().encode(content).length > 480) {
-      emit({ type: "app.greeting.error", error: { message: "The opening instructions are too long" } });
+      emit({
+        type: "app.greeting.error",
+        error: { message: "The opening instructions are too long" },
+      });
       return;
     }
     greetingCommand = { id: crypto.randomUUID(), type: "instructions" };
     greetingTimer = setTimeout(() => {
       clearGreeting();
-      emit({ type: "app.greeting.error", error: { message: "The opening could not be confirmed" } });
+      emit({
+        type: "app.greeting.error",
+        error: { message: "The opening could not be confirmed" },
+      });
     }, 10_000);
     gateway?.send(
       JSON.stringify({
@@ -389,12 +414,22 @@ export function bindLiveConnection(
     setupAbort.abort();
     close(gateway);
     if (flo) {
-      execution.waitUntil(flo.persist(transcripts).catch((error) => {
-        emit({ type: "app.error", error: { message: error instanceof Error ? error.message : "Couldn't save the call." } });
-      }).finally(() => {
-        if (finalEvent && browser.readyState === 1) browser.send(finalEvent);
-        close(browser);
-      }));
+      execution.waitUntil(
+        flo
+          .persist(transcripts)
+          .catch((error) => {
+            emit({
+              type: "app.error",
+              error: {
+                message: error instanceof Error ? error.message : "Couldn't save the call.",
+              },
+            });
+          })
+          .finally(() => {
+            if (finalEvent && browser.readyState === 1) browser.send(finalEvent);
+            close(browser);
+          }),
+      );
     } else {
       if (finalEvent && browser.readyState === 1) browser.send(finalEvent);
       close(browser);
@@ -432,7 +467,11 @@ export function bindLiveConnection(
     restartTimer = setTimeout(() => void runDelegation(), 300);
   }
 
-  function deliverResult(delegationID: string, answer: string, plan?: ReturnType<typeof planStudySchedule>) {
+  function deliverResult(
+    delegationID: string,
+    answer: string,
+    plan?: ReturnType<typeof planStudySchedule>,
+  ) {
     if (closing) return;
     if (gateway?.readyState !== 1) return stop();
     try {
@@ -463,29 +502,37 @@ export function bindLiveConnection(
     task = controller;
     let taskRevision = revision;
     try {
-      const answer = flo ? await flo.answer(transcripts, controller.signal, id) : await answerQuestion(
-        backendMessages,
-        config,
-        { runID, sessionID, delegationID: id },
-        controller.signal,
-        () => {
-          const updates = transcripts.slice(transcriptCursor);
-          if (updates.some(({ role, listeningSound }) => role === "user" && !listeningSound)) delete pending.plan;
-          backendMessages.push(...updates.map(({ role, text }) => ({ role, content: text })));
-          transcriptCursor = transcripts.length;
-          taskRevision = revision;
-        },
-        (plan) => {
-          pending.plan = plan;
-        },
-      );
+      const answer = flo
+        ? await flo.answer(transcripts, controller.signal, id)
+        : await answerQuestion(
+            backendMessages,
+            config,
+            { runID, sessionID, delegationID: id },
+            controller.signal,
+            () => {
+              const updates = transcripts.slice(transcriptCursor);
+              if (updates.some(({ role, listeningSound }) => role === "user" && !listeningSound))
+                delete pending.plan;
+              backendMessages.push(...updates.map(({ role, text }) => ({ role, content: text })));
+              transcriptCursor = transcripts.length;
+              taskRevision = revision;
+            },
+            (plan) => {
+              pending.plan = plan;
+            },
+          );
       if (closing || controller.signal.aborted) return;
       if (taskRevision !== revision) return;
       deliverResult(id, answer.trim(), pending.plan);
     } catch (error) {
       if (closing || controller.signal.aborted) return;
       if (flo) {
-        emit({ type: "app.error", error: { message: error instanceof Error ? error.message : "The assistant could not reply." } });
+        emit({
+          type: "app.error",
+          error: {
+            message: error instanceof Error ? error.message : "The assistant could not reply.",
+          },
+        });
         stop();
         return;
       }
@@ -495,7 +542,10 @@ export function bindLiveConnection(
           "The backend attempt failed. Completed tool results remain valid; verify uncertain external actions before any retry.",
       });
       if (taskRevision !== revision) return;
-      deliverResult(id, "The backend could not finish the answer. Ask whether the user wants to try again.");
+      deliverResult(
+        id,
+        "The backend could not finish the answer. Ask whether the user wants to try again.",
+      );
     } finally {
       if (task === controller) task = undefined;
       scheduleDelegation();
@@ -510,11 +560,16 @@ export function bindLiveConnection(
 
   function receiveGateway(data: unknown) {
     try {
-      if (typeof data !== "string" || data.length > 1024 * 1024) throw new Error("Invalid voice event");
+      if (typeof data !== "string" || data.length > 1024 * 1024)
+        throw new Error("Invalid voice event");
       const event: ProviderEvent = JSON.parse(data);
       if (event.type === "session.closed") return finish(data);
       if (browser.readyState === 1) browser.send(data);
-      if (event.type === "gateway.session.closing" || event.type === "gateway.error" || event.type === "app.error") {
+      if (
+        event.type === "gateway.session.closing" ||
+        event.type === "gateway.error" ||
+        event.type === "app.error"
+      ) {
         return stop();
       }
       if (closing) return;
@@ -542,11 +597,21 @@ export function bindLiveConnection(
           clearGreeting();
           emit({ type: "app.greeting.accepted" });
         }
-      } else if (greetingCommand && event.type === "error" && event.error?.client_event_id === greetingCommand.id) {
+      } else if (
+        greetingCommand &&
+        event.type === "error" &&
+        event.error?.client_event_id === greetingCommand.id
+      ) {
         clearGreeting();
-        emit({ type: "app.greeting.error", error: { message: event.error.message ?? "The opening was rejected" } });
+        emit({
+          type: "app.greeting.error",
+          error: { message: event.error.message ?? "The opening was rejected" },
+        });
       }
-      if (event.type === "session.input_transcript.delta" || event.type === "session.output_transcript.delta") {
+      if (
+        event.type === "session.input_transcript.delta" ||
+        event.type === "session.output_transcript.delta"
+      ) {
         const role = event.type === "session.input_transcript.delta" ? "user" : "assistant";
         if (!event.delta) return;
         const listeningSound = role === "user" && Boolean(task) && isListeningSound(event.delta);
@@ -577,7 +642,10 @@ export function bindLiveConnection(
             completedDelegation = undefined;
           }
           if (pendingDelegations.length) {
-            emit({ type: "app.delegation.pending", delegation_id: pendingDelegations[0]?.event.delegation?.id });
+            emit({
+              type: "app.delegation.pending",
+              delegation_id: pendingDelegations[0]?.event.delegation?.id,
+            });
           }
         }
         scheduleDelegation();
@@ -597,9 +665,10 @@ export function bindLiveConnection(
   async function startSession(sdp: string) {
     if (closing || browser.readyState !== 1) return;
     if (config.flo) {
-      flo = await createFloVoice(visitor, runID);
+      flo = await createFloVoice(visitor, runID, clinicId);
       config = { ...config, persona: flo.persona, openingInstructions: flo.openingInstructions };
-    } else if (!(await verifyToken(startOptions.token))) throw new Error("Please sign in to start a live call.");
+    } else if (!(await verifyToken(startOptions.token)))
+      throw new Error("Please sign in to start a live call.");
     if (closing || browser.readyState !== 1) return;
     clearTimeout(startTimer);
     startupTimer = setTimeout(() => {
@@ -633,12 +702,30 @@ export function bindLiveConnection(
         type: "session.start",
         session: {
           model: config.liveModel,
-          instructions: flo ? flo.persona : conversationInstructions(config.persona ?? "", startOptions.language),
+          instructions: flo
+            ? flo.persona
+            : conversationInstructions(config.persona ?? "", startOptions.language),
           audio: { output: { voice: startOptions.voice } },
           delegation: { type: "client" },
-          ...(flo ? { input: flo.history.slice(-6).map((m) => ({ role: m.role === "assistant" ? "assistant" : "user",
-            content: [{ type: m.role === "assistant" ? "output_text" : "input_text",
-              text: m.parts.map((p) => p.type === "text" ? p.text : "").join("").slice(0, 800) }] })).filter((m) => m.content[0]?.text) } : {}),
+          ...(flo
+            ? {
+                input: flo.history
+                  .slice(-6)
+                  .map((m) => ({
+                    role: m.role === "assistant" ? "assistant" : "user",
+                    content: [
+                      {
+                        type: m.role === "assistant" ? "output_text" : "input_text",
+                        text: m.parts
+                          .map((p) => (p.type === "text" ? p.text : ""))
+                          .join("")
+                          .slice(0, 800),
+                      },
+                    ],
+                  }))
+                  .filter((m) => m.content[0]?.text),
+              }
+            : {}),
         },
         transport: { type: "webrtc", sdp },
       }),
@@ -647,24 +734,40 @@ export function bindLiveConnection(
 
   browser.onMessage((data) => {
     try {
-      if (typeof data !== "string" || data.length > 64 * 1024) throw new Error("Invalid client message");
+      if (typeof data !== "string" || data.length > 64 * 1024)
+        throw new Error("Invalid client message");
       const event = JSON.parse(data);
       if (event.type === "session.close") return stop();
       if (closing) return;
       if (!gateway) {
-        if (starting || event.type !== "app.start" || typeof event.sdp !== "string" || !event.sdp.trim()) {
+        if (
+          starting ||
+          event.type !== "app.start" ||
+          typeof event.sdp !== "string" ||
+          !event.sdp.trim()
+        ) {
           throw new Error("Voice startup message required");
         }
         starting = true;
         visitor = event.visitorId;
+        clinicId =
+          typeof event.clinicId === "string" && event.clinicId.trim()
+            ? event.clinicId.trim().slice(0, 160)
+            : undefined;
         const scenario = SCENARIOS.find((x) => x.id === event.scenario) ?? SCENARIOS[0];
         const persona =
-          typeof event.persona === "string" && event.persona.trim() ? event.persona.slice(0, 50000) : scenario?.prompt ?? "";
+          typeof event.persona === "string" && event.persona.trim()
+            ? event.persona.slice(0, 50000)
+            : (scenario?.prompt ?? "");
         config = { ...config, persona: persona.replace(/Reply in the user's language\./, "") };
         startOptions = {
           token: typeof event.token === "string" ? event.token : "",
           voice: LIVE_VOICES.includes(event.voice) ? event.voice : ASSISTANT_VOICE_NAME,
-          language: config.flo ? "en" : typeof event.language === "string" ? event.language.slice(0, 8) : "auto",
+          language: config.flo
+            ? "en"
+            : typeof event.language === "string"
+              ? event.language.slice(0, 8)
+              : "auto",
         };
         execution.waitUntil(
           startSession(event.sdp).catch((error) => {
@@ -689,7 +792,10 @@ export function bindLiveConnection(
       if (gateway.readyState !== 1) return stop();
       gateway.send(data);
     } catch {
-      emit({ type: "app.error", error: { message: "Voice connection could not be started or continued" } });
+      emit({
+        type: "app.error",
+        error: { message: "Voice connection could not be started or continued" },
+      });
       stop();
     }
   });

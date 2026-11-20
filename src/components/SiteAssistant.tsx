@@ -1,5 +1,6 @@
 import { webAssistantGreeting } from "@/lib/web-assistant";
 import { useEffect, useMemo, useRef, useState } from "react";
+import { useRouterState } from "@tanstack/react-router";
 import { useStickToBottomContext } from "use-stick-to-bottom";
 import { useChat } from "@ai-sdk/react";
 import { DefaultChatTransport, type UIMessage } from "ai";
@@ -50,33 +51,46 @@ const SUGGESTIONS = [
   "I’d like Mira for my business",
 ];
 
-function visitorId() {
-  let id = localStorage.getItem(KEY);
+function visitorStorageKey(clinicId?: string) {
+  return clinicId ? `${KEY}:${clinicId}` : KEY;
+}
+
+function visitorId(storageKey = KEY) {
+  let id = localStorage.getItem(storageKey);
   if (!id || !/^[A-Za-z0-9_-]{16,64}$/.test(id)) {
     id = crypto.randomUUID().replace(/-/g, "");
-    localStorage.setItem(KEY, id);
+    localStorage.setItem(storageKey, id);
   }
   return id;
 }
 
-function useFloSession(enabled: boolean) {
+function useFloSession(enabled: boolean, clinicId?: string) {
+  const storageKey = visitorStorageKey(clinicId);
   const [id, setId] = useState<string | null>(null);
   const [initial, setInitial] = useState<UIMessage[] | null>(null);
   const [demoBusiness, setDemoBusiness] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
+  useEffect(() => {
+    setId(null);
+    setInitial(null);
+    setDemoBusiness(null);
+  }, [storageKey]);
+
   const restart = () => {
     const next = crypto.randomUUID().replace(/-/g, "");
-    localStorage.setItem(KEY, next);
+    localStorage.setItem(storageKey, next);
     setId(next);
     setInitial([]);
   };
 
   useEffect(() => {
     if (!enabled || id) return;
-    const v = visitorId();
+    const v = visitorId(storageKey);
     setId(v);
-    fetch(`/api/public/assistant?visitorId=${v}`)
+    const query = new URLSearchParams({ visitorId: v });
+    if (clinicId) query.set("clinicId", clinicId);
+    fetch(`/api/public/assistant?${query.toString()}`)
       .then((r) => r.json())
       .then((d) => {
         setDemoBusiness(typeof d.demoBusiness === "string" ? d.demoBusiness : null);
@@ -88,7 +102,7 @@ function useFloSession(enabled: boolean) {
           startedOnEarlierDay(d.createdAt, new Date(), zone)
         ) {
           const next = crypto.randomUUID().replace(/-/g, "");
-          localStorage.setItem(KEY, next);
+          localStorage.setItem(storageKey, next);
           setId(next);
           setInitial([]);
           return;
@@ -96,7 +110,7 @@ function useFloSession(enabled: boolean) {
         setInitial(messages);
       })
       .catch(() => setInitial([]));
-  }, [enabled, id]);
+  }, [enabled, id, storageKey, clinicId]);
 
   return { id, initial, demoBusiness, busy, setBusy, restart };
 }
@@ -173,7 +187,14 @@ export function EmbeddedClinicAssistant({ className }: { className?: string }) {
 
 export function SiteAssistant() {
   const [open, setOpen] = useState(false);
-  const { id, initial, demoBusiness, busy, setBusy, restart } = useFloSession(open);
+  const scopedClinicId = useRouterState({
+    select: (state) => {
+      const match = state.matches.find((m) => m.routeId === "/web-agent_/$id");
+      const params = match?.params as { id?: string } | undefined;
+      return params?.id?.trim() || undefined;
+    },
+  });
+  const { id, initial, demoBusiness, busy, setBusy, restart } = useFloSession(open, scopedClinicId);
 
   return (
     <>
@@ -204,8 +225,9 @@ export function SiteAssistant() {
           </div>
           {id && initial ? (
             <ChatBody
-              key={id}
+              key={`${scopedClinicId ?? "default"}:${id}`}
               visitorId={id}
+              clinicId={scopedClinicId}
               initial={initial}
               demoBusiness={demoBusiness}
               onBusyChange={setBusy}
@@ -232,18 +254,24 @@ export function SiteAssistant() {
 
 function ChatBody({
   visitorId,
+  clinicId,
   initial,
   demoBusiness,
   onBusyChange,
 }: {
   visitorId: string;
+  clinicId?: string | undefined;
   initial: UIMessage[];
   demoBusiness: string | null;
   onBusyChange: (busy: boolean) => void;
 }) {
   const transport = useMemo(
-    () => new DefaultChatTransport({ api: "/api/public/assistant", body: { visitorId } }),
-    [visitorId],
+    () =>
+      new DefaultChatTransport({
+        api: "/api/public/assistant",
+        body: { visitorId, ...(clinicId ? { clinicId } : {}) },
+      }),
+    [visitorId, clinicId],
   );
   const { messages, setMessages, sendMessage, status, stop } = useChat({
     id: `flo-${visitorId}`,
@@ -292,6 +320,7 @@ function ChatBody({
     <>
       <FloVoice
         visitorId={visitorId}
+        clinicId={clinicId}
         disabled={status === "submitted" || status === "streaming" || voiceActive}
         onActive={setVoiceActive}
         onMessages={setMessages}
@@ -302,9 +331,7 @@ function ChatBody({
         <ConversationContent className="gap-4 p-4">
           {visibleMessages.length === 0 && (
             <div className="space-y-3 text-sm">
-              <p className="text-muted-foreground">
-                {webAssistantGreeting(demoBusiness)}
-              </p>
+              <p className="text-muted-foreground">{webAssistantGreeting(demoBusiness)}</p>
               <div className="flex flex-wrap gap-2">
                 {(demoBusiness
                   ? [
@@ -397,9 +424,7 @@ function ChatBody({
               value={text}
               onChange={(e) => setText(e.target.value)}
               placeholder={
-                demoBusiness
-                  ? `Ask Mira about ${demoBusiness}…`
-                  : "Ask Mira about your business…"
+                demoBusiness ? `Ask Mira about ${demoBusiness}…` : "Ask Mira about your business…"
               }
               maxLength={2000}
               disabled={voiceActive}

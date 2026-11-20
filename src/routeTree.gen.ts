@@ -12,7 +12,6 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as AdminPortalRouteImport } from './routes/admin-portal'
-import { Route as AuraPortalRouteImport } from './routes/aura-portal'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as DemoRouteImport } from './routes/demo'
 import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
@@ -30,6 +29,7 @@ import { Route as ApiSttRouteImport } from './routes/api/stt'
 import { Route as ApiTtsRouteImport } from './routes/api/tts'
 import { Route as EmbedAssistantRouteImport } from './routes/embed.assistant'
 import { Route as PortalTokenRouteImport } from './routes/portal.$token'
+import { Route as WebAgentIdRouteImport } from './routes/web-agent_.$id'
 import { Route as AuthenticatedClinicsNewRouteImport } from './routes/_authenticated/clinics.new'
 import { Route as AuthenticatedHistoryIdRouteImport } from './routes/_authenticated/history.$id'
 import { Route as ApiPublicAssistantRouteImport } from './routes/api/public/assistant'
@@ -56,11 +56,6 @@ const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
 const AdminPortalRoute = AdminPortalRouteImport.update({
   id: '/admin-portal',
   path: '/admin-portal',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const AuraPortalRoute = AuraPortalRouteImport.update({
-  id: '/aura-portal',
-  path: '/aura-portal',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthRoute = AuthRouteImport.update({
@@ -149,6 +144,11 @@ const PortalTokenRoute = PortalTokenRouteImport.update({
   path: '/portal/$token',
   getParentRoute: () => rootRouteImport,
 } as any)
+const WebAgentIdRoute = WebAgentIdRouteImport.update({
+  id: '/web-agent_/$id',
+  path: '/web-agent/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AuthenticatedClinicsNewRoute = AuthenticatedClinicsNewRouteImport.update({
   id: '/clinics/new',
   path: '/clinics/new',
@@ -224,7 +224,6 @@ const ApiPublicBolnaV1ChatCompletionsRoute =
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/admin-portal': typeof AdminPortalRoute
-  '/aura-portal': typeof AuraPortalRoute
   '/auth': typeof AuthRoute
   '/demo': typeof DemoRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
@@ -242,6 +241,7 @@ export interface FileRoutesByFullPath {
   '/api/tts': typeof ApiTtsRoute
   '/embed/assistant': typeof EmbedAssistantRoute
   '/portal/$token': typeof PortalTokenRoute
+  '/web-agent/$id': typeof WebAgentIdRoute
   '/clinics/new': typeof AuthenticatedClinicsNewRoute
   '/history/$id': typeof AuthenticatedHistoryIdRoute
   '/api/public/assistant': typeof ApiPublicAssistantRoute
@@ -259,7 +259,6 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/admin-portal': typeof AdminPortalRoute
-  '/aura-portal': typeof AuraPortalRoute
   '/auth': typeof AuthRoute
   '/demo': typeof DemoRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
@@ -277,6 +276,7 @@ export interface FileRoutesByTo {
   '/api/tts': typeof ApiTtsRoute
   '/embed/assistant': typeof EmbedAssistantRoute
   '/portal/$token': typeof PortalTokenRoute
+  '/web-agent/$id': typeof WebAgentIdRoute
   '/clinics/new': typeof AuthenticatedClinicsNewRoute
   '/history/$id': typeof AuthenticatedHistoryIdRoute
   '/api/public/assistant': typeof ApiPublicAssistantRoute
@@ -296,7 +296,6 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/admin-portal': typeof AdminPortalRoute
-  '/aura-portal': typeof AuraPortalRoute
   '/auth': typeof AuthRoute
   '/demo': typeof DemoRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
@@ -314,6 +313,7 @@ export interface FileRoutesById {
   '/api/tts': typeof ApiTtsRoute
   '/embed/assistant': typeof EmbedAssistantRoute
   '/portal/$token': typeof PortalTokenRoute
+  '/web-agent_/$id': typeof WebAgentIdRoute
   '/_authenticated/clinics/new': typeof AuthenticatedClinicsNewRoute
   '/_authenticated/history/$id': typeof AuthenticatedHistoryIdRoute
   '/api/public/assistant': typeof ApiPublicAssistantRoute
@@ -333,7 +333,6 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/admin-portal'
-    | '/aura-portal'
     | '/auth'
     | '/demo'
     | '/sitemap.xml'
@@ -351,6 +350,7 @@ export interface FileRouteTypes {
     | '/api/tts'
     | '/embed/assistant'
     | '/portal/$token'
+    | '/web-agent/$id'
     | '/clinics/new'
     | '/history/$id'
     | '/api/public/assistant'
@@ -368,7 +368,6 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/admin-portal'
-    | '/aura-portal'
     | '/auth'
     | '/demo'
     | '/sitemap.xml'
@@ -386,6 +385,7 @@ export interface FileRouteTypes {
     | '/api/tts'
     | '/embed/assistant'
     | '/portal/$token'
+    | '/web-agent/$id'
     | '/clinics/new'
     | '/history/$id'
     | '/api/public/assistant'
@@ -404,7 +404,6 @@ export interface FileRouteTypes {
     | '/'
     | '/_authenticated'
     | '/admin-portal'
-    | '/aura-portal'
     | '/auth'
     | '/demo'
     | '/sitemap.xml'
@@ -422,6 +421,7 @@ export interface FileRouteTypes {
     | '/api/tts'
     | '/embed/assistant'
     | '/portal/$token'
+    | '/web-agent_/$id'
     | '/_authenticated/clinics/new'
     | '/_authenticated/history/$id'
     | '/api/public/assistant'
@@ -441,7 +441,6 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
   AdminPortalRoute: typeof AdminPortalRoute
-  AuraPortalRoute: typeof AuraPortalRoute
   AuthRoute: typeof AuthRoute
   DemoRoute: typeof DemoRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
@@ -454,6 +453,7 @@ export interface RootRouteChildren {
   ApiTtsRoute: typeof ApiTtsRoute
   EmbedAssistantRoute: typeof EmbedAssistantRoute
   PortalTokenRoute: typeof PortalTokenRoute
+  WebAgentIdRoute: typeof WebAgentIdRoute
   ApiPublicAssistantRoute: typeof ApiPublicAssistantRoute
   ApiPublicRatesRoute: typeof ApiPublicRatesRoute
   ApiBolnaV1ModelsRoute: typeof ApiBolnaV1ModelsRoute
@@ -486,13 +486,6 @@ declare module '@tanstack/react-router' {
       path: '/admin-portal'
       fullPath: '/admin-portal'
       preLoaderRoute: typeof AdminPortalRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/aura-portal': {
-      id: '/aura-portal'
-      path: '/aura-portal'
-      fullPath: '/aura-portal'
-      preLoaderRoute: typeof AuraPortalRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/auth': {
@@ -612,6 +605,13 @@ declare module '@tanstack/react-router' {
       path: '/portal/$token'
       fullPath: '/portal/$token'
       preLoaderRoute: typeof PortalTokenRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/web-agent_/$id': {
+      id: '/web-agent_/$id'
+      path: '/web-agent/$id'
+      fullPath: '/web-agent/$id'
+      preLoaderRoute: typeof WebAgentIdRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_authenticated/clinics/new': {
@@ -748,7 +748,6 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   AdminPortalRoute: AdminPortalRoute,
-  AuraPortalRoute: AuraPortalRoute,
   AuthRoute: AuthRoute,
   DemoRoute: DemoRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
@@ -761,6 +760,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiTtsRoute: ApiTtsRoute,
   EmbedAssistantRoute: EmbedAssistantRoute,
   PortalTokenRoute: PortalTokenRoute,
+  WebAgentIdRoute: WebAgentIdRoute,
   ApiPublicAssistantRoute: ApiPublicAssistantRoute,
   ApiPublicRatesRoute: ApiPublicRatesRoute,
   ApiBolnaV1ModelsRoute: ApiBolnaV1ModelsRoute,

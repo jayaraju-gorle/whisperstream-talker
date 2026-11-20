@@ -165,4 +165,79 @@ describe("visitor contact updates", () => {
     expect(eq).toHaveBeenCalledWith("id", "existing-lead");
     expect(chain.insert).not.toHaveBeenCalled();
   });
+
+  it("scopes GET and POST assistant requests to a dedicated clinicId", async () => {
+    vi.stubEnv("LOVABLE_API_KEY", "test-key");
+    const clinicId = "11111111-1111-4111-8111-111111111111";
+    const clinicRow = {
+      id: clinicId,
+      name: "Hanvi's Kondapur Dental Hospital",
+      phone: "+91 99596 39696",
+      hours: [],
+      doctors: [{ name: "Dr. Hanvi", specialty: "Dentistry", days: "Mon-Sun", fee: "₹500" }],
+    };
+    const insert = vi.fn().mockResolvedValue({ error: null });
+    const chain = {
+      upsert: vi.fn().mockReturnThis(),
+      select: vi.fn().mockReturnThis(),
+      eq: vi.fn().mockReturnThis(),
+      order: vi.fn().mockReturnThis(),
+      limit: vi.fn().mockReturnThis(),
+      single: vi.fn(async () => ({ data: { id: "visitor-conversation" }, error: null })),
+      maybeSingle: vi
+        .fn()
+        .mockResolvedValueOnce({ data: { messages: [], created_at: "2026-11-20T09:00:00Z" } })
+        .mockResolvedValueOnce({ data: clinicRow })
+        .mockResolvedValueOnce({ data: clinicRow })
+        .mockResolvedValueOnce({ data: clinicRow })
+        .mockResolvedValueOnce({ data: clinicRow })
+        .mockResolvedValueOnce({ data: null })
+        .mockResolvedValueOnce({ data: null }),
+      insert,
+    };
+    mocks.from.mockReturnValue(chain);
+    mocks.stream.mockReturnValue({ toUIMessageStreamResponse: () => new Response("ok") });
+
+    const getResponse = await handleAssistantGet({
+      request: new Request(
+        `http://localhost/api/public/assistant?visitorId=visitor_secret_123456&clinicId=${clinicId}`,
+      ),
+    });
+    expect(await getResponse.json()).toEqual({
+      messages: [],
+      createdAt: "2026-11-20T09:00:00Z",
+      demoBusiness: "Hanvi's Kondapur Dental Hospital",
+    });
+
+    await handleAssistantPost({
+      request: new Request("http://localhost/api/public/assistant", {
+        method: "POST",
+        body: JSON.stringify({
+          visitorId: "visitor_secret_123456",
+          clinicId,
+          messages: [
+            { id: "m1", role: "user", parts: [{ type: "text", text: "Book tomorrow 5pm" }] },
+          ],
+        }),
+      }),
+    });
+
+    const call = mocks.stream.mock.calls[0];
+    if (!call) throw new Error("Assistant stream was not started");
+    expect(Object.keys(call[0].tools)).toEqual(["request_appointment"]);
+    const result = await call[0].tools.request_appointment.execute({
+      name: "Arun",
+      phone: "+91 9876543210",
+      preferred_time: "Tomorrow 5pm",
+    });
+    expect(result).toEqual({ ok: true });
+    expect(insert).toHaveBeenCalledWith(
+      expect.objectContaining({
+        clinic_id: clinicId,
+        channel: "Browser",
+        patient_name: "Arun",
+        phone: "+91 9876543210",
+      }),
+    );
+  });
 });

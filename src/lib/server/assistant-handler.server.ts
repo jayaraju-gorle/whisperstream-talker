@@ -47,6 +47,7 @@ async function admin() {
 
 const Body = z.object({
   visitorId: VisitorId,
+  clinicId: z.string().trim().min(1).max(160).optional(),
   messages: z.array(z.any()).min(1).max(200),
 });
 
@@ -61,7 +62,7 @@ export async function handleAssistantPost({
 }): Promise<Response> {
   const parsed = Body.safeParse(await request.json().catch(() => null));
   if (!parsed.success) return json({ error: "Invalid request" }, 400);
-  const { visitorId } = parsed.data;
+  const { visitorId, clinicId } = parsed.data;
   if (visitorId.startsWith("bolna_") && channel !== "Bolna")
     return json({ error: "Invalid request" }, 400);
   const messages = publicTrialHistory(parsed.data.messages as UIMessage[]);
@@ -95,7 +96,7 @@ export async function handleAssistantPost({
   };
 
   // TRY <code> switches to that saved business's assistant; AURA is the public sample.
-  const trial = await resolveTrial(db, messages, "Website");
+  const trial = await resolveTrial(db, messages, "Website", undefined, clinicId);
   const notice = trial.notice;
   if (notice) {
     const text = notice;
@@ -170,7 +171,7 @@ export async function handleAssistantPost({
     stopWhen: isStepCount(4),
     tools: trial.session
       ? clinicAppointmentTools(db, trial.session.id, "Website", phoneContext?.phone)
-      : floTools(db, convo.id, channel, phoneContext?.phone ?? (phoneFromMessages(messages) ?? "")),
+      : floTools(db, convo.id, channel, phoneContext?.phone ?? phoneFromMessages(messages) ?? ""),
     providerOptions,
     onChunk: ({ chunk }) => {
       if (firstToken == null && chunk.type === "text-delta") firstToken = Date.now();
@@ -208,7 +209,9 @@ export async function handleAssistantPost({
 }
 
 export async function handleAssistantGet({ request }: { request: Request }) {
-  const id = VisitorId.safeParse(new URL(request.url).searchParams.get("visitorId"));
+  const url = new URL(request.url);
+  const id = VisitorId.safeParse(url.searchParams.get("visitorId"));
+  const clinicId = url.searchParams.get("clinicId")?.trim() || undefined;
   if (!id.success || id.data.startsWith("bolna_")) return json({ messages: [] });
   const db = await admin();
   const { data, error } = await db
@@ -218,7 +221,7 @@ export async function handleAssistantGet({ request }: { request: Request }) {
     .maybeSingle();
   if (error) return json({ error: "Couldn't load the conversation" }, 500);
   const history = (Array.isArray(data?.messages) ? data.messages : []) as unknown as UIMessage[];
-  const trial = await resolveTrial(db, history, "Website");
+  const trial = await resolveTrial(db, history, "Website", undefined, clinicId);
   return json({
     messages: publicTrialHistory(history).length === history.length ? history : [],
     createdAt: data?.created_at ?? null,

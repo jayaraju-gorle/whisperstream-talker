@@ -7,12 +7,14 @@ import type { UIMessage } from "ai";
 
 export function FloVoice({
   visitorId,
+  clinicId,
   disabled,
   onActive,
   onMessages,
   onCaptions,
 }: {
   visitorId: string;
+  clinicId?: string | undefined;
   disabled?: boolean;
   onActive: (active: boolean) => void;
   onMessages: (messages: UIMessage[]) => void;
@@ -22,7 +24,7 @@ export function FloVoice({
   const generation = useRef(0);
   const call = useLiveVoice({
     url: FLO_VOICE_PATH,
-    startPayload: async () => ({ visitorId }),
+    startPayload: async () => ({ visitorId, ...(clinicId ? { clinicId } : {}) }),
     onEvent: async (event) => {
       if (
         event.type === "session.input_transcript.delta" ||
@@ -41,7 +43,9 @@ export function FloVoice({
       if (event.type === "app.closed") {
         const endedGeneration = generation.current;
         try {
-          const response = await fetch(`/api/public/assistant?visitorId=${visitorId}`);
+          const query = new URLSearchParams({ visitorId });
+          if (clinicId) query.set("clinicId", clinicId);
+          const response = await fetch(`/api/public/assistant?${query.toString()}`);
           if (!response.ok || endedGeneration !== generation.current) return;
           const data = await response.json();
           if (Array.isArray(data.messages) && event.finalized === true) {
