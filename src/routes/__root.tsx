@@ -139,15 +139,10 @@ function RootComponent() {
   const embedded = useRouterState({
     select: (state) => state.location.pathname === "/embed/assistant",
   });
-  // Clinic staff/admin portals use the green & white clinical theme and hide
-  // the public Mira sales bubble, which isn't meant for clinic staff.
+  // Hide the public Mira sales bubble on clinic staff/admin portals.
   const clinicPortal = useRouterState({
     select: (state) => isClinicPortalPath(state.location.pathname),
   });
-
-  useEffect(() => {
-    document.documentElement.classList.toggle("theme-clinic", clinicPortal);
-  }, [clinicPortal]);
 
   useEffect(() => {
     initAnalytics();
@@ -164,11 +159,7 @@ function RootComponent() {
       {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
       <Outlet />
       {!embedded && !clinicPortal && <SiteAssistant />}
-      <Toaster
-        theme={clinicPortal ? "light" : "dark"}
-        position="top-center"
-        richColors={clinicPortal}
-      />
+      <Toaster theme="light" position="top-center" richColors />
     </QueryClientProvider>
   );
 }

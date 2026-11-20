@@ -12,11 +12,11 @@ export function Logo({ className = "h-6 w-6" }: { className?: string }) {
     <svg viewBox="0 0 64 64" className={className} aria-hidden="true">
       <defs>
         <linearGradient id={gid} x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0" stopColor="#22d3ee" />
-          <stop offset="1" stopColor="#f59e0b" />
+          <stop offset="0" stopColor="#ffffff" />
+          <stop offset="1" stopColor="#a7f3d0" />
         </linearGradient>
       </defs>
-      <rect width="64" height="64" rx="14" fill="#0b1118" />
+      <rect width="64" height="64" rx="14" fill="#047857" />
       <path
         d="M14 14h36a6 6 0 0 1 6 6v20a6 6 0 0 1-6 6H28l-10 8v-8h-4a6 6 0 0 1-6-6V20a6 6 0 0 1 6-6z"
         fill="none"
