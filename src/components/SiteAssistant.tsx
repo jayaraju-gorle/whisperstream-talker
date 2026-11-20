@@ -1,6 +1,7 @@
 import { webAssistantGreeting } from "@/lib/web-assistant";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouterState } from "@tanstack/react-router";
+import { clinicVisitorKey } from "@/lib/clinic";
 import { useStickToBottomContext } from "use-stick-to-bottom";
 import { useChat } from "@ai-sdk/react";
 import { DefaultChatTransport, type UIMessage } from "ai";
@@ -51,20 +52,31 @@ const SUGGESTIONS = [
   "I’d like Mira for my business",
 ];
 
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
 function visitorStorageKey(clinicId?: string) {
   return clinicId ? `${KEY}:${clinicId}` : KEY;
 }
 
-function visitorId(storageKey = KEY) {
+function createVisitorId(clinicUuid?: string) {
+  const rand = crypto.randomUUID().replace(/-/g, "");
+  return clinicUuid ? `web_c_${clinicVisitorKey(clinicUuid)}_${rand.slice(0, 16)}` : rand;
+}
+
+function visitorId(storageKey = KEY, clinicUuid?: string) {
   let id = localStorage.getItem(storageKey);
-  if (!id || !/^[A-Za-z0-9_-]{16,64}$/.test(id)) {
-    id = crypto.randomUUID().replace(/-/g, "");
+  if (
+    !id ||
+    !/^[A-Za-z0-9_-]{16,64}$/.test(id) ||
+    (clinicUuid && !id.startsWith(`web_c_${clinicVisitorKey(clinicUuid)}_`))
+  ) {
+    id = createVisitorId(clinicUuid);
     localStorage.setItem(storageKey, id);
   }
   return id;
 }
 
-function useFloSession(enabled: boolean, clinicId?: string) {
+function useFloSession(enabled: boolean, clinicId?: string, clinicUuid?: string) {
   const storageKey = visitorStorageKey(clinicId);
   const [id, setId] = useState<string | null>(null);
   const [initial, setInitial] = useState<UIMessage[] | null>(null);
@@ -78,7 +90,7 @@ function useFloSession(enabled: boolean, clinicId?: string) {
   }, [storageKey]);
 
   const restart = () => {
-    const next = crypto.randomUUID().replace(/-/g, "");
+    const next = createVisitorId(clinicUuid);
     localStorage.setItem(storageKey, next);
     setId(next);
     setInitial([]);
@@ -86,7 +98,7 @@ function useFloSession(enabled: boolean, clinicId?: string) {
 
   useEffect(() => {
     if (!enabled || id) return;
-    const v = visitorId(storageKey);
+    const v = visitorId(storageKey, clinicUuid);
     setId(v);
     const query = new URLSearchParams({ visitorId: v });
     if (clinicId) query.set("clinicId", clinicId);
@@ -101,7 +113,7 @@ function useFloSession(enabled: boolean, clinicId?: string) {
           typeof d.createdAt === "string" &&
           startedOnEarlierDay(d.createdAt, new Date(), zone)
         ) {
-          const next = crypto.randomUUID().replace(/-/g, "");
+          const next = createVisitorId(clinicUuid);
           localStorage.setItem(storageKey, next);
           setId(next);
           setInitial([]);
@@ -110,7 +122,7 @@ function useFloSession(enabled: boolean, clinicId?: string) {
         setInitial(messages);
       })
       .catch(() => setInitial([]));
-  }, [enabled, id, storageKey, clinicId]);
+  }, [enabled, id, storageKey, clinicId, clinicUuid]);
 
   return { id, initial, demoBusiness, busy, setBusy, restart };
 }
@@ -187,14 +199,26 @@ export function EmbeddedClinicAssistant({ className }: { className?: string }) {
 
 export function SiteAssistant() {
   const [open, setOpen] = useState(false);
-  const scopedClinicId = useRouterState({
+  const { scopedClinicId, scopedClinicUuid } = useRouterState({
     select: (state) => {
       const match = state.matches.find((m) => m.routeId === "/web-agent_/$id");
       const params = match?.params as { id?: string } | undefined;
-      return params?.id?.trim() || undefined;
+      const loader = match?.loaderData as { id?: string } | null | undefined;
+      const rawId = params?.id?.trim() || undefined;
+      const uuid =
+        loader?.id && UUID_RE.test(loader.id)
+          ? loader.id
+          : rawId && UUID_RE.test(rawId)
+            ? rawId
+            : undefined;
+      return { scopedClinicId: rawId, scopedClinicUuid: uuid };
     },
   });
-  const { id, initial, demoBusiness, busy, setBusy, restart } = useFloSession(open, scopedClinicId);
+  const { id, initial, demoBusiness, busy, setBusy, restart } = useFloSession(
+    open,
+    scopedClinicId,
+    scopedClinicUuid,
+  );
 
   return (
     <>

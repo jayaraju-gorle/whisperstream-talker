@@ -128,12 +128,16 @@ export const getPortal = createServerFn({ method: "POST" })
   .handler(async ({ data }) => {
     const { db, clinic } = await clinicFor(data.token);
     const isAdmin = await isValidAdminKey(data.token, data.adminKey);
-    const { data: requests, error } = await db
-      .from("clinic_appointment_requests")
-      .select("id,channel,patient_name,phone,doctor,preferred_time,reason,status,created_at")
-      .eq("clinic_id", clinic.id)
-      .order("created_at", { ascending: false })
-      .limit(200);
+    const { loadClinicConversations } = await import("@/lib/server/portal-conversations.server");
+    const [{ data: requests, error }, conversations] = await Promise.all([
+      db
+        .from("clinic_appointment_requests")
+        .select("id,channel,patient_name,phone,doctor,preferred_time,reason,status,created_at")
+        .eq("clinic_id", clinic.id)
+        .order("created_at", { ascending: false })
+        .limit(200),
+      loadClinicConversations(db, { id: clinic.id, testCode: clinic.test_code }).catch(() => []),
+    ]);
     if (error) throw new Error("Couldn't load requests.");
     return {
       role: (isAdmin ? "admin" : "staff") as "admin" | "staff",
@@ -141,6 +145,7 @@ export const getPortal = createServerFn({ method: "POST" })
       shortCode: isAdmin ? clinic.test_code : null,
       details: isAdmin ? toClinicInput(clinic) : null,
       requests: requests ?? [],
+      conversations,
     };
   });
 
@@ -274,9 +279,11 @@ export const getAuraDemoPortal = createServerFn({ method: "POST" })
         shortCode: role === "admin" ? "AURA" : null,
         details: role === "admin" ? AURA_FALLBACK_DETAILS : null,
         requests: [],
+        conversations: [],
       };
     }
     const { supabaseAdmin: db } = await import("@/integrations/supabase/client.server");
+    const { loadClinicConversations } = await import("@/lib/server/portal-conversations.server");
     const [{ data: clinic, error: cErr }, { data: requests, error: rErr }] = await Promise.all([
       db.from("clinics").select(CLINIC_COLUMNS).eq("id", PUBLIC_SAMPLE_BUSINESS_ID).maybeSingle(),
       db
@@ -288,6 +295,10 @@ export const getAuraDemoPortal = createServerFn({ method: "POST" })
     ]);
     if (cErr || !clinic) throw new Error("Demo clinic portal is unavailable.");
     if (rErr) throw new Error("Couldn't load appointment requests.");
+    const conversations = await loadClinicConversations(db, {
+      id: clinic.id,
+      testCode: clinic.test_code ?? "AURA",
+    }).catch(() => []);
     return {
       localPreview: false,
       role,
@@ -295,6 +306,7 @@ export const getAuraDemoPortal = createServerFn({ method: "POST" })
       shortCode: role === "admin" ? clinic.test_code : null,
       details: role === "admin" ? toClinicInput(clinic as unknown as ClinicRow) : null,
       requests: requests ?? [],
+      conversations,
     };
   });
 

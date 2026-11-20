@@ -2,7 +2,10 @@ import { useEffect, useState } from "react";
 import {
   CalendarCheck,
   Check,
+  ChevronDown,
+  ChevronUp,
   MessageCircle,
+  MessageSquareText,
   Phone,
   Plus,
   ShieldCheck,
@@ -11,6 +14,7 @@ import {
   UserCheck,
   X,
 } from "lucide-react";
+import type { PortalConversation } from "@/lib/server/portal-conversations.server";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -33,12 +37,14 @@ export type PortalRequest = {
 };
 
 type Filter = "new" | "confirmed" | "cancelled" | "all";
-type AdminTab = "appointments" | "settings";
+type ConversationFilter = "all" | "inquiry" | "appointment";
+type PortalTab = "appointments" | "conversations" | "settings";
 
 export function ClinicPortalView({
   clinicName,
   role,
   requests,
+  conversations = [],
   details,
   shortCode,
   onStatusChange,
@@ -49,6 +55,7 @@ export function ClinicPortalView({
   clinicName: string;
   role: "admin" | "staff";
   requests: PortalRequest[];
+  conversations?: PortalConversation[] | undefined;
   details?: ClinicInput | null;
   shortCode?: string | null;
   onStatusChange: (id: string, status: "confirmed" | "cancelled" | "new") => Promise<void>;
@@ -56,13 +63,15 @@ export function ClinicPortalView({
   onSaveDetails?: ((clinic: ClinicInput, shortCode?: string) => Promise<void>) | undefined;
   headerExtra?: React.ReactNode;
 }) {
-  const [adminTab, setAdminTab] = useState<AdminTab>("appointments");
+  const [tab, setTab] = useState<PortalTab>("appointments");
   const [filter, setFilter] = useState<Filter>("new");
+  const [convoFilter, setConvoFilter] = useState<ConversationFilter>("all");
+  const [expandedConvo, setExpandedConvo] = useState<string | null>(null);
   const [busy, setBusy] = useState<string | null>(null);
 
   useEffect(() => {
-    if (role === "staff") setAdminTab("appointments");
-  }, [role]);
+    if (role === "staff" && tab === "settings") setTab("appointments");
+  }, [role, tab]);
 
   async function act(id: string, status: "confirmed" | "cancelled" | "new") {
     setBusy(id + status);
@@ -125,39 +134,62 @@ export function ClinicPortalView({
           </span>
         </div>
         {headerExtra}
-        {role === "admin" && details && onSaveDetails && (
-          <div className="grid grid-cols-2 gap-1.5 rounded-lg border border-border bg-background p-1 text-xs">
-            <button
-              type="button"
-              onClick={() => setAdminTab("appointments")}
+        {(() => {
+          const showSettings = role === "admin" && Boolean(details && onSaveDetails);
+          return (
+            <div
               className={cn(
-                "flex min-h-11 items-center justify-center gap-1.5 rounded-md font-medium transition-colors",
-                adminTab === "appointments"
-                  ? "bg-primary text-primary-foreground"
-                  : "text-muted-foreground hover:text-foreground",
+                "grid gap-1.5 rounded-lg border border-border bg-background p-1 text-xs",
+                showSettings ? "grid-cols-3" : "grid-cols-2",
               )}
             >
-              <CalendarCheck className="h-4 w-4" />
-              Appointments ({count("new")} new)
-            </button>
-            <button
-              type="button"
-              onClick={() => setAdminTab("settings")}
-              className={cn(
-                "flex min-h-11 items-center justify-center gap-1.5 rounded-md font-medium transition-colors",
-                adminTab === "settings"
-                  ? "bg-primary text-primary-foreground"
-                  : "text-muted-foreground hover:text-foreground",
+              <button
+                type="button"
+                onClick={() => setTab("appointments")}
+                className={cn(
+                  "flex min-h-11 items-center justify-center gap-1.5 rounded-md px-2 font-medium transition-colors",
+                  tab === "appointments"
+                    ? "bg-primary text-primary-foreground"
+                    : "text-muted-foreground hover:text-foreground",
+                )}
+              >
+                <CalendarCheck className="h-4 w-4 shrink-0" />
+                <span className="truncate">Appointments ({count("new")} new)</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setTab("conversations")}
+                className={cn(
+                  "flex min-h-11 items-center justify-center gap-1.5 rounded-md px-2 font-medium transition-colors",
+                  tab === "conversations"
+                    ? "bg-primary text-primary-foreground"
+                    : "text-muted-foreground hover:text-foreground",
+                )}
+              >
+                <MessageSquareText className="h-4 w-4 shrink-0" />
+                <span className="truncate">Conversations ({conversations.length})</span>
+              </button>
+              {showSettings && (
+                <button
+                  type="button"
+                  onClick={() => setTab("settings")}
+                  className={cn(
+                    "flex min-h-11 items-center justify-center gap-1.5 rounded-md px-2 font-medium transition-colors",
+                    tab === "settings"
+                      ? "bg-primary text-primary-foreground"
+                      : "text-muted-foreground hover:text-foreground",
+                  )}
+                >
+                  <Stethoscope className="h-4 w-4 shrink-0" />
+                  <span className="truncate">Clinic Info &amp; FAQs</span>
+                </button>
               )}
-            >
-              <Stethoscope className="h-4 w-4" />
-              Clinic Info &amp; FAQs
-            </button>
-          </div>
-        )}
+            </div>
+          );
+        })()}
       </header>
 
-      {(role === "staff" || adminTab === "appointments") && (
+      {tab === "appointments" && (
         <section className="space-y-4" aria-label="Appointment requests">
           <div className="grid grid-cols-4 gap-1 rounded-lg border border-border p-1 text-xs">
             {(["new", "confirmed", "cancelled", "all"] as Filter[]).map((f) => (
@@ -280,7 +312,156 @@ export function ClinicPortalView({
         </section>
       )}
 
-      {role === "admin" && adminTab === "settings" && details && onSaveDetails && (
+      {tab === "conversations" && (
+        <section className="space-y-4" aria-label="All conversations">
+          {(() => {
+            const filtered =
+              convoFilter === "all"
+                ? conversations
+                : convoFilter === "inquiry"
+                  ? conversations.filter((c) => !c.hasAppointment)
+                  : conversations.filter((c) => c.hasAppointment);
+            const inquiryCount = conversations.filter((c) => !c.hasAppointment).length;
+            const apptCount = conversations.filter((c) => c.hasAppointment).length;
+
+            return (
+              <>
+                <div className="grid grid-cols-3 gap-1 rounded-lg border border-border p-1 text-xs">
+                  {(
+                    [
+                      ["all", `All (${conversations.length})`],
+                      ["inquiry", `Inquiries (${inquiryCount})`],
+                      ["appointment", `Booked (${apptCount})`],
+                    ] as const
+                  ).map(([key, label]) => (
+                    <button
+                      key={key}
+                      type="button"
+                      onClick={() => setConvoFilter(key)}
+                      className={cn(
+                        "min-h-11 rounded-md px-2",
+                        convoFilter === key
+                          ? "bg-primary text-primary-foreground"
+                          : "text-muted-foreground",
+                      )}
+                    >
+                      {label}
+                    </button>
+                  ))}
+                </div>
+
+                {!filtered.length && (
+                  <p className="rounded-xl border border-dashed border-border py-10 text-center text-sm text-muted-foreground">
+                    No{" "}
+                    {convoFilter === "all"
+                      ? ""
+                      : convoFilter === "inquiry"
+                        ? "non-appointment "
+                        : "booked "}
+                    conversations yet.
+                  </p>
+                )}
+
+                <ul className="space-y-3">
+                  {filtered.map((c) => {
+                    const expanded = expandedConvo === c.id;
+                    const digits = c.contact.replace(/[^\d]/g, "");
+                    const hasPhone = digits.length >= 7;
+                    return (
+                      <li
+                        key={c.id}
+                        className="space-y-3 rounded-xl border border-border bg-card p-4"
+                      >
+                        <div className="flex items-start justify-between gap-2">
+                          <div className="min-w-0">
+                            <p className="truncate font-medium">{c.contact}</p>
+                            <p className="mt-0.5 line-clamp-2 text-sm text-muted-foreground">
+                              {c.preview}
+                            </p>
+                          </div>
+                          <span
+                            className={cn(
+                              "shrink-0 rounded-full px-2 py-0.5 text-xs",
+                              c.hasAppointment
+                                ? "bg-primary/15 text-primary"
+                                : "bg-muted text-muted-foreground",
+                            )}
+                          >
+                            {c.hasAppointment ? "Appointment" : "Inquiry"}
+                          </span>
+                        </div>
+                        <p className="text-xs text-muted-foreground">
+                          {c.channel} · {new Date(c.updated_at).toLocaleString()} · {c.messageCount}{" "}
+                          {c.messageCount === 1 ? "message" : "messages"}
+                        </p>
+                        <div className="flex flex-wrap gap-2">
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            className="min-h-10"
+                            onClick={() => setExpandedConvo(expanded ? null : c.id)}
+                          >
+                            {expanded ? (
+                              <>
+                                <ChevronUp className="h-4 w-4" /> Hide transcript
+                              </>
+                            ) : (
+                              <>
+                                <ChevronDown className="h-4 w-4" /> View transcript
+                              </>
+                            )}
+                          </Button>
+                          {hasPhone && (
+                            <>
+                              <Button asChild variant="secondary" size="sm" className="min-h-10">
+                                <a href={`tel:${c.contact.replace(/\s/g, "")}`}>
+                                  <Phone className="h-4 w-4" /> Call
+                                </a>
+                              </Button>
+                              <Button asChild variant="secondary" size="sm" className="min-h-10">
+                                <a
+                                  href={`https://wa.me/${digits}`}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                >
+                                  <MessageCircle className="h-4 w-4" /> WhatsApp
+                                </a>
+                              </Button>
+                            </>
+                          )}
+                        </div>
+                        {expanded && (
+                          <div className="space-y-2 border-t border-border pt-3">
+                            {c.messages.map((m) => (
+                              <div
+                                key={m.id}
+                                className={cn(
+                                  "rounded-lg px-3 py-2 text-xs leading-relaxed",
+                                  m.role === "user"
+                                    ? "bg-primary/10 text-foreground"
+                                    : "bg-muted/60 text-muted-foreground",
+                                )}
+                              >
+                                <span className="mr-1.5 font-semibold text-foreground">
+                                  {m.role === "user" ? "Visitor:" : "Mira:"}
+                                </span>
+                                <span className="whitespace-pre-wrap">{m.text}</span>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </li>
+                    );
+                  })}
+                </ul>
+              </>
+            );
+          })()}
+        </section>
+      )}
+
+      {role === "admin" && tab === "settings" && details && onSaveDetails && (
         <ClinicAdminEditor
           key={JSON.stringify({ details, shortCode })}
           initial={details}

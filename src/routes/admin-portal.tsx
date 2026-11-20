@@ -263,6 +263,7 @@ function AdminPortalDemo() {
         clinicName={displayName}
         role={q.data.role}
         requests={requests}
+        conversations={q.data.conversations}
         details={q.data.role === "admin" ? displayDetails : null}
         shortCode={q.data.role === "admin" ? (localShortCode ?? q.data.shortCode) : null}
         onStatusChange={async (id, status) => {

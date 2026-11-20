@@ -67,6 +67,7 @@ function Portal() {
       clinicName={q.data.clinic.name}
       role={q.data.role}
       requests={q.data.requests}
+      conversations={q.data.conversations}
       details={q.data.details}
       shortCode={q.data.shortCode}
       onStatusChange={async (id, status) => {
