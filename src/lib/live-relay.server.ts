@@ -6,6 +6,7 @@ import { z } from "zod";
 import { createClient } from "@supabase/supabase-js";
 import { SCENARIOS } from "./catalog";
 import { createFloVoice } from "./server/flo-voice.server";
+import { extractUrls, stripUrlsForSpeech } from "./flo-voice";
 
 export type LiveConfig = {
   baseURL: string;
@@ -475,7 +476,11 @@ export function bindLiveConnection(
     if (closing) return;
     if (gateway?.readyState !== 1) return stop();
     try {
-      for (const content of commentaryChunks(answer)) {
+      const urls = extractUrls(answer);
+      const spoken = urls.length
+        ? `${stripUrlsForSpeech(answer)} I have placed the clickable link in the chat for you. Do not read the URL aloud.`.trim()
+        : answer;
+      for (const content of commentaryChunks(spoken)) {
         gateway.send(
           JSON.stringify({
             type: "session.commentary.append",
@@ -485,6 +490,7 @@ export function bindLiveConnection(
           }),
         );
       }
+      if (urls.length) emit({ type: "app.links", delegation_id: delegationID, urls });
       if (plan) emit({ type: "app.study_schedule.plan", delegation_id: delegationID, plan });
       completedDelegation = pendingDelegations.shift();
     } catch {

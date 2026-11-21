@@ -2,7 +2,12 @@ import { useRef } from "react";
 import { Mic, MicOff, Phone, PhoneOff, Play } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useLiveVoice } from "@/hooks/use-live-voice";
-import { FLO_VOICE_PATH, voiceMessages, type VoiceFragment } from "@/lib/flo-voice";
+import {
+  FLO_VOICE_PATH,
+  formatSharedLinksMarkdown,
+  voiceMessages,
+  type VoiceFragment,
+} from "@/lib/flo-voice";
 import type { UIMessage } from "ai";
 
 export function FloVoice({
@@ -39,6 +44,20 @@ export function FloVoice({
         };
         fragments.current.push(fragment);
         onCaptions(voiceMessages(fragments.current, `voice-${generation.current}`));
+      }
+      if (event.type === "app.links" && Array.isArray(event["urls"])) {
+        const urls = (event["urls"] as unknown[]).filter(
+          (u): u is string => typeof u === "string" && /^https?:\/\//i.test(u),
+        );
+        if (urls.length) {
+          fragments.current.push({
+            role: "assistant",
+            text: `\n\n${formatSharedLinksMarkdown(urls)}\n\n`,
+            start_ms: 0,
+            end_ms: 0,
+          });
+          onCaptions(voiceMessages(fragments.current, `voice-${generation.current}`));
+        }
       }
       if (event.type === "app.closed") {
         const endedGeneration = generation.current;

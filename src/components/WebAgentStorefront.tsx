@@ -348,22 +348,36 @@ export function WebAgentStorefront({
         </section>
 
         {faqs.length > 0 && (
-          <section id="faqs" className="space-y-5">
-            <div className="flex items-center gap-2">
-              <HelpCircle className="h-5 w-5 text-primary" />
-              <h2 className="text-2xl font-semibold tracking-tight">Frequently Asked Questions</h2>
+          <section id="faqs" className="rounded-xl border border-border bg-card p-5 sm:p-6">
+            <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border pb-4">
+              <div className="flex items-center gap-2">
+                <HelpCircle className="h-5 w-5 text-primary" />
+                <h2 className="text-lg font-semibold">Frequently Asked Questions</h2>
+              </div>
+              <button
+                type="button"
+                onClick={openAssistantBubble}
+                className="text-xs font-medium text-primary hover:underline"
+              >
+                Have another question? Ask Mira →
+              </button>
             </div>
-            <div className="grid gap-4 md:grid-cols-2">
+            <dl className="divide-y divide-border">
               {faqs.map((faq, idx) => (
                 <div
                   key={`${faq.question}-${idx}`}
-                  className="space-y-1.5 rounded-xl border border-border bg-card p-5"
+                  className="flex items-start gap-3 py-4 first:pt-4 last:pb-0"
                 >
-                  <h3 className="font-semibold text-foreground">{faq.question}</h3>
-                  <p className="text-sm leading-relaxed text-muted-foreground">{faq.answer}</p>
+                  <span className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-secondary font-mono text-xs font-semibold text-secondary-foreground">
+                    Q{idx + 1}
+                  </span>
+                  <div className="min-w-0 space-y-1">
+                    <dt className="font-medium text-foreground">{faq.question}</dt>
+                    <dd className="text-sm leading-relaxed text-muted-foreground">{faq.answer}</dd>
+                  </div>
                 </div>
               ))}
-            </div>
+            </dl>
           </section>
         )}
       </main>

@@ -5,7 +5,13 @@ import { publicTrialHistory } from "@/lib/public-clinic-demo";
 import { webAssistantGreeting, WEB_GREETING_RULES } from "@/lib/web-assistant";
 import { resolveTrial } from "@/lib/server/clinic-mode.server";
 import { ASSISTANT_SPEECH_RULES } from "@/lib/assistant-speech";
-import { validFloVisitor, voiceMessages, type VoiceFragment } from "@/lib/flo-voice";
+import {
+  extractUrls,
+  formatSharedLinksMarkdown,
+  validFloVisitor,
+  voiceMessages,
+  type VoiceFragment,
+} from "@/lib/flo-voice";
 
 export async function createFloVoice(visitorId: unknown, runId: string, clinicId?: string) {
   if (!validFloVisitor(visitorId)) throw new Error("Invalid conversation identity.");
@@ -21,7 +27,10 @@ export async function createFloVoice(visitorId: unknown, runId: string, clinicId
   );
   const initial = [...history];
   const answered = new Map<string, { text: string; answer: string }>();
-  const trial = await resolveTrial(db, history, "Website", undefined, clinicId);
+  const sharedUrls = new Set<string>();
+  const trial = clinicId
+    ? await resolveTrial(db, history, "Website", undefined, clinicId)
+    : await resolveTrial(db, history, "Website");
   const instructions = trial.session?.instructions ?? (await publicAssistantInstructions(db));
   const persona = `${instructions}
 VOICE CHANNEL: Speak in English unless the caller explicitly speaks another language. Keep spoken replies to one or two sentences. ${ASSISTANT_SPEECH_RULES}
@@ -46,7 +55,15 @@ ${WEB_GREETING_RULES}`;
         .slice(initial.length)
         .flatMap((m) => m.parts.filter((p) => p.type.startsWith("tool-")));
       const lastAssistant = messages.filter((m) => m.role === "assistant").at(-1);
-      if (lastAssistant) lastAssistant.parts.push(...tools);
+      if (lastAssistant) {
+        if (sharedUrls.size) {
+          lastAssistant.parts.push({
+            type: "text",
+            text: `\n\n${formatSharedLinksMarkdown([...sharedUrls])}`,
+          });
+        }
+        lastAssistant.parts.push(...tools);
+      }
       const { error } = await db.from("assistant_conversations").upsert(
         {
           visitor_id: visitorId,
@@ -106,6 +123,7 @@ ${WEB_GREETING_RULES}`;
       history.push(reply);
       const text = reply.parts.map((p) => (p.type === "text" ? p.text : "")).join("");
       if (!text.trim()) throw new Error("The assistant returned no reply.");
+      for (const u of extractUrls(text)) sharedUrls.add(u);
       answered.set(latest.id, { text: latestText, answer: text });
       return text;
     },

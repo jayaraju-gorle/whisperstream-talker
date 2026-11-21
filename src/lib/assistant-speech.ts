@@ -6,4 +6,4 @@ export function assistantClock(time: string): string {
   return `${hour % 12 || 12}:${match[2]} ${hour < 12 ? "AM" : "PM"}`;
 }
 
-export const ASSISTANT_SPEECH_RULES = `Use natural 12-hour times: 1:00 PM is "one PM", 5:00 PM is "five PM", 10:30 AM is "ten thirty AM", and 8:00 PM is "eight PM". Never say thirteen hundred, seventeen hundred, or military-time numbers. Do not read URLs or markdown aloud. For directions, give a short address and offer the WhatsApp map handoff; never claim a WhatsApp message was sent without a verified send result.`;
+export const ASSISTANT_SPEECH_RULES = `Use natural 12-hour times: 1:00 PM is "one PM", 5:00 PM is "five PM", 10:30 AM is "ten thirty AM", and 8:00 PM is "eight PM". Never say thirteen hundred, seventeen hundred, or military-time numbers. Never read URLs, "https", "api equals", or markdown aloud. When sharing a Google Maps link or web link, simply say you have shared the clickable link in the chat for them. Never claim a WhatsApp message was sent without a verified send result.`;
