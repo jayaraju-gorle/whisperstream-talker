@@ -297,6 +297,7 @@ function AdminPortalDemo() {
                 if (q.data.localPreview) {
                   setLocalDetails(res.clinic);
                   if (res.shortCode) setLocalShortCode(res.shortCode);
+                  await qc.invalidateQueries({ queryKey: ["aura-public-info"] });
                   return;
                 }
                 await qc.invalidateQueries({ queryKey: ["aura-demo-portal"] });

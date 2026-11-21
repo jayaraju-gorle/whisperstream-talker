@@ -6,7 +6,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { DAYS, stepError, testCodeError, toClinicInput, type ClinicInput } from "@/lib/clinic";
-import { CLINIC_COLUMNS, type ClinicRow } from "@/lib/clinic-store";
+import { CLINIC_COLUMNS, mergeUpdateMeta, type ClinicRow } from "@/lib/clinic-store";
 import { PUBLIC_CLINIC_NAME, PUBLIC_SAMPLE_BUSINESS_ID } from "@/lib/public-clinic-demo";
 
 const AURA_FALLBACK_DETAILS: ClinicInput = {
@@ -43,6 +43,25 @@ const AURA_FALLBACK_DETAILS: ClinicInput = {
   notes:
     "Fictional sample clinic for live demonstrations. Services: family consultations, child health, preventive check-ups and vaccination inquiries.",
 };
+
+// In local dev without SUPABASE_SERVICE_ROLE_KEY, keep edits made in /admin-portal
+// on globalThis so they survive Vite SSR module reloads and immediately show on /web-agent.
+type LocalAuraPreview = ClinicInput & { shortCode: string };
+const localPreviewStore = globalThis as typeof globalThis & {
+  __localAuraPreview?: LocalAuraPreview;
+};
+
+function getLocalAuraPreview(): LocalAuraPreview {
+  if (!localPreviewStore.__localAuraPreview) {
+    localPreviewStore.__localAuraPreview = { ...AURA_FALLBACK_DETAILS, shortCode: "AURA" };
+  }
+  return localPreviewStore.__localAuraPreview;
+}
+
+function setLocalAuraPreview(next: LocalAuraPreview): LocalAuraPreview {
+  localPreviewStore.__localAuraPreview = next;
+  return next;
+}
 
 const token = z.string().regex(/^[a-f0-9]{64}$/);
 const adminKeySchema = z
@@ -192,6 +211,7 @@ export const savePortalClinic = createServerFn({ method: "POST" })
       .update({
         ...clean,
         ...(nextCode ? { test_code: nextCode } : {}),
+        call_settings: mergeUpdateMeta(clinic.call_settings, "Clinic Admin") as never,
         hours: clean.hours as never,
         doctors: clean.doctors as never,
         updated_at: new Date().toISOString(),
@@ -219,6 +239,22 @@ export const getClinicAdminKey = createServerFn({ method: "POST" })
     return { adminKey: await portalAdminSignature(clinic.portal_token) };
   });
 
+export const getClinicConversations = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d) => z.object({ clinicId: z.string().uuid() }).parse(d))
+  .handler(async ({ data, context }) => {
+    const { data: clinic, error } = await context.supabase
+      .from("clinics")
+      .select("id,test_code")
+      .eq("id", data.clinicId)
+      .maybeSingle();
+    if (error || !clinic) throw new Error("Couldn't load business conversations.");
+    if (!process.env["SUPABASE_SERVICE_ROLE_KEY"]) return [];
+    const { supabaseAdmin: db } = await import("@/integrations/supabase/client.server");
+    const { loadClinicConversations } = await import("@/lib/server/portal-conversations.server");
+    return loadClinicConversations(db, { id: clinic.id, testCode: clinic.test_code ?? "" });
+  });
+
 function auraRoleForCode(code?: string): "admin" | "staff" | null {
   const normalized = code?.trim().toUpperCase();
   if (normalized === "AURA-ADMIN") return "admin";
@@ -227,8 +263,7 @@ function auraRoleForCode(code?: string): "admin" | "staff" | null {
 }
 
 export const getAuraPublicInfo = createServerFn({ method: "POST" }).handler(async () => {
-  if (!process.env["SUPABASE_SERVICE_ROLE_KEY"])
-    return { ...AURA_FALLBACK_DETAILS, shortCode: "AURA" };
+  if (!process.env["SUPABASE_SERVICE_ROLE_KEY"]) return getLocalAuraPreview();
   const { supabaseAdmin: db } = await import("@/integrations/supabase/client.server");
   const { data: clinic } = await db
     .from("clinics")
@@ -244,6 +279,42 @@ export type PublicClinicInfo = ClinicInput & {
   id: string;
   shortCode: string;
 };
+
+const ALLOWED_MAP_HOSTS = new Set([
+  "maps.app.goo.gl",
+  "goo.gl",
+  "maps.google.com",
+  "www.google.com",
+  "google.com",
+]);
+
+export const resolveMapLink = createServerFn({ method: "POST" })
+  .inputValidator((d) => z.object({ url: z.string().trim().url().max(600) }).parse(d))
+  .handler(async ({ data }) => {
+    const { extractCoordsFromMapUrl } = await import("@/lib/clinic-form-helpers");
+    const direct = extractCoordsFromMapUrl(data.url);
+    if (direct) return direct;
+    let parsed: URL;
+    try {
+      parsed = new URL(data.url);
+    } catch {
+      return null;
+    }
+    if (!ALLOWED_MAP_HOSTS.has(parsed.hostname.toLowerCase())) return null;
+    try {
+      const res = await fetch(parsed.href, {
+        method: "GET",
+        redirect: "follow",
+        headers: { "User-Agent": "Mozilla/5.0" },
+      });
+      const fromUrl = extractCoordsFromMapUrl(res.url);
+      if (fromUrl) return fromUrl;
+      const html = (await res.text()).slice(0, 60_000);
+      return extractCoordsFromMapUrl(html);
+    } catch {
+      return null;
+    }
+  });
 
 export const getClinicPublicInfo = createServerFn({ method: "POST" })
   .inputValidator((d) => z.object({ id: z.string().trim().min(1).max(160) }).parse(d))
@@ -272,12 +343,13 @@ export const getAuraDemoPortal = createServerFn({ method: "POST" })
     const role = auraRoleForCode(data.code);
     if (!role) throw new Error("Invalid access code.");
     if (!process.env["SUPABASE_SERVICE_ROLE_KEY"]) {
+      const preview = getLocalAuraPreview();
       return {
         localPreview: true,
         role,
-        clinic: { name: PUBLIC_CLINIC_NAME },
-        shortCode: role === "admin" ? "AURA" : null,
-        details: role === "admin" ? AURA_FALLBACK_DETAILS : null,
+        clinic: { name: preview.name },
+        shortCode: role === "admin" ? preview.shortCode : null,
+        details: role === "admin" ? preview : null,
         requests: [],
         conversations: [],
       };
@@ -369,7 +441,12 @@ export const saveAuraDemoClinic = createServerFn({ method: "POST" })
       if (codeErr) throw new Error(codeErr);
     }
     if (!process.env["SUPABASE_SERVICE_ROLE_KEY"]) {
-      return { ok: true, clinic: clean, shortCode: nextCode ?? "AURA" };
+      const current = getLocalAuraPreview();
+      const updated = setLocalAuraPreview({
+        ...clean,
+        shortCode: nextCode ?? current.shortCode,
+      });
+      return { ok: true, clinic: clean, shortCode: updated.shortCode };
     }
     const { supabaseAdmin: db } = await import("@/integrations/supabase/client.server");
     const { error } = await db

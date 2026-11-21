@@ -8,6 +8,7 @@ import {
   Clock,
   Globe,
   HeartPulse,
+  HelpCircle,
   Inbox,
   Lock,
   MapPin,
@@ -31,6 +32,16 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { stepError, testCodeError, type ClinicInput, type DayHours } from "@/lib/clinic";
+import {
+  COMMON_CLINIC_FAQS,
+  formatClinicNotes,
+  formatStructuredAddress,
+  parseClinicNotes,
+  parseStructuredAddress,
+  type ClinicFaqItem,
+  type StructuredAddress,
+} from "@/lib/clinic-form-helpers";
+import { ClinicMapPicker } from "@/components/clinic/ClinicMapPicker";
 import { cn } from "@/lib/utils";
 
 export type PortalRequest = {
@@ -768,7 +779,7 @@ function SettingsCard({
   );
 }
 
-function ClinicAdminEditor({
+export function ClinicAdminEditor({
   initial,
   initialShortCode,
   onSave,
@@ -779,10 +790,45 @@ function ClinicAdminEditor({
 }) {
   const [c, setC] = useState<ClinicInput>(initial);
   const [code, setCode] = useState(initialShortCode);
+  const [addr, setAddr] = useState<StructuredAddress>(() =>
+    parseStructuredAddress(initial.address),
+  );
+  const [notesState, setNotesState] = useState<{ overview: string; faqs: ClinicFaqItem[] }>(() =>
+    parseClinicNotes(initial.notes),
+  );
   const [saving, setSaving] = useState(false);
 
   const set = <K extends keyof ClinicInput>(k: K, v: ClinicInput[K]) =>
     setC((p) => ({ ...p, [k]: v }));
+  const setAddrField = (k: keyof StructuredAddress, v: string) => {
+    setAddr((prev) => {
+      const next = { ...prev, [k]: v };
+      setC((p) => ({ ...p, address: formatStructuredAddress(next) }));
+      return next;
+    });
+  };
+  const syncNotes = (next: { overview: string; faqs: ClinicFaqItem[] }) => {
+    setNotesState(next);
+    setC((p) => ({ ...p, notes: formatClinicNotes(next.overview, next.faqs) }));
+  };
+  const updateFaq = (index: number, patch: Partial<ClinicFaqItem>) => {
+    syncNotes({
+      ...notesState,
+      faqs: notesState.faqs.map((item, j) => (j === index ? { ...item, ...patch } : item)),
+    });
+  };
+  const addFaq = (question = "", answer = "") => {
+    syncNotes({
+      ...notesState,
+      faqs: [...notesState.faqs, { question, answer }],
+    });
+  };
+  const removeFaq = (index: number) => {
+    syncNotes({
+      ...notesState,
+      faqs: notesState.faqs.filter((_, j) => j !== index),
+    });
+  };
   const setDay = (i: number, p: Partial<DayHours>) =>
     set(
       "hours",
@@ -864,23 +910,71 @@ function ClinicAdminEditor({
               />
             </div>
           </div>
-          <div className="space-y-1.5">
-            <Label htmlFor="admin-address">Address</Label>
-            <Input
-              id="admin-address"
-              value={c.address}
-              onChange={(e) => set("address", e.target.value)}
-            />
+          <div className="space-y-3 rounded-xl border border-border bg-muted/40 p-3">
+            <div>
+              <p className="text-sm font-medium">Clinic address</p>
+              <p className="text-xs text-muted-foreground">
+                Enter your address details so patients and maps can locate your clinic easily.
+              </p>
+            </div>
+            <div className="grid gap-3 sm:grid-cols-2">
+              <div className="space-y-1.5">
+                <Label htmlFor="admin-addr-street">Building / Door No. &amp; Street</Label>
+                <Input
+                  id="admin-addr-street"
+                  placeholder="e.g. 63B, SBI Bank Lane"
+                  value={addr.street}
+                  onChange={(e) => setAddrField("street", e.target.value)}
+                />
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="admin-addr-locality">Area / Locality / Landmark</Label>
+                <Input
+                  id="admin-addr-locality"
+                  placeholder="e.g. Kondapur, Sri Ram Nagar"
+                  value={addr.locality}
+                  onChange={(e) => setAddrField("locality", e.target.value)}
+                />
+              </div>
+            </div>
+            <div className="grid gap-3 sm:grid-cols-3">
+              <div className="space-y-1.5">
+                <Label htmlFor="admin-addr-city">City</Label>
+                <Input
+                  id="admin-addr-city"
+                  placeholder="e.g. Hyderabad"
+                  value={addr.city}
+                  onChange={(e) => setAddrField("city", e.target.value)}
+                />
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="admin-addr-state">State</Label>
+                <Input
+                  id="admin-addr-state"
+                  placeholder="e.g. Telangana"
+                  value={addr.state}
+                  onChange={(e) => setAddrField("state", e.target.value)}
+                />
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="admin-addr-pin">PIN Code</Label>
+                <Input
+                  id="admin-addr-pin"
+                  inputMode="numeric"
+                  maxLength={10}
+                  placeholder="e.g. 500084"
+                  value={addr.pincode}
+                  onChange={(e) => setAddrField("pincode", e.target.value)}
+                />
+              </div>
+            </div>
           </div>
-          <div className="space-y-1.5">
-            <Label htmlFor="admin-map">Google Maps link</Label>
-            <Input
-              id="admin-map"
-              placeholder="https://maps.app.goo.gl/..."
-              value={c.map_url}
-              onChange={(e) => set("map_url", e.target.value)}
-            />
-          </div>
+
+          <ClinicMapPicker
+            address={c.address}
+            mapUrl={c.map_url}
+            onChangeMapUrl={(url) => set("map_url", url)}
+          />
         </div>
       </SettingsCard>
 
@@ -1042,27 +1136,175 @@ function ClinicAdminEditor({
       </SettingsCard>
 
       <SettingsCard
-        icon={MessageSquareText}
-        title="FAQs, services & patient instructions"
-        description="The assistant answers patient questions using this information."
+        icon={HelpCircle}
+        title="Clinic info, FAQs & insurance"
+        description="Share clinic details, common Q&As, and optional insurance info for the assistant."
+        action={
+          <Button type="button" size="sm" variant="outline" onClick={() => addFaq()}>
+            <Plus className="h-4 w-4" /> Add FAQ
+          </Button>
+        }
       >
-        <div className="space-y-1.5">
-          <Label htmlFor="admin-insurance">Insurance &amp; payment notes</Label>
-          <Input
-            id="admin-insurance"
-            value={c.insurance}
-            onChange={(e) => set("insurance", e.target.value)}
-          />
-        </div>
-        <div className="space-y-1.5">
-          <Label htmlFor="admin-notes">Clinic FAQs, services &amp; pre-visit instructions</Label>
-          <Textarea
-            id="admin-notes"
-            rows={5}
-            value={c.notes}
-            onChange={(e) => set("notes", e.target.value)}
-            placeholder="Parking, fasting instructions, vaccinations, services, etc."
-          />
+        <div className="space-y-5">
+          {/* 1. Clinic info & pre-visit notes */}
+          <div className="space-y-1.5">
+            <Label htmlFor="admin-overview">About clinic &amp; general pre-visit notes</Label>
+            <Textarea
+              id="admin-overview"
+              rows={3}
+              value={notesState.overview}
+              onChange={(e) => syncNotes({ ...notesState, overview: e.target.value })}
+              placeholder="Brief clinic description, key treatments, or general instructions for patients."
+            />
+          </div>
+
+          {/* 2. Frequently Asked Questions (Q&A) */}
+          <div className="space-y-3 border-t border-border pt-4">
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <div>
+                <p className="text-sm font-medium">Frequently Asked Questions (Q&amp;A)</p>
+                <p className="text-xs text-muted-foreground">
+                  Tap a quick question below to add it with a ready-to-edit answer, or write your
+                  own.
+                </p>
+              </div>
+            </div>
+
+            {notesState.faqs.length === 0 ? (
+              <div className="rounded-xl border border-dashed border-border bg-muted/30 p-4 text-center">
+                <p className="text-sm font-medium">No FAQs added yet</p>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  Tap any common question below to auto-fill both the question and a suggested
+                  answer.
+                </p>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {notesState.faqs.map((faq, idx) => {
+                  const template = COMMON_CLINIC_FAQS.find(
+                    (t) => t.question.toLowerCase() === faq.question.trim().toLowerCase(),
+                  );
+                  return (
+                    <div
+                      key={idx}
+                      className="space-y-2.5 rounded-xl border border-border bg-muted/40 p-3"
+                    >
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="inline-flex items-center gap-2 text-xs font-semibold text-secondary-foreground">
+                          <span className="flex h-6 w-6 items-center justify-center rounded-full bg-secondary text-[11px]">
+                            Q{idx + 1}
+                          </span>
+                          Question &amp; Answer
+                        </span>
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant="ghost"
+                          className="text-destructive hover:bg-red-50 hover:text-destructive"
+                          onClick={() => removeFaq(idx)}
+                        >
+                          <Trash2 className="h-3.5 w-3.5" /> Remove
+                        </Button>
+                      </div>
+                      <div className="space-y-1">
+                        <Label
+                          htmlFor={`admin-faq-q-${idx}`}
+                          className="text-xs text-muted-foreground"
+                        >
+                          Question
+                        </Label>
+                        <Input
+                          id={`admin-faq-q-${idx}`}
+                          placeholder="e.g. Is parking available at the clinic?"
+                          value={faq.question}
+                          onChange={(e) => updateFaq(idx, { question: e.target.value })}
+                        />
+                      </div>
+                      <div className="space-y-1.5">
+                        <Label
+                          htmlFor={`admin-faq-a-${idx}`}
+                          className="text-xs text-muted-foreground"
+                        >
+                          Answer
+                        </Label>
+                        <Textarea
+                          id={`admin-faq-a-${idx}`}
+                          rows={2}
+                          placeholder="e.g. Yes, free two-wheeler and car parking is available right outside."
+                          value={faq.answer}
+                          onChange={(e) => updateFaq(idx, { answer: e.target.value })}
+                        />
+                        {template && (
+                          <div className="space-y-1 pt-0.5">
+                            <p className="text-[11px] font-medium text-muted-foreground">
+                              Quick-fill answer:
+                            </p>
+                            <div className="flex flex-wrap gap-1.5">
+                              {template.quickAnswers.map((ans) => (
+                                <button
+                                  key={ans}
+                                  type="button"
+                                  onClick={() => updateFaq(idx, { answer: ans })}
+                                  className={cn(
+                                    "rounded-lg border px-2 py-1 text-left text-[11px] transition-colors",
+                                    faq.answer.trim() === ans
+                                      ? "border-primary bg-secondary text-secondary-foreground"
+                                      : "border-border bg-card text-muted-foreground hover:border-primary/40 hover:text-foreground",
+                                  )}
+                                >
+                                  {ans}
+                                </button>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+
+            <div className="space-y-1.5">
+              <p className="text-xs font-medium text-muted-foreground">
+                Quick-add common clinic questions (auto-fills a suggested answer):
+              </p>
+              <div className="flex flex-wrap gap-1.5">
+                {COMMON_CLINIC_FAQS.filter(
+                  (item) =>
+                    !notesState.faqs.some(
+                      (f) => f.question.trim().toLowerCase() === item.question.toLowerCase(),
+                    ),
+                ).map((item) => (
+                  <button
+                    key={item.question}
+                    type="button"
+                    onClick={() => addFaq(item.question, item.defaultAnswer)}
+                    className="inline-flex items-center gap-1 rounded-full border border-border bg-card px-2.5 py-1 text-xs text-foreground transition-colors hover:border-primary/40 hover:bg-secondary hover:text-secondary-foreground"
+                  >
+                    <Plus className="h-3 w-3 text-primary" />
+                    {item.question}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          {/* 3. Insurance & payment options (Optional) */}
+          <div className="space-y-1.5 border-t border-border pt-4">
+            <div className="flex items-center gap-2">
+              <Label htmlFor="admin-insurance">Insurance &amp; payment options</Label>
+              <span className="rounded-full bg-muted px-2 py-0.5 text-[11px] font-medium text-muted-foreground">
+                Optional
+              </span>
+            </div>
+            <Input
+              id="admin-insurance"
+              placeholder="e.g. UPI, credit/debit cards, cash, cashless insurance (leave blank if not applicable)"
+              value={c.insurance}
+              onChange={(e) => set("insurance", e.target.value)}
+            />
+          </div>
         </div>
       </SettingsCard>
 

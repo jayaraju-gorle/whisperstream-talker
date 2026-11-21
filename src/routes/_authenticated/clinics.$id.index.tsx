@@ -1,12 +1,19 @@
-import { MapPin } from "lucide-react";
+import {
+  ChevronDown,
+  ChevronUp,
+  MapPin,
+  MessageCircle,
+  MessageSquareText,
+  Pencil,
+  Phone,
+} from "lucide-react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useState } from "react";
 import { toast } from "sonner";
-import { Pencil } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { getClinicAdminKey } from "@/lib/portal.functions";
+import { getClinicAdminKey, getClinicConversations } from "@/lib/portal.functions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { LoadingIndicator } from "@/components/LoadingIndicator";
@@ -17,6 +24,7 @@ import { floTurnCostUsd } from "@/lib/flo-models";
 import { useCurrency } from "@/hooks/use-currency";
 import { useTimezone } from "@/hooks/use-timezone";
 import { resolvePreferredTime } from "@/lib/timezone";
+import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/_authenticated/clinics/$id/")({
   staticData: { sitemap: false },
@@ -329,6 +337,7 @@ function Dashboard() {
       </div>
 
       <Appointments clinicId={id} />
+      <ClinicConversationsSection clinicId={id} />
     </main>
   );
 }
@@ -339,6 +348,175 @@ function Stat({ label, value, hint }: { label: string; value: string; hint?: str
       <div className="text-xs text-muted-foreground">{label}</div>
       <div className="mt-1 font-mono text-lg">{value}</div>
     </div>
+  );
+}
+
+function ClinicConversationsSection({ clinicId }: { clinicId: string }) {
+  const fetchConversations = useServerFn(getClinicConversations);
+  const [filter, setFilter] = useState<"all" | "inquiry" | "appointment">("all");
+  const [expandedId, setExpandedId] = useState<string | null>(null);
+  const q = useQuery({
+    queryKey: ["clinics", clinicId, "conversations"],
+    refetchInterval: 20000,
+    queryFn: () => fetchConversations({ data: { clinicId } }),
+  });
+
+  const all = q.data ?? [];
+  const inquiryCount = all.filter((c) => !c.hasAppointment).length;
+  const bookedCount = all.length - inquiryCount;
+  const filtered =
+    filter === "all"
+      ? all
+      : filter === "inquiry"
+        ? all.filter((c) => !c.hasAppointment)
+        : all.filter((c) => c.hasAppointment);
+
+  return (
+    <section className="space-y-4 rounded-lg border border-border bg-card p-4">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <h2 className="flex items-center gap-2 font-semibold">
+            <MessageSquareText className="h-4 w-4 text-primary" />
+            All conversations ({all.length})
+          </h2>
+          <p className="text-xs text-muted-foreground">
+            Synced with the business admin portal — includes general inquiries and booked
+            appointments across WhatsApp, phone, and website.
+          </p>
+        </div>
+        <div className="flex gap-1 rounded-lg border border-border bg-background p-1 text-xs">
+          {(
+            [
+              ["all", `All (${all.length})`],
+              ["inquiry", `Inquiries (${inquiryCount})`],
+              ["appointment", `Booked (${bookedCount})`],
+            ] as const
+          ).map(([key, label]) => (
+            <button
+              key={key}
+              type="button"
+              onClick={() => setFilter(key)}
+              className={cn(
+                "rounded-md px-2.5 py-1.5 font-medium transition-colors",
+                filter === key
+                  ? "bg-primary text-primary-foreground"
+                  : "text-muted-foreground hover:text-foreground",
+              )}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {q.isLoading && <LoadingIndicator label="Loading conversations…" />}
+      {q.isError && <p className="text-sm text-destructive">Couldn&apos;t load conversations.</p>}
+      {!q.isLoading && !q.isError && filtered.length === 0 && (
+        <p className="py-6 text-center text-sm text-muted-foreground">
+          No {filter === "all" ? "" : filter === "inquiry" ? "inquiry-only " : "booked "}
+          conversations yet.
+        </p>
+      )}
+
+      <ul className="space-y-3">
+        {filtered.map((c) => {
+          const expanded = expandedId === c.id;
+          const digits = c.contact.replace(/[^\d]/g, "");
+          const hasPhone = digits.length >= 7;
+          return (
+            <li
+              key={c.id}
+              className="space-y-3 rounded-xl border border-border bg-background/60 p-4"
+            >
+              <div className="flex flex-wrap items-start justify-between gap-2">
+                <div className="min-w-0 flex-1">
+                  <p className="font-medium">{c.contact}</p>
+                  <p className="mt-0.5 line-clamp-2 text-sm text-muted-foreground">
+                    &ldquo;{c.preview}&rdquo;
+                  </p>
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    {c.channel === "Browser" ? "Website" : c.channel} ·{" "}
+                    {new Date(c.updated_at).toLocaleString()} · {c.messageCount}{" "}
+                    {c.messageCount === 1 ? "message" : "messages"}
+                  </p>
+                </div>
+                <span
+                  className={cn(
+                    "shrink-0 rounded-full px-2 py-0.5 text-xs font-medium",
+                    c.hasAppointment
+                      ? "bg-emerald-50 text-emerald-800 ring-1 ring-inset ring-emerald-200"
+                      : "bg-muted text-muted-foreground",
+                  )}
+                >
+                  {c.hasAppointment ? "Appointment booked" : "General inquiry"}
+                </span>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="secondary"
+                  onClick={() => setExpandedId(expanded ? null : c.id)}
+                >
+                  {expanded ? (
+                    <>
+                      <ChevronUp className="h-4 w-4" /> Hide transcript
+                    </>
+                  ) : (
+                    <>
+                      <ChevronDown className="h-4 w-4" /> View transcript
+                    </>
+                  )}
+                </Button>
+                {hasPhone && (
+                  <>
+                    <Button asChild size="sm" variant="outline">
+                      <a href={`tel:${c.contact.replace(/\s/g, "")}`}>
+                        <Phone className="h-4 w-4" /> Call
+                      </a>
+                    </Button>
+                    <Button asChild size="sm" variant="outline">
+                      <a href={`https://wa.me/${digits}`} target="_blank" rel="noopener noreferrer">
+                        <MessageCircle className="h-4 w-4" /> WhatsApp
+                      </a>
+                    </Button>
+                  </>
+                )}
+              </div>
+              {expanded && (
+                <div className="space-y-2 border-t border-border pt-3">
+                  {c.messages.map((m) => (
+                    <div
+                      key={m.id}
+                      className={cn("flex", m.role === "user" ? "justify-end" : "justify-start")}
+                    >
+                      <div
+                        className={cn(
+                          "max-w-[85%] rounded-2xl px-3 py-2 text-sm leading-relaxed",
+                          m.role === "user"
+                            ? "rounded-br-sm bg-primary text-primary-foreground"
+                            : "rounded-bl-sm border border-border bg-card text-foreground",
+                        )}
+                      >
+                        <p
+                          className={cn(
+                            "mb-0.5 text-[10px] font-semibold uppercase tracking-wide",
+                            m.role === "user" ? "text-white/75" : "text-primary",
+                          )}
+                        >
+                          {m.role === "user" ? "Patient" : "Assistant"}
+                        </p>
+                        <p className="whitespace-pre-wrap">{m.text}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </li>
+          );
+        })}
+      </ul>
+    </section>
   );
 }
 

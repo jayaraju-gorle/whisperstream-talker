@@ -1,11 +1,12 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Plus, Radio } from "lucide-react";
+import { Clock, Plus, Radio } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { LoadingIndicator } from "@/components/LoadingIndicator";
+import { readLastUpdatedBy } from "@/lib/clinic-store";
 import { PUBLIC_SAMPLE_BUSINESS_ID } from "@/lib/public-clinic-demo";
 import { DEMO_BUSINESS_SETTING_KEY, parseDemoBusinessId } from "@/lib/demo-business";
 
@@ -37,8 +38,8 @@ function Clinics() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("clinics")
-        .select("id,name,phone,address,created_at")
-        .order("created_at", { ascending: false });
+        .select("id,name,phone,address,created_at,updated_at,call_settings,test_code")
+        .order("updated_at", { ascending: false });
       if (error) throw error;
       return data;
     },
@@ -170,6 +171,34 @@ function Clinics() {
                   {c.phone}
                   {c.address ? ` · ${c.address}` : ""}
                 </div>
+                {(() => {
+                  const updatedBy = readLastUpdatedBy(c.call_settings);
+                  const updatedAt = c.updated_at || c.created_at;
+                  const byClinicAdmin = updatedBy === "Clinic Admin";
+                  return (
+                    <div className="mt-2.5 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+                      <span className="inline-flex items-center gap-1">
+                        <Clock className="h-3.5 w-3.5" />
+                        Updated{" "}
+                        {new Date(updatedAt).toLocaleString(undefined, {
+                          day: "numeric",
+                          month: "short",
+                          hour: "numeric",
+                          minute: "2-digit",
+                        })}
+                      </span>
+                      <span
+                        className={
+                          byClinicAdmin
+                            ? "rounded-full bg-emerald-50 px-2 py-0.5 text-[11px] font-medium text-emerald-800 ring-1 ring-inset ring-emerald-200"
+                            : "rounded-full bg-muted px-2 py-0.5 text-[11px] font-medium text-muted-foreground"
+                        }
+                      >
+                        by {updatedBy ?? "Super Admin"}
+                      </span>
+                    </div>
+                  );
+                })()}
               </Link>
               {c.id !== PUBLIC_SAMPLE_BUSINESS_ID && (
                 <div className="flex items-center justify-between gap-3 border-t border-border px-4 py-3">

@@ -1,13 +1,27 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
+import { Download } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { LoadingIndicator } from "@/components/LoadingIndicator";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { FLO_MODELS, FLO_MODEL_SETTING_KEY, floTurnCostUsd, resolveFloModel } from "@/lib/flo-models";
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectLabel,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  FLO_MODELS,
+  FLO_MODEL_SETTING_KEY,
+  floTurnCostUsd,
+  resolveFloModel,
+} from "@/lib/flo-models";
 import { useCurrency } from "@/hooks/use-currency";
 import { useTimezone } from "@/hooks/use-timezone";
 import { TIMEZONES } from "@/lib/timezone";
@@ -16,16 +30,34 @@ import { CurrencySelect } from "@/components/CurrencySelect";
 import { matchWhatsAppMetrics } from "@/lib/whatsapp-metrics";
 import { Switch } from "@/components/ui/switch";
 import { isLikelyTestLead } from "@/lib/lead-filters";
-import { latestMessagePreview, messageText, viewConversations, visiblePages, type ActivityWindow, type ContactFilter, type ConversationSort } from "@/lib/web-conversations";
+import { clinicVisitorKey, CLINIC_VISITOR_PREFIX, parseClinicCommand } from "@/lib/clinic";
+import { downloadCsv } from "@/lib/csv-export";
+import {
+  latestMessagePreview,
+  messageText,
+  viewConversations,
+  visiblePages,
+  type ActivityWindow,
+  type ContactFilter,
+  type ConversationSort,
+} from "@/lib/web-conversations";
 
 export const Route = createFileRoute("/_authenticated/leads")({
   staticData: { sitemap: false },
   head: () => ({
     meta: [
       { title: "Assistant — Conversational Flows Studio" },
-      { name: "description", content: "Manage Mira's leads, web, WhatsApp and phone conversations, voice and model settings." },
+      {
+        name: "description",
+        content:
+          "Manage Mira's leads, web, WhatsApp and phone conversations, voice and model settings.",
+      },
       { property: "og:title", content: "Assistant — Conversational Flows Studio" },
-      { property: "og:description", content: "Manage Mira's leads, web, WhatsApp and phone conversations, voice and model settings." },
+      {
+        property: "og:description",
+        content:
+          "Manage Mira's leads, web, WhatsApp and phone conversations, voice and model settings.",
+      },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
       { name: "robots", content: "noindex" },
@@ -46,6 +78,93 @@ type Lead = {
   created_at: string;
 };
 
+type ClinicSummary = {
+  id: string;
+  name: string;
+  test_code: string;
+};
+
+type AppointmentRequestRow = {
+  id: string;
+  clinic_id: string;
+  channel: string;
+  patient_name: string;
+  phone: string;
+  doctor: string;
+  preferred_time: string;
+  reason: string;
+  status: string;
+  created_at: string;
+};
+
+function matchClinicForAssistantConversation(
+  visitorId: string,
+  messages: unknown,
+  clinics: ClinicSummary[],
+): ClinicSummary | null {
+  for (const c of clinics) {
+    const key = clinicVisitorKey(c.id);
+    if (
+      visitorId.startsWith(`web_c_${key}_`) ||
+      visitorId.startsWith(`${CLINIC_VISITOR_PREFIX}${key}_`)
+    ) {
+      return c;
+    }
+  }
+  const arr = Array.isArray(messages)
+    ? (messages as { role?: string; parts?: { type?: string; text?: string }[] }[])
+    : [];
+  for (let i = arr.length - 1; i >= 0; i--) {
+    const m = arr[i];
+    if (m?.role !== "user") continue;
+    const text = messageText(m);
+    const cmd = parseClinicCommand(text);
+    if (cmd?.kind === "try") {
+      const found = clinics.find((c) => c.test_code.toUpperCase() === cmd.code);
+      if (found) return found;
+    }
+    if (cmd?.kind === "exit") break;
+  }
+  const combined = arr
+    .map((m) => messageText(m))
+    .join(" ")
+    .toLowerCase();
+  if (combined) {
+    for (const c of clinics) {
+      if (c.name.trim().length >= 4 && combined.includes(c.name.trim().toLowerCase())) {
+        return c;
+      }
+    }
+  }
+  return null;
+}
+
+function matchClinicForWaThread(
+  messages: WaMessage[],
+  clinics: ClinicSummary[],
+): ClinicSummary | null {
+  for (let i = messages.length - 1; i >= 0; i--) {
+    const m = messages[i];
+    if (!m || m.direction === "out") continue;
+    const cmd = parseClinicCommand(m.body);
+    if (cmd?.kind === "try") {
+      const found = clinics.find((c) => c.test_code.toUpperCase() === cmd.code);
+      if (found) return found;
+    }
+    if (cmd?.kind === "exit") break;
+  }
+  const combined = messages
+    .map((m) => m.body)
+    .join(" ")
+    .toLowerCase();
+  for (const c of clinics) {
+    if (c.name.trim().length >= 4 && combined.includes(c.name.trim().toLowerCase())) {
+      return c;
+    }
+  }
+  return null;
+}
+
 function Leads() {
   const { format, zone, setZone, saving: timezoneSaving } = useTimezone();
   const qc = useQueryClient();
@@ -53,18 +172,97 @@ function Leads() {
   const [updating, setUpdating] = useState<string | null>(null);
   const [tab, setTab] = useState<"leads" | "web" | "whatsapp" | "phone" | "model">("leads");
   const [hideTests, setHideTests] = useState(false);
+  const [entryType, setEntryType] = useState<"all" | "appointment" | "lead">("all");
+  const [businessFilter, setBusinessFilter] = useState<string>("all");
+
+  const clinicsQuery = useQuery({
+    queryKey: ["clinics", "summary"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("clinics")
+        .select("id,name,test_code")
+        .order("name", { ascending: true });
+      if (error) throw error;
+      return (data ?? []) as ClinicSummary[];
+    },
+  });
+  const clinics = clinicsQuery.data ?? [];
+  const clinicById = new Map(clinics.map((c) => [c.id, c]));
+
   const { data, isLoading, isError } = useQuery({
     queryKey: ["leads", "list"],
     queryFn: async () => {
-      const { data, error } = await supabase.from("leads").select("*").order("created_at", { ascending: false });
+      const { data, error } = await supabase
+        .from("leads")
+        .select("*")
+        .order("created_at", { ascending: false });
       if (error) throw error;
       return data as Lead[];
     },
   });
 
+  const apptsQuery = useQuery({
+    queryKey: ["appointments", "all"],
+    refetchInterval: 20_000,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("clinic_appointment_requests")
+        .select(
+          "id,clinic_id,channel,patient_name,phone,doctor,preferred_time,reason,status,created_at",
+        )
+        .order("created_at", { ascending: false })
+        .limit(500);
+      if (error) throw error;
+      return (data ?? []) as AppointmentRequestRow[];
+    },
+  });
+
   const testCount = data?.filter(isLikelyTestLead).length ?? 0;
-  const visibleLeads = hideTests ? data?.filter(lead => !isLikelyTestLead(lead)) : data;
-  const setStatus = async (id: string, status: string) => {
+  const visibleLeads = hideTests
+    ? (data ?? []).filter((lead) => !isLikelyTestLead(lead))
+    : (data ?? []);
+  const appointments = apptsQuery.data ?? [];
+
+  type CombinedEntry =
+    | {
+        kind: "lead";
+        created_at: string;
+        businessId: string | null;
+        businessName: string;
+        lead: Lead;
+      }
+    | {
+        kind: "appointment";
+        created_at: string;
+        businessId: string;
+        businessName: string;
+        appt: AppointmentRequestRow;
+      };
+
+  const combined: CombinedEntry[] = [
+    ...appointments.map((appt) => ({
+      kind: "appointment" as const,
+      created_at: appt.created_at,
+      businessId: appt.clinic_id,
+      businessName: clinicById.get(appt.clinic_id)?.name ?? "Business",
+      appt,
+    })),
+    ...visibleLeads.map((lead) => ({
+      kind: "lead" as const,
+      created_at: lead.created_at,
+      businessId: null,
+      businessName: lead.company?.trim() || "Mira Studio",
+      lead,
+    })),
+  ]
+    .filter((item) => {
+      if (entryType !== "all" && item.kind !== entryType) return false;
+      if (businessFilter !== "all" && item.businessId !== businessFilter) return false;
+      return true;
+    })
+    .sort((a, b) => b.created_at.localeCompare(a.created_at));
+
+  const setLeadStatus = async (id: string, status: string) => {
     setUpdating(id);
     const { error } = await supabase.from("leads").update({ status }).eq("id", id);
     setUpdating(null);
@@ -75,83 +273,355 @@ function Leads() {
     qc.invalidateQueries({ queryKey: ["leads"] });
   };
 
+  const setAppointmentStatus = async (id: string, status: string) => {
+    setUpdating(id);
+    const { error } = await supabase
+      .from("clinic_appointment_requests")
+      .update({ status })
+      .eq("id", id);
+    setUpdating(null);
+    if (error) {
+      toast.error("Couldn't update the appointment.");
+      return;
+    }
+    qc.invalidateQueries({ queryKey: ["appointments"] });
+    qc.invalidateQueries({ queryKey: ["clinics"] });
+  };
+
+  const exportCombinedCsv = () => {
+    downloadCsv(
+      `leads-and-appointments-${new Date().toISOString().slice(0, 10)}.csv`,
+      [
+        "Type",
+        "Business",
+        "Name",
+        "Phone",
+        "Email",
+        "Channel",
+        "Doctor / Interest",
+        "Preferred Time",
+        "Reason / Notes",
+        "Status",
+        "Created At",
+      ],
+      combined.map((item) =>
+        item.kind === "appointment"
+          ? [
+              "Appointment",
+              item.businessName,
+              item.appt.patient_name,
+              item.appt.phone,
+              "",
+              item.appt.channel,
+              item.appt.doctor,
+              item.appt.preferred_time,
+              item.appt.reason,
+              item.appt.status,
+              format(item.appt.created_at),
+            ]
+          : [
+              "Setup Lead",
+              item.businessName,
+              item.lead.name,
+              item.lead.phone ?? "",
+              item.lead.email,
+              "Website",
+              item.lead.interest ?? "",
+              "",
+              "",
+              item.lead.status,
+              format(item.lead.created_at),
+            ],
+      ),
+    );
+    toast.success(`Exported ${combined.length} rows to CSV.`);
+  };
+
   return (
     <main className="mx-auto w-full max-w-5xl px-4 py-8">
       <h1 className="text-2xl font-semibold">Assistant</h1>
       <p className="mt-1 text-sm text-muted-foreground">
-        Mira's conversations, leads and model settings.
+        Mira's conversations, leads, appointments and model settings across all businesses.
       </p>
       <div className="mt-4 flex flex-wrap items-end gap-4">
-        <div className="space-y-1"><span className="text-xs text-muted-foreground">Timestamps in</span>
-          <Select value={zone} onValueChange={v => void setZone(v)} disabled={timezoneSaving}>
-            <SelectTrigger aria-label="Timestamp timezone" className="w-48"><SelectValue /></SelectTrigger>
-            <SelectContent>{TIMEZONES.map(t => <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>)}</SelectContent>
+        <div className="space-y-1">
+          <span className="text-xs text-muted-foreground">Timestamps in</span>
+          <Select value={zone} onValueChange={(v) => void setZone(v)} disabled={timezoneSaving}>
+            <SelectTrigger aria-label="Timestamp timezone" className="w-48">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {TIMEZONES.map((t) => (
+                <SelectItem key={t.value} value={t.value}>
+                  {t.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
           </Select>
-        </div><CurrencySelect />
+        </div>
+        <CurrencySelect />
       </div>
       <div className="mt-4 flex flex-wrap gap-2" role="tablist" aria-label="Assistant views">
-        <Button size="sm" role="tab" aria-selected={tab === "leads"} variant={tab === "leads" ? "default" : "outline"} onClick={() => setTab("leads")}>Leads</Button>
-        <Button size="sm" role="tab" aria-selected={tab === "web"} variant={tab === "web" ? "default" : "outline"} onClick={() => setTab("web")}>Web conversations</Button>
-        <Button size="sm" role="tab" aria-selected={tab === "whatsapp"} variant={tab === "whatsapp" ? "default" : "outline"} onClick={() => setTab("whatsapp")}>WhatsApp</Button>
-        <Button size="sm" role="tab" aria-selected={tab === "phone"} variant={tab === "phone" ? "default" : "outline"} onClick={() => setTab("phone")}>Phone conversations</Button>
-        <Button size="sm" role="tab" aria-selected={tab === "model"} variant={tab === "model" ? "default" : "outline"} onClick={() => setTab("model")}>Mira model</Button>
+        <Button
+          size="sm"
+          role="tab"
+          aria-selected={tab === "leads"}
+          variant={tab === "leads" ? "default" : "outline"}
+          onClick={() => setTab("leads")}
+        >
+          Leads &amp; Appointments
+        </Button>
+        <Button
+          size="sm"
+          role="tab"
+          aria-selected={tab === "web"}
+          variant={tab === "web" ? "default" : "outline"}
+          onClick={() => setTab("web")}
+        >
+          Web conversations
+        </Button>
+        <Button
+          size="sm"
+          role="tab"
+          aria-selected={tab === "whatsapp"}
+          variant={tab === "whatsapp" ? "default" : "outline"}
+          onClick={() => setTab("whatsapp")}
+        >
+          WhatsApp
+        </Button>
+        <Button
+          size="sm"
+          role="tab"
+          aria-selected={tab === "phone"}
+          variant={tab === "phone" ? "default" : "outline"}
+          onClick={() => setTab("phone")}
+        >
+          Phone conversations
+        </Button>
+        <Button
+          size="sm"
+          role="tab"
+          aria-selected={tab === "model"}
+          variant={tab === "model" ? "default" : "outline"}
+          onClick={() => setTab("model")}
+        >
+          Mira model
+        </Button>
       </div>
-      {tab === "phone" ? <WebConversations leads={data ?? []} phone /> : tab === "model" ? <FloModelSettings /> : tab === "whatsapp" ? <WhatsAppMessages /> : tab === "web" ? <WebConversations leads={data ?? []} /> : <>
-      <div className="mt-5 flex flex-wrap items-center gap-3">
-        <label className="flex items-center gap-2 text-sm"><Switch checked={hideTests} onCheckedChange={setHideTests} />Hide likely test submissions</label>
-        {hideTests && data && <span className="text-xs text-muted-foreground">{testCount} hidden</span>}
-      </div>
-      {isLoading && <div className="mt-8"><LoadingIndicator label="Loading leads…" /></div>}
-      {isError && <p className="mt-8 text-sm text-destructive">You don't have access to leads, or they couldn't load.</p>}
-      {visibleLeads && visibleLeads.length === 0 && <p className="mt-8 text-sm text-muted-foreground">{data?.length ? "No leads match this view." : "No leads yet."}</p>}
-      <div className="mt-6 space-y-3">
-        {visibleLeads?.map((l) => (
-          <div key={l.id} className="rounded-lg border border-border bg-card p-4">
-            <div className="flex flex-wrap items-start justify-between gap-3">
-              <div className="min-w-0">
-                <div className="font-medium">
-                  {l.name} {l.company && <span className="text-muted-foreground">· {l.company}</span>}
-                </div>
-                <div className="mt-1 flex flex-wrap gap-x-4 text-sm">
-                  <a className="text-primary hover:underline" href={`mailto:${l.email}`}>{l.email}</a>
-                  {l.phone && <a className="text-primary hover:underline" href={`tel:${l.phone}`}>{l.phone}</a>}
-                </div>
-                {l.interest && <p className="mt-2 text-sm text-muted-foreground">{l.interest}</p>}
-                <div className="mt-2 font-mono text-[11px] text-muted-foreground">
-                  {format(l.created_at)}
-                </div>
-              </div>
-              <div className="flex flex-wrap items-center gap-2">
-                {["new", "contacted", "closed"].map((s) => (
-                  <Button
-                    key={s}
-                    size="sm"
-                    variant={l.status === s ? "default" : "outline"}
-                    disabled={updating === l.id}
-                    onClick={() => setStatus(l.id, s)}
-                  >
-                    {s.charAt(0).toUpperCase() + s.slice(1)}
-                  </Button>
-                ))}
-                {l.conversation_id && (
-                  <Button size="sm" variant="ghost" onClick={() => setOpenId(openId === l.id ? null : l.id)}>
-                    {openId === l.id ? "Hide chat" : "View chat"}
-                  </Button>
-                )}
-              </div>
+      {tab === "phone" ? (
+        <WebConversations leads={data ?? []} clinics={clinics} phone />
+      ) : tab === "model" ? (
+        <FloModelSettings />
+      ) : tab === "whatsapp" ? (
+        <WhatsAppMessages clinics={clinics} />
+      ) : tab === "web" ? (
+        <WebConversations leads={data ?? []} clinics={clinics} />
+      ) : (
+        <>
+          <div className="mt-5 flex flex-wrap items-center justify-between gap-3">
+            <div className="flex flex-wrap items-center gap-3">
+              <Select
+                value={entryType}
+                onValueChange={(v) => setEntryType(v as "all" | "appointment" | "lead")}
+              >
+                <SelectTrigger aria-label="Filter by entry type" className="w-44">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">
+                    All ({appointments.length + visibleLeads.length})
+                  </SelectItem>
+                  <SelectItem value="appointment">Appointments ({appointments.length})</SelectItem>
+                  <SelectItem value="lead">Setup leads ({visibleLeads.length})</SelectItem>
+                </SelectContent>
+              </Select>
+              <Select value={businessFilter} onValueChange={setBusinessFilter}>
+                <SelectTrigger aria-label="Filter by business" className="w-56">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All businesses</SelectItem>
+                  {clinics.map((c) => (
+                    <SelectItem key={c.id} value={c.id}>
+                      {c.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <label className="flex items-center gap-2 text-sm">
+                <Switch checked={hideTests} onCheckedChange={setHideTests} />
+                Hide likely test submissions
+              </label>
+              {hideTests && data && (
+                <span className="text-xs text-muted-foreground">{testCount} hidden</span>
+              )}
             </div>
-            {openId === l.id && l.conversation_id && <Transcript id={l.conversation_id} />}
+            <Button
+              size="sm"
+              variant="outline"
+              disabled={combined.length === 0}
+              onClick={exportCombinedCsv}
+            >
+              <Download className="h-4 w-4" /> Export CSV
+            </Button>
           </div>
-        ))}
-      </div>
-      </>}
+          {(isLoading || apptsQuery.isLoading) && (
+            <div className="mt-8">
+              <LoadingIndicator label="Loading leads and appointments…" />
+            </div>
+          )}
+          {(isError || apptsQuery.isError) && (
+            <p className="mt-8 text-sm text-destructive">
+              Couldn&apos;t load leads or appointments.
+            </p>
+          )}
+          {!isLoading && !apptsQuery.isLoading && combined.length === 0 && (
+            <p className="mt-8 text-sm text-muted-foreground">
+              No leads or appointments match this view.
+            </p>
+          )}
+          <div className="mt-6 space-y-3">
+            {combined.map((item) => {
+              if (item.kind === "appointment") {
+                const a = item.appt;
+                const digits = a.phone.replace(/[^\d]/g, "");
+                return (
+                  <div key={`appt-${a.id}`} className="rounded-lg border border-border bg-card p-4">
+                    <div className="flex flex-wrap items-start justify-between gap-3">
+                      <div className="min-w-0">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <span className="font-medium">{a.patient_name}</span>
+                          <span className="rounded-full bg-emerald-50 px-2 py-0.5 text-[11px] font-medium text-emerald-800 ring-1 ring-inset ring-emerald-200">
+                            Appointment
+                          </span>
+                          <span className="rounded-full bg-secondary px-2 py-0.5 text-[11px] font-medium text-secondary-foreground">
+                            {item.businessName}
+                          </span>
+                        </div>
+                        <div className="mt-1 flex flex-wrap gap-x-4 text-sm text-muted-foreground">
+                          {a.doctor && <span>{a.doctor}</span>}
+                          {a.preferred_time && (
+                            <span className="font-medium text-foreground">{a.preferred_time}</span>
+                          )}
+                          {a.phone && (
+                            <a
+                              className="text-primary hover:underline"
+                              href={`tel:${a.phone.replace(/\s/g, "")}`}
+                            >
+                              {a.phone}
+                            </a>
+                          )}
+                          {digits && (
+                            <a
+                              className="text-primary hover:underline"
+                              href={`https://wa.me/${digits}`}
+                              target="_blank"
+                              rel="noreferrer"
+                            >
+                              WhatsApp
+                            </a>
+                          )}
+                        </div>
+                        {a.reason && (
+                          <p className="mt-2 text-sm text-muted-foreground">{a.reason}</p>
+                        )}
+                        <div className="mt-2 font-mono text-[11px] text-muted-foreground">
+                          {a.channel} · {format(a.created_at)}
+                        </div>
+                      </div>
+                      <div className="flex flex-wrap items-center gap-2">
+                        {["new", "confirmed", "cancelled"].map((s) => (
+                          <Button
+                            key={s}
+                            size="sm"
+                            variant={a.status === s ? "default" : "outline"}
+                            disabled={updating === a.id}
+                            onClick={() => void setAppointmentStatus(a.id, s)}
+                          >
+                            {s.charAt(0).toUpperCase() + s.slice(1)}
+                          </Button>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                );
+              }
+              const l = item.lead;
+              return (
+                <div key={`lead-${l.id}`} className="rounded-lg border border-border bg-card p-4">
+                  <div className="flex flex-wrap items-start justify-between gap-3">
+                    <div className="min-w-0">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <span className="font-medium">{l.name}</span>
+                        <span className="rounded-full bg-muted px-2 py-0.5 text-[11px] font-medium text-muted-foreground">
+                          Setup lead
+                        </span>
+                        {l.company && (
+                          <span className="text-sm text-muted-foreground">· {l.company}</span>
+                        )}
+                      </div>
+                      <div className="mt-1 flex flex-wrap gap-x-4 text-sm">
+                        <a className="text-primary hover:underline" href={`mailto:${l.email}`}>
+                          {l.email}
+                        </a>
+                        {l.phone && (
+                          <a className="text-primary hover:underline" href={`tel:${l.phone}`}>
+                            {l.phone}
+                          </a>
+                        )}
+                      </div>
+                      {l.interest && (
+                        <p className="mt-2 text-sm text-muted-foreground">{l.interest}</p>
+                      )}
+                      <div className="mt-2 font-mono text-[11px] text-muted-foreground">
+                        {format(l.created_at)}
+                      </div>
+                    </div>
+                    <div className="flex flex-wrap items-center gap-2">
+                      {["new", "contacted", "closed"].map((s) => (
+                        <Button
+                          key={s}
+                          size="sm"
+                          variant={l.status === s ? "default" : "outline"}
+                          disabled={updating === l.id}
+                          onClick={() => void setLeadStatus(l.id, s)}
+                        >
+                          {s.charAt(0).toUpperCase() + s.slice(1)}
+                        </Button>
+                      ))}
+                      {l.conversation_id && (
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={() => setOpenId(openId === l.id ? null : l.id)}
+                        >
+                          {openId === l.id ? "Hide chat" : "View chat"}
+                        </Button>
+                      )}
+                    </div>
+                  </div>
+                  {openId === l.id && l.conversation_id && <Transcript id={l.conversation_id} />}
+                </div>
+              );
+            })}
+          </div>
+        </>
+      )}
     </main>
   );
 }
 
 const PAGE_SIZES = [15, 25, 50] as const;
 
-function WebConversations({ leads, phone = false }: { leads: Lead[]; phone?: boolean }) {
+function WebConversations({
+  leads,
+  clinics,
+  phone = false,
+}: {
+  leads: Lead[];
+  clinics: ClinicSummary[];
+  phone?: boolean;
+}) {
   const { format, zone } = useTimezone();
   const title = phone ? "Phone conversations" : "Web conversations";
   const [openId, setOpenId] = useState<string | null>(null);
@@ -161,22 +631,35 @@ function WebConversations({ leads, phone = false }: { leads: Lead[]; phone?: boo
   const [sort, setSort] = useState<ConversationSort>("activity-desc");
   const [activity, setActivity] = useState<ActivityWindow>("all");
   const [contact, setContact] = useState<ContactFilter>("all");
+  const [businessId, setBusinessId] = useState<string>("all");
   const { data, isLoading, isError, refetch, isFetching } = useQuery({
     queryKey: ["assistant-conversations", phone ? "phone" : "web"],
     refetchInterval: 15_000,
     queryFn: async () => {
-      let query = supabase.from("assistant_conversations")
-        .select("id,created_at,updated_at,messages", { count: "exact" })
+      let query = supabase
+        .from("assistant_conversations")
+        .select("id,visitor_id,created_at,updated_at,messages", { count: "exact" })
         .not("visitor_id", "like", "whatsapp\\_%")
         .not("visitor_id", "like", "wa\\_c\\_%");
-      query = phone ? query.like("visitor_id", "bolna\\_%") : query.not("visitor_id", "like", "bolna\\_%");
-      const { data, count, error } = await query.order("updated_at", { ascending: false }).order("id", { ascending: false }).limit(500);
+      query = phone
+        ? query.like("visitor_id", "bolna\\_%")
+        : query.not("visitor_id", "like", "bolna\\_%");
+      const { data, count, error } = await query
+        .order("updated_at", { ascending: false })
+        .order("id", { ascending: false })
+        .limit(500);
       if (error) throw error;
       return { conversations: data ?? [], total: count ?? 0 };
     },
   });
   const leadFor = (id: string) => leads.find((lead) => lead.conversation_id === id);
-  const view = viewConversations(data?.conversations ?? [], {
+  const clinicForRow = (row: { visitor_id: string; messages: unknown }) =>
+    matchClinicForAssistantConversation(row.visitor_id ?? "", row.messages, clinics);
+  const scopedRows =
+    businessId === "all"
+      ? (data?.conversations ?? [])
+      : (data?.conversations ?? []).filter((row) => clinicForRow(row)?.id === businessId);
+  const view = viewConversations(scopedRows, {
     sort,
     window: activity,
     contact,
@@ -188,14 +671,27 @@ function WebConversations({ leads, phone = false }: { leads: Lead[]; phone?: boo
     hasLead: (row) => Boolean(leadFor(row.id)),
     searchText: (row) => {
       const lead = leadFor(row.id);
-      return [lead?.name, lead?.email, lead?.phone, lead?.company, row.id, latestMessagePreview(row.messages, 500)].filter(Boolean).join(" ");
+      const clinic = clinicForRow(row);
+      return [
+        lead?.name,
+        lead?.email,
+        lead?.phone,
+        lead?.company,
+        clinic?.name,
+        row.id,
+        latestMessagePreview(row.messages, 500),
+      ]
+        .filter(Boolean)
+        .join(" ");
     },
   });
-  const filtersActive = query.trim() !== "" || activity !== "all" || contact !== "all";
+  const filtersActive =
+    query.trim() !== "" || activity !== "all" || contact !== "all" || businessId !== "all";
   const resetFilters = () => {
     setQuery("");
     setActivity("all");
     setContact("all");
+    setBusinessId("all");
     setPage(0);
     setOpenId(null);
   };
@@ -203,60 +699,217 @@ function WebConversations({ leads, phone = false }: { leads: Lead[]; phone?: boo
     setPage(next);
     setOpenId(null);
   };
+  const exportCsv = () => {
+    const allMatched = viewConversations(scopedRows, {
+      sort,
+      window: activity,
+      contact,
+      query,
+      page: 0,
+      pageSize: Math.max(scopedRows.length, 1),
+      now: new Date(),
+      timeZone: zone,
+      hasLead: (row) => Boolean(leadFor(row.id)),
+      searchText: (row) => {
+        const lead = leadFor(row.id);
+        const clinic = clinicForRow(row);
+        return [
+          lead?.name,
+          lead?.email,
+          lead?.phone,
+          lead?.company,
+          clinic?.name,
+          row.id,
+          latestMessagePreview(row.messages, 500),
+        ]
+          .filter(Boolean)
+          .join(" ");
+      },
+    }).items;
+    downloadCsv(
+      `${phone ? "phone" : "web"}-conversations-${new Date().toISOString().slice(0, 10)}.csv`,
+      [
+        "Conversation ID",
+        "Business",
+        "Visitor / Lead Name",
+        "Phone",
+        "Email",
+        "Started At",
+        "Last Activity",
+        "Latest Message",
+      ],
+      allMatched.map((row) => {
+        const lead = leadFor(row.id);
+        const clinic = clinicForRow(row);
+        return [
+          row.id,
+          clinic?.name ?? "",
+          lead?.name ?? `${phone ? "Phone call" : "Website visitor"} · ${row.id.slice(0, 8)}`,
+          lead?.phone ?? "",
+          lead?.email ?? "",
+          format(row.created_at),
+          format(row.updated_at),
+          latestMessagePreview(row.messages, 500),
+        ];
+      }),
+    );
+    toast.success(`Exported ${allMatched.length} conversations to CSV.`);
+  };
   return (
     <div className="mt-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h2 className="font-medium">{title}{data ? ` · ${data.total}` : ""}</h2>
-          <p className="mt-1 text-xs text-muted-foreground">Sorted by last activity, so a returning visitor stays above a quiet chat that started later. Change the sort to order by when the chat started.</p>
+          <h2 className="font-medium">
+            {title}
+            {data ? ` · ${data.total}` : ""}
+          </h2>
+          <p className="mt-1 text-xs text-muted-foreground">
+            Sorted by last activity, so a returning visitor stays above a quiet chat that started
+            later. Change the sort to order by when the chat started.
+          </p>
         </div>
-        <Button size="sm" variant="outline" loading={isFetching} loadingLabel="Refreshing…" onClick={() => void refetch()}>Refresh</Button>
+        <div className="flex items-center gap-2">
+          <Button size="sm" variant="outline" disabled={view.matched === 0} onClick={exportCsv}>
+            <Download className="h-4 w-4" /> Export CSV
+          </Button>
+          <Button
+            size="sm"
+            variant="outline"
+            loading={isFetching}
+            loadingLabel="Refreshing…"
+            onClick={() => void refetch()}
+          >
+            Refresh
+          </Button>
+        </div>
       </div>
       <InboxToolbar
         searchLabel={`Search ${title.toLowerCase()}`}
         placeholder="Search name, email, or message"
         query={query}
-        onQuery={(value) => { setQuery(value); setPage(0); setOpenId(null); }}
+        onQuery={(value) => {
+          setQuery(value);
+          setPage(0);
+          setOpenId(null);
+        }}
         activity={activity}
-        onActivity={(value) => { setActivity(value); setPage(0); setOpenId(null); }}
+        onActivity={(value) => {
+          setActivity(value);
+          setPage(0);
+          setOpenId(null);
+        }}
         sort={sort}
-        onSort={(value) => { setSort(value); setPage(0); setOpenId(null); }}
+        onSort={(value) => {
+          setSort(value);
+          setPage(0);
+          setOpenId(null);
+        }}
         thirdLabel="Contact details"
         thirdValue={contact}
-        onThird={(value) => { setContact(value as ContactFilter); setPage(0); setOpenId(null); }}
-        thirdOptions={[{ value: "all", label: "All visitors" }, { value: "with-lead", label: "With contact details" }, { value: "visitors", label: "No contact details" }]}
+        onThird={(value) => {
+          setContact(value as ContactFilter);
+          setPage(0);
+          setOpenId(null);
+        }}
+        thirdOptions={[
+          { value: "all", label: "All visitors" },
+          { value: "with-lead", label: "With contact details" },
+          { value: "visitors", label: "No contact details" },
+        ]}
+        clinics={clinics}
+        businessId={businessId}
+        onBusinessId={(value) => {
+          setBusinessId(value);
+          setPage(0);
+          setOpenId(null);
+        }}
         pageSize={pageSize}
-        onPageSize={(size) => { setPageSize(size); setPage(0); setOpenId(null); }}
+        onPageSize={(size) => {
+          setPageSize(size);
+          setPage(0);
+          setOpenId(null);
+        }}
         filtersActive={filtersActive}
         onClear={resetFilters}
-        summary={data ? `${view.matched === view.total ? `${view.matched} conversations` : `${view.matched} of ${view.total} match`}${data.total > data.conversations.length ? ` · showing the ${data.conversations.length} most recently active` : ""}` : ""}
+        summary={
+          data
+            ? `${view.matched === view.total ? `${view.matched} conversations` : `${view.matched} of ${view.total} match`}${data.total > data.conversations.length ? ` · showing the ${data.conversations.length} most recently active` : ""}`
+            : ""
+        }
       />
-      {isLoading && <div className="mt-4"><LoadingIndicator label={`Loading ${title.toLowerCase()}…`} /></div>}
-      {isError && <p className="mt-4 text-sm text-destructive">{title} couldn't load. Please try refreshing.</p>}
-      {data && view.total === 0 && <p className="mt-4 text-sm text-muted-foreground">No {title.toLowerCase()} yet.</p>}
-      {data && view.total > 0 && view.matched === 0 && <p className="mt-4 text-sm text-muted-foreground">Nothing matches these filters. <button type="button" className="text-primary underline" onClick={resetFilters}>Clear filters</button></p>}
+      {isLoading && (
+        <div className="mt-4">
+          <LoadingIndicator label={`Loading ${title.toLowerCase()}…`} />
+        </div>
+      )}
+      {isError && (
+        <p className="mt-4 text-sm text-destructive">
+          {title} couldn't load. Please try refreshing.
+        </p>
+      )}
+      {data && data.conversations.length === 0 && (
+        <p className="mt-4 text-sm text-muted-foreground">No {title.toLowerCase()} yet.</p>
+      )}
+      {data && data.conversations.length > 0 && view.matched === 0 && (
+        <p className="mt-4 text-sm text-muted-foreground">
+          Nothing matches these filters.{" "}
+          <button type="button" className="text-primary underline" onClick={resetFilters}>
+            Clear filters
+          </button>
+        </p>
+      )}
       {view.pages > 1 && <ConversationPager view={view} onPage={goTo} />}
       <div className="mt-4 space-y-3">
         {view.items.map((conversation) => {
           const lead = leadFor(conversation.id);
+          const clinic = clinicForRow(conversation);
           const open = openId === conversation.id;
           return (
             <div key={conversation.id} className="rounded-lg border border-border bg-card p-4">
               <div className="flex flex-wrap items-start justify-between gap-3">
                 <div className="min-w-0 flex-1 break-words">
-                  <h3 className="font-medium">{lead?.name ?? `${phone ? "Phone call" : "Website visitor"} · ${conversation.id.slice(0, 8)}`}</h3>
-                  {lead && <div className="mt-1 flex flex-wrap gap-x-4 text-sm">
-                    <a className="text-primary hover:underline" href={`mailto:${lead.email}`}>{lead.email}</a>
-                    {lead.phone && <a className="text-primary hover:underline" href={`tel:${lead.phone}`}>{lead.phone}</a>}
-                    {lead.company && <span className="text-muted-foreground">{lead.company}</span>}
-                  </div>}
-                  <p className="mt-2 line-clamp-2 text-sm">{latestMessagePreview(conversation.messages) || "No messages saved yet."}</p>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <h3 className="font-medium">
+                      {lead?.name ??
+                        `${phone ? "Phone call" : "Website visitor"} · ${conversation.id.slice(0, 8)}`}
+                    </h3>
+                    {clinic && (
+                      <span className="rounded-full bg-secondary px-2 py-0.5 text-[11px] font-medium text-secondary-foreground">
+                        {clinic.name}
+                      </span>
+                    )}
+                  </div>
+                  {lead && (
+                    <div className="mt-1 flex flex-wrap gap-x-4 text-sm">
+                      <a className="text-primary hover:underline" href={`mailto:${lead.email}`}>
+                        {lead.email}
+                      </a>
+                      {lead.phone && (
+                        <a className="text-primary hover:underline" href={`tel:${lead.phone}`}>
+                          {lead.phone}
+                        </a>
+                      )}
+                      {lead.company && (
+                        <span className="text-muted-foreground">{lead.company}</span>
+                      )}
+                    </div>
+                  )}
+                  <p className="mt-2 line-clamp-2 text-sm">
+                    {latestMessagePreview(conversation.messages) || "No messages saved yet."}
+                  </p>
                   <div className="mt-2 space-y-1 font-mono text-[11px] text-muted-foreground">
                     <p>Last activity {format(conversation.updated_at)}</p>
                     <p>Started {format(conversation.created_at)}</p>
                   </div>
                 </div>
-                <Button size="sm" variant="ghost" aria-expanded={open} onClick={() => setOpenId(open ? null : conversation.id)}>{open ? "Hide chat" : "View chat"}</Button>
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  aria-expanded={open}
+                  onClick={() => setOpenId(open ? null : conversation.id)}
+                >
+                  {open ? "Hide chat" : "View chat"}
+                </Button>
               </div>
               {open && <Transcript id={conversation.id} phone={phone} />}
             </div>
@@ -269,8 +922,26 @@ function WebConversations({ leads, phone = false }: { leads: Lead[]; phone?: boo
 }
 
 function InboxToolbar({
-  searchLabel, placeholder, query, onQuery, activity, onActivity, sort, onSort,
-  thirdLabel, thirdValue, onThird, thirdOptions, pageSize, onPageSize, filtersActive, onClear, summary,
+  searchLabel,
+  placeholder,
+  query,
+  onQuery,
+  activity,
+  onActivity,
+  sort,
+  onSort,
+  thirdLabel,
+  thirdValue,
+  onThird,
+  thirdOptions,
+  clinics,
+  businessId,
+  onBusinessId,
+  pageSize,
+  onPageSize,
+  filtersActive,
+  onClear,
+  summary,
 }: {
   searchLabel: string;
   placeholder: string;
@@ -284,6 +955,9 @@ function InboxToolbar({
   thirdValue: string;
   onThird: (value: string) => void;
   thirdOptions: { value: string; label: string }[];
+  clinics: ClinicSummary[];
+  businessId: string;
+  onBusinessId: (value: string) => void;
   pageSize: (typeof PAGE_SIZES)[number];
   onPageSize: (size: (typeof PAGE_SIZES)[number]) => void;
   filtersActive: boolean;
@@ -292,10 +966,30 @@ function InboxToolbar({
 }) {
   return (
     <>
-      <div className="mt-4 grid gap-2 sm:grid-cols-2 lg:grid-cols-[minmax(0,1.4fr)_repeat(3,minmax(0,0.8fr))]">
-        <Input value={query} aria-label={searchLabel} placeholder={placeholder} onChange={(event) => onQuery(event.target.value)} />
+      <div className="mt-4 grid gap-2 sm:grid-cols-2 lg:grid-cols-[minmax(0,1.3fr)_repeat(4,minmax(0,0.75fr))]">
+        <Input
+          value={query}
+          aria-label={searchLabel}
+          placeholder={placeholder}
+          onChange={(event) => onQuery(event.target.value)}
+        />
+        <Select value={businessId} onValueChange={onBusinessId}>
+          <SelectTrigger aria-label="Filter by business">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All businesses</SelectItem>
+            {clinics.map((c) => (
+              <SelectItem key={c.id} value={c.id}>
+                {c.name}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
         <Select value={activity} onValueChange={(value) => onActivity(value as ActivityWindow)}>
-          <SelectTrigger aria-label="Last activity"><SelectValue /></SelectTrigger>
+          <SelectTrigger aria-label="Last activity">
+            <SelectValue />
+          </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">Any time</SelectItem>
             <SelectItem value="today">Last activity today</SelectItem>
@@ -305,13 +999,21 @@ function InboxToolbar({
           </SelectContent>
         </Select>
         <Select value={thirdValue} onValueChange={onThird}>
-          <SelectTrigger aria-label={thirdLabel}><SelectValue /></SelectTrigger>
+          <SelectTrigger aria-label={thirdLabel}>
+            <SelectValue />
+          </SelectTrigger>
           <SelectContent>
-            {thirdOptions.map((option) => <SelectItem key={option.value} value={option.value}>{option.label}</SelectItem>)}
+            {thirdOptions.map((option) => (
+              <SelectItem key={option.value} value={option.value}>
+                {option.label}
+              </SelectItem>
+            ))}
           </SelectContent>
         </Select>
         <Select value={sort} onValueChange={(value) => onSort(value as ConversationSort)}>
-          <SelectTrigger aria-label="Sort conversations"><SelectValue /></SelectTrigger>
+          <SelectTrigger aria-label="Sort conversations">
+            <SelectValue />
+          </SelectTrigger>
           <SelectContent>
             <SelectItem value="activity-desc">Last activity, newest</SelectItem>
             <SelectItem value="activity-asc">Last activity, oldest</SelectItem>
@@ -323,11 +1025,24 @@ function InboxToolbar({
       <div className="mt-3 flex flex-wrap items-center justify-between gap-3">
         <p className="text-sm text-muted-foreground">{summary}</p>
         <div className="flex items-center gap-2">
-          {filtersActive && <Button size="sm" variant="ghost" onClick={onClear}>Clear filters</Button>}
-          <Select value={String(pageSize)} onValueChange={(value) => onPageSize(Number(value) as (typeof PAGE_SIZES)[number])}>
-            <SelectTrigger aria-label="Conversations per page" className="w-28"><SelectValue /></SelectTrigger>
+          {filtersActive && (
+            <Button size="sm" variant="ghost" onClick={onClear}>
+              Clear filters
+            </Button>
+          )}
+          <Select
+            value={String(pageSize)}
+            onValueChange={(value) => onPageSize(Number(value) as (typeof PAGE_SIZES)[number])}
+          >
+            <SelectTrigger aria-label="Conversations per page" className="w-28">
+              <SelectValue />
+            </SelectTrigger>
             <SelectContent>
-              {PAGE_SIZES.map((size) => <SelectItem key={size} value={String(size)}>{size} / page</SelectItem>)}
+              {PAGE_SIZES.map((size) => (
+                <SelectItem key={size} value={String(size)}>
+                  {size} / page
+                </SelectItem>
+              ))}
             </SelectContent>
           </Select>
         </div>
@@ -336,23 +1051,65 @@ function InboxToolbar({
   );
 }
 
-function ConversationPager({ view, onPage }: { view: { page: number; pages: number; from: number; to: number; matched: number }; onPage: (page: number) => void }) {
+function ConversationPager({
+  view,
+  onPage,
+}: {
+  view: { page: number; pages: number; from: number; to: number; matched: number };
+  onPage: (page: number) => void;
+}) {
   const pages = visiblePages(view.page, view.pages);
   return (
-    <nav className="mt-4 flex flex-wrap items-center justify-between gap-3" aria-label="Conversation pages">
-      <p className="text-sm text-muted-foreground">{view.matched === 0 ? "No results" : `${view.from}–${view.to} of ${view.matched}`}</p>
+    <nav
+      className="mt-4 flex flex-wrap items-center justify-between gap-3"
+      aria-label="Conversation pages"
+    >
+      <p className="text-sm text-muted-foreground">
+        {view.matched === 0 ? "No results" : `${view.from}–${view.to} of ${view.matched}`}
+      </p>
       <div className="flex flex-wrap items-center gap-1">
-        <Button size="sm" variant="outline" disabled={view.page === 0} onClick={() => onPage(0)}>First</Button>
-        <Button size="sm" variant="outline" disabled={view.page === 0} onClick={() => onPage(view.page - 1)}>Previous</Button>
+        <Button size="sm" variant="outline" disabled={view.page === 0} onClick={() => onPage(0)}>
+          First
+        </Button>
+        <Button
+          size="sm"
+          variant="outline"
+          disabled={view.page === 0}
+          onClick={() => onPage(view.page - 1)}
+        >
+          Previous
+        </Button>
         {(pages[0] ?? 0) > 0 && <span className="px-1 text-muted-foreground">…</span>}
         {pages.map((number) => (
-          <Button key={number} size="sm" variant={number === view.page ? "default" : "outline"} aria-current={number === view.page ? "page" : undefined} onClick={() => onPage(number)}>
+          <Button
+            key={number}
+            size="sm"
+            variant={number === view.page ? "default" : "outline"}
+            aria-current={number === view.page ? "page" : undefined}
+            onClick={() => onPage(number)}
+          >
             {number + 1}
           </Button>
         ))}
-        {(pages[pages.length - 1] ?? 0) < view.pages - 1 && <span className="px-1 text-muted-foreground">…</span>}
-        <Button size="sm" variant="outline" disabled={view.page >= view.pages - 1} onClick={() => onPage(view.page + 1)}>Next</Button>
-        <Button size="sm" variant="outline" disabled={view.page >= view.pages - 1} onClick={() => onPage(view.pages - 1)}>Last</Button>
+        {(pages[pages.length - 1] ?? 0) < view.pages - 1 && (
+          <span className="px-1 text-muted-foreground">…</span>
+        )}
+        <Button
+          size="sm"
+          variant="outline"
+          disabled={view.page >= view.pages - 1}
+          onClick={() => onPage(view.page + 1)}
+        >
+          Next
+        </Button>
+        <Button
+          size="sm"
+          variant="outline"
+          disabled={view.page >= view.pages - 1}
+          onClick={() => onPage(view.pages - 1)}
+        >
+          Last
+        </Button>
       </div>
     </nav>
   );
@@ -366,17 +1123,32 @@ function Transcript({ id, phone = false }: { id: string; phone?: boolean }) {
     queryFn: async () => {
       const [{ data, error }, { data: logs }] = await Promise.all([
         supabase.from("assistant_conversations").select("messages").eq("id", id).single(),
-        supabase.from("assistant_turn_logs").select("model,first_token_ms,total_ms,ok,created_at").eq("conversation_id", id).eq("channel", phone ? "Bolna" : "Website").order("created_at"),
+        supabase
+          .from("assistant_turn_logs")
+          .select("model,first_token_ms,total_ms,ok,created_at")
+          .eq("conversation_id", id)
+          .eq("channel", phone ? "Bolna" : "Website")
+          .order("created_at"),
       ]);
       if (error) throw error;
       return {
-        messages: (data.messages ?? []) as { id: string; role: string; parts: { type: string; text?: string }[] }[],
+        messages: (data.messages ?? []) as {
+          id: string;
+          role: string;
+          parts: { type: string; text?: string }[];
+        }[],
         logs: logs ?? [],
       };
     },
   });
-  if (isLoading) return <div className="mt-3"><LoadingIndicator label="Loading chat…" /></div>;
-  if (isError) return <p className="mt-3 text-sm text-destructive">This conversation couldn't load.</p>;
+  if (isLoading)
+    return (
+      <div className="mt-3">
+        <LoadingIndicator label="Loading chat…" />
+      </div>
+    );
+  if (isError)
+    return <p className="mt-3 text-sm text-destructive">This conversation couldn't load.</p>;
   // Timing is logged per Mira reply; older replies from before logging started have none.
   const replies = data?.messages.filter((m) => m.role !== "user").length ?? 0;
   const offset = replies - (data?.logs.length ?? 0);
@@ -384,7 +1156,9 @@ function Transcript({ id, phone = false }: { id: string; phone?: boolean }) {
   const secs = (ms: number | null) => (ms == null ? "–" : `${(ms / 1000).toFixed(1)} s`);
   return (
     <div className="mt-4 space-y-2 break-words border-t border-border pt-3 text-sm">
-      {data?.messages.length === 0 && <p className="text-muted-foreground">No messages saved yet.</p>}
+      {data?.messages.length === 0 && (
+        <p className="text-muted-foreground">No messages saved yet.</p>
+      )}
       {data?.messages.map((m) => {
         const isFlo = m.role !== "user";
         if (isFlo) replyIndex++;
@@ -393,11 +1167,14 @@ function Transcript({ id, phone = false }: { id: string; phone?: boolean }) {
         if (!text) return null;
         return (
           <div key={m.id}>
-            <span className="font-mono text-[11px] uppercase text-muted-foreground">{isFlo ? "Mira" : "Visitor"}</span>
+            <span className="font-mono text-[11px] uppercase text-muted-foreground">
+              {isFlo ? "Mira" : "Visitor"}
+            </span>
             <p className="whitespace-pre-wrap">{text}</p>
             {log && (
               <p className="mt-1 font-mono text-[11px] text-muted-foreground">
-                {format(log.created_at)} · {log.model.split("/").pop()} · first words {secs(log.first_token_ms)} · full reply {secs(log.total_ms)}
+                {format(log.created_at)} · {log.model.split("/").pop()} · first words{" "}
+                {secs(log.first_token_ms)} · full reply {secs(log.total_ms)}
               </p>
             )}
           </div>
@@ -408,25 +1185,45 @@ function Transcript({ id, phone = false }: { id: string; phone?: boolean }) {
 }
 
 type WaMessage = {
-  id: string; direction: string; phone: string; body: string; status: string;
-  reply_state: string | null; reply_error: string | null; created_at: string; status_times: Record<string, string> | null;
+  id: string;
+  direction: string;
+  phone: string;
+  body: string;
+  status: string;
+  reply_state: string | null;
+  reply_error: string | null;
+  created_at: string;
+  status_times: Record<string, string> | null;
   conversation_id: string | null;
 };
 
-const REPLY_LABEL: Record<string, string> = { manual: "Manual — no automatic reply", pending: "Reply waiting", sending: "Replying…", sent: "Replied", failed: "Reply failed", unknown: "Reply needs review", expired: "Not answered (too old)" };
+const REPLY_LABEL: Record<string, string> = {
+  manual: "Manual — no automatic reply",
+  pending: "Reply waiting",
+  sending: "Replying…",
+  sent: "Replied",
+  failed: "Reply failed",
+  unknown: "Reply needs review",
+  expired: "Not answered (too old)",
+};
 
 function WaThread({ msgs }: { msgs: WaMessage[] }) {
   const { format } = useTimezone();
-  const conversationIds = [...new Set(msgs.flatMap((m) => m.conversation_id ? [m.conversation_id] : []))].sort();
+  const conversationIds = [
+    ...new Set(msgs.flatMap((m) => (m.conversation_id ? [m.conversation_id] : []))),
+  ].sort();
   const { data: logs, isError: metricsError } = useQuery({
     queryKey: ["whatsapp-turn-logs", conversationIds],
     enabled: conversationIds.length > 0,
     refetchInterval: 15_000,
     queryFn: async () => {
       if (!conversationIds.length) return [];
-      const { data, error } = await supabase.from("assistant_turn_logs")
+      const { data, error } = await supabase
+        .from("assistant_turn_logs")
         .select("id,conversation_id,channel,model,first_token_ms,total_ms,ok,created_at")
-        .in("conversation_id", conversationIds).eq("channel", "WhatsApp").order("created_at");
+        .in("conversation_id", conversationIds)
+        .eq("channel", "WhatsApp")
+        .order("created_at");
       if (error) throw error;
       return data;
     },
@@ -435,7 +1232,9 @@ function WaThread({ msgs }: { msgs: WaMessage[] }) {
   const metrics = matchWhatsAppMetrics(msgs, logs ?? []);
   return (
     <div className="mt-4 space-y-3 border-t border-border pt-3 text-sm">
-      {metricsError && <p className="text-destructive">Reply timings couldn't load. Please try again.</p>}
+      {metricsError && (
+        <p className="text-destructive">Reply timings couldn't load. Please try again.</p>
+      )}
       {msgs.map((m) => {
         const isFlo = m.direction === "out";
         const log = metrics.get(m.id);
@@ -444,17 +1243,28 @@ function WaThread({ msgs }: { msgs: WaMessage[] }) {
             <div className="flex flex-wrap gap-x-2 font-mono text-[11px] uppercase text-muted-foreground">
               <span>{isFlo ? "Mira" : "Visitor"}</span>
               <span>{format(m.created_at)}</span>
-              <span className={m.status === "failed" || m.reply_state === "failed" ? "text-destructive" : ""}>
-                {isFlo ? m.status : m.reply_state ? REPLY_LABEL[m.reply_state] ?? m.reply_state : ""}
+              <span
+                className={
+                  m.status === "failed" || m.reply_state === "failed" ? "text-destructive" : ""
+                }
+              >
+                {isFlo
+                  ? m.status
+                  : m.reply_state
+                    ? (REPLY_LABEL[m.reply_state] ?? m.reply_state)
+                    : ""}
               </span>
             </div>
             <p className="whitespace-pre-wrap">{m.body}</p>
             {log && (
               <p className="mt-1 font-mono text-[11px] text-muted-foreground">
-                {format(log.created_at)} · {log.model.split("/").pop()} · first words {secs(log.first_token_ms)} · full reply {secs(log.total_ms)}
+                {format(log.created_at)} · {log.model.split("/").pop()} · first words{" "}
+                {secs(log.first_token_ms)} · full reply {secs(log.total_ms)}
               </p>
             )}
-            {m.reply_error && m.reply_state !== "sent" && <p className="text-xs text-destructive">{m.reply_error}</p>}
+            {m.reply_error && m.reply_state !== "sent" && (
+              <p className="text-xs text-destructive">{m.reply_error}</p>
+            )}
           </div>
         );
       })}
@@ -468,22 +1278,31 @@ type ReplyFilter = "all" | "waiting" | "replied";
 function waitingOnMira(messages: WaMessage[]) {
   const lastVisitor = [...messages].reverse().find((message) => message.direction !== "out");
   if (!lastVisitor) return false;
-  if (lastVisitor.reply_state === "failed" || lastVisitor.reply_state === "pending" || lastVisitor.reply_state === "sending" || lastVisitor.reply_state === "unknown") return true;
+  if (
+    lastVisitor.reply_state === "failed" ||
+    lastVisitor.reply_state === "pending" ||
+    lastVisitor.reply_state === "sending" ||
+    lastVisitor.reply_state === "unknown"
+  )
+    return true;
   return messages.at(-1)?.direction !== "out";
 }
 
 function whatsAppThreads(messages: WaMessage[]): WaThread[] {
   const grouped = new Map<string, WaMessage[]>();
-  for (const message of messages) grouped.set(message.phone, [...(grouped.get(message.phone) ?? []), message]);
+  for (const message of messages)
+    grouped.set(message.phone, [...(grouped.get(message.phone) ?? []), message]);
   return [...grouped.entries()].flatMap(([phone, thread]) => {
     const first = thread[0];
     const last = thread.at(-1);
     if (!first || !last) return [];
-    return [{ id: phone, created_at: first.created_at, updated_at: last.created_at, messages: thread }];
+    return [
+      { id: phone, created_at: first.created_at, updated_at: last.created_at, messages: thread },
+    ];
   });
 }
 
-function WhatsAppMessages() {
+function WhatsAppMessages({ clinics }: { clinics: ClinicSummary[] }) {
   const { format, zone } = useTimezone();
   const [phone, setPhone] = useState<string | null>(null);
   const [page, setPage] = useState(0);
@@ -492,19 +1311,26 @@ function WhatsAppMessages() {
   const [sort, setSort] = useState<ConversationSort>("activity-desc");
   const [activity, setActivity] = useState<ActivityWindow>("all");
   const [reply, setReply] = useState<ReplyFilter>("all");
+  const [businessId, setBusinessId] = useState<string>("all");
   const { data, isLoading, isError, refetch, isFetching } = useQuery({
     queryKey: ["whatsapp-messages"],
     refetchInterval: 15_000,
     queryFn: async () => {
-      const { data, error } = await supabase.from("whatsapp_messages")
-        .select("id,direction,phone,body,status,reply_state,reply_error,created_at,status_times,conversation_id")
-        .order("created_at", { ascending: true }).limit(2000);
+      const { data, error } = await supabase
+        .from("whatsapp_messages")
+        .select(
+          "id,direction,phone,body,status,reply_state,reply_error,created_at,status_times,conversation_id",
+        )
+        .order("created_at", { ascending: true })
+        .limit(2000);
       if (error) throw error;
       return data as WaMessage[];
     },
   });
   const allThreads = whatsAppThreads(data ?? []);
+  const clinicForThread = (thread: WaThread) => matchClinicForWaThread(thread.messages, clinics);
   const threads = allThreads.filter((thread) => {
+    if (businessId !== "all" && clinicForThread(thread)?.id !== businessId) return false;
     if (reply === "waiting") return waitingOnMira(thread.messages);
     if (reply === "replied") return !waitingOnMira(thread.messages);
     return true;
@@ -519,13 +1345,18 @@ function WhatsAppMessages() {
     now: new Date(),
     timeZone: zone,
     hasLead: () => false,
-    searchText: (thread) => [thread.id, ...thread.messages.map((message) => message.body)].join(" "),
+    searchText: (thread) =>
+      [thread.id, clinicForThread(thread)?.name, ...thread.messages.map((message) => message.body)]
+        .filter(Boolean)
+        .join(" "),
   });
-  const filtersActive = query.trim() !== "" || activity !== "all" || reply !== "all";
+  const filtersActive =
+    query.trim() !== "" || activity !== "all" || reply !== "all" || businessId !== "all";
   const resetFilters = () => {
     setQuery("");
     setActivity("all");
     setReply("all");
+    setBusinessId("all");
     setPage(0);
     setPhone(null);
   };
@@ -533,56 +1364,179 @@ function WhatsAppMessages() {
     setPage(next);
     setPhone(null);
   };
+  const exportCsv = () => {
+    const allMatched = viewConversations(threads, {
+      sort,
+      window: activity,
+      contact: "all",
+      query,
+      page: 0,
+      pageSize: Math.max(threads.length, 1),
+      now: new Date(),
+      timeZone: zone,
+      hasLead: () => false,
+      searchText: (thread) =>
+        [
+          thread.id,
+          clinicForThread(thread)?.name,
+          ...thread.messages.map((message) => message.body),
+        ]
+          .filter(Boolean)
+          .join(" "),
+    }).items;
+    downloadCsv(
+      `whatsapp-conversations-${new Date().toISOString().slice(0, 10)}.csv`,
+      ["Phone", "Business", "Message Count", "Started At", "Last Activity", "Latest Message"],
+      allMatched.map((thread) => [
+        `+${thread.id}`,
+        clinicForThread(thread)?.name ?? "",
+        thread.messages.length,
+        format(thread.created_at),
+        format(thread.updated_at),
+        thread.messages.at(-1)?.body ?? "",
+      ]),
+    );
+    toast.success(`Exported ${allMatched.length} WhatsApp conversations to CSV.`);
+  };
   return (
     <div className="mt-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h2 className="font-medium">WhatsApp{data ? ` · ${allThreads.length}` : ""}</h2>
-          <p className="mt-1 text-xs text-muted-foreground">Sorted by the latest message, so a number that just wrote stays above an older chat.</p>
+          <p className="mt-1 text-xs text-muted-foreground">
+            Sorted by the latest message, so a number that just wrote stays above an older chat.
+          </p>
         </div>
-        <Button size="sm" variant="outline" loading={isFetching} loadingLabel="Refreshing…" onClick={() => void refetch()}>Refresh</Button>
+        <div className="flex items-center gap-2">
+          <Button size="sm" variant="outline" disabled={view.matched === 0} onClick={exportCsv}>
+            <Download className="h-4 w-4" /> Export CSV
+          </Button>
+          <Button
+            size="sm"
+            variant="outline"
+            loading={isFetching}
+            loadingLabel="Refreshing…"
+            onClick={() => void refetch()}
+          >
+            Refresh
+          </Button>
+        </div>
       </div>
       <InboxToolbar
         searchLabel="Search WhatsApp conversations"
         placeholder="Search phone number or message"
         query={query}
-        onQuery={(value) => { setQuery(value); setPage(0); setPhone(null); }}
+        onQuery={(value) => {
+          setQuery(value);
+          setPage(0);
+          setPhone(null);
+        }}
         activity={activity}
-        onActivity={(value) => { setActivity(value); setPage(0); setPhone(null); }}
+        onActivity={(value) => {
+          setActivity(value);
+          setPage(0);
+          setPhone(null);
+        }}
         sort={sort}
-        onSort={(value) => { setSort(value); setPage(0); setPhone(null); }}
+        onSort={(value) => {
+          setSort(value);
+          setPage(0);
+          setPhone(null);
+        }}
         thirdLabel="Reply status"
         thirdValue={reply}
-        onThird={(value) => { setReply(value as ReplyFilter); setPage(0); setPhone(null); }}
-        thirdOptions={[{ value: "all", label: "All chats" }, { value: "waiting", label: "Waiting on Mira" }, { value: "replied", label: "Mira replied" }]}
+        onThird={(value) => {
+          setReply(value as ReplyFilter);
+          setPage(0);
+          setPhone(null);
+        }}
+        thirdOptions={[
+          { value: "all", label: "All chats" },
+          { value: "waiting", label: "Waiting on Mira" },
+          { value: "replied", label: "Mira replied" },
+        ]}
+        clinics={clinics}
+        businessId={businessId}
+        onBusinessId={(value) => {
+          setBusinessId(value);
+          setPage(0);
+          setPhone(null);
+        }}
         pageSize={pageSize}
-        onPageSize={(size) => { setPageSize(size); setPage(0); setPhone(null); }}
+        onPageSize={(size) => {
+          setPageSize(size);
+          setPage(0);
+          setPhone(null);
+        }}
         filtersActive={filtersActive}
         onClear={resetFilters}
-        summary={data ? view.matched === allThreads.length ? `${view.matched} conversations` : `${view.matched} of ${allThreads.length} match` : ""}
+        summary={
+          data
+            ? view.matched === allThreads.length
+              ? `${view.matched} conversations`
+              : `${view.matched} of ${allThreads.length} match`
+            : ""
+        }
       />
-      {isLoading && <div className="mt-4"><LoadingIndicator label="Loading WhatsApp messages…" /></div>}
+      {isLoading && (
+        <div className="mt-4">
+          <LoadingIndicator label="Loading WhatsApp messages…" />
+        </div>
+      )}
       {isError && <p className="mt-4 text-sm text-destructive">WhatsApp messages couldn't load.</p>}
-      {data && threads.length === 0 && reply === "all" && activity === "all" && query.trim() === "" && <p className="mt-4 text-sm text-muted-foreground">No WhatsApp messages yet.</p>}
-      {data && view.matched === 0 && (reply !== "all" || activity !== "all" || query.trim() !== "") && <p className="mt-4 text-sm text-muted-foreground">Nothing matches these filters. <button type="button" className="text-primary underline" onClick={resetFilters}>Clear filters</button></p>}
+      {data && allThreads.length === 0 && (
+        <p className="mt-4 text-sm text-muted-foreground">No WhatsApp messages yet.</p>
+      )}
+      {data && allThreads.length > 0 && view.matched === 0 && (
+        <p className="mt-4 text-sm text-muted-foreground">
+          Nothing matches these filters.{" "}
+          <button type="button" className="text-primary underline" onClick={resetFilters}>
+            Clear filters
+          </button>
+        </p>
+      )}
       {view.pages > 1 && <ConversationPager view={view} onPage={goTo} />}
       <div className="mt-4 space-y-3">
         {view.items.map((thread) => {
           const last = thread.messages.at(-1);
           if (!last) return null;
+          const clinic = clinicForThread(thread);
           const open = phone === thread.id;
           return (
             <div key={thread.id} className="rounded-lg border border-border bg-card p-4">
               <div className="flex flex-wrap items-start justify-between gap-3">
                 <div className="min-w-0 flex-1">
-                  <a className="font-medium text-primary hover:underline" href={`https://wa.me/${thread.id}`} target="_blank" rel="noreferrer">+{thread.id}</a>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <a
+                      className="font-medium text-primary hover:underline"
+                      href={`https://wa.me/${thread.id}`}
+                      target="_blank"
+                      rel="noreferrer"
+                    >
+                      +{thread.id}
+                    </a>
+                    {clinic && (
+                      <span className="rounded-full bg-secondary px-2 py-0.5 text-[11px] font-medium text-secondary-foreground">
+                        {clinic.name}
+                      </span>
+                    )}
+                  </div>
                   <p className="mt-1 line-clamp-2 text-sm">{last.body}</p>
                   <div className="mt-2 space-y-1 font-mono text-[11px] text-muted-foreground">
-                    <p>{thread.messages.length} messages · last activity {format(thread.updated_at)}</p>
+                    <p>
+                      {thread.messages.length} messages · last activity {format(thread.updated_at)}
+                    </p>
                     <p>Started {format(thread.created_at)}</p>
                   </div>
                 </div>
-                <Button size="sm" variant="ghost" aria-expanded={open} onClick={() => setPhone(open ? null : thread.id)}>{open ? "Hide messages" : "View messages"}</Button>
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  aria-expanded={open}
+                  onClick={() => setPhone(open ? null : thread.id)}
+                >
+                  {open ? "Hide messages" : "View messages"}
+                </Button>
               </div>
               {open && <WaThread msgs={thread.messages} />}
             </div>
@@ -594,10 +1548,25 @@ function WhatsAppMessages() {
   );
 }
 
-type TurnLog = { id: string; channel: string; model: string; first_token_ms: number | null; total_ms: number; input_tokens: number | null; output_tokens: number | null; ok: boolean; error: string | null; created_at: string };
+type TurnLog = {
+  id: string;
+  channel: string;
+  model: string;
+  first_token_ms: number | null;
+  total_ms: number;
+  input_tokens: number | null;
+  output_tokens: number | null;
+  ok: boolean;
+  error: string | null;
+  created_at: string;
+};
 
 const modelLabel = (id: string) => FLO_MODELS.find((m) => m.id === id)?.label ?? id;
-const median = (xs: number[]) => { if (!xs.length) return null; const s = [...xs].sort((a, b) => a - b); return s[Math.floor(s.length / 2)]; };
+const median = (xs: number[]) => {
+  if (!xs.length) return null;
+  const s = [...xs].sort((a, b) => a - b);
+  return s[Math.floor(s.length / 2)];
+};
 
 function FloModelSettings() {
   const { format } = useTimezone();
@@ -607,7 +1576,11 @@ function FloModelSettings() {
   const setting = useQuery({
     queryKey: ["app-settings", FLO_MODEL_SETTING_KEY],
     queryFn: async () => {
-      const { data, error } = await supabase.from("app_settings").select("value").eq("key", FLO_MODEL_SETTING_KEY).maybeSingle();
+      const { data, error } = await supabase
+        .from("app_settings")
+        .select("value")
+        .eq("key", FLO_MODEL_SETTING_KEY)
+        .maybeSingle();
       if (error) throw error;
       return resolveFloModel(data?.value).id;
     },
@@ -616,16 +1589,27 @@ function FloModelSettings() {
     queryKey: ["assistant-turn-logs"],
     refetchInterval: 15_000,
     queryFn: async () => {
-      const { data, error } = await supabase.from("assistant_turn_logs").select("*").order("created_at", { ascending: false }).limit(500);
+      const { data, error } = await supabase
+        .from("assistant_turn_logs")
+        .select("*")
+        .order("created_at", { ascending: false })
+        .limit(500);
       if (error) throw error;
       return data as TurnLog[];
     },
   });
   const save = async (model: string) => {
     setSaving(true);
-    const { error } = await supabase.from("app_settings").upsert({ key: FLO_MODEL_SETTING_KEY, value: { model }, updated_at: new Date().toISOString() });
+    const { error } = await supabase.from("app_settings").upsert({
+      key: FLO_MODEL_SETTING_KEY,
+      value: { model },
+      updated_at: new Date().toISOString(),
+    });
     setSaving(false);
-    if (error) { toast.error("Couldn't save the model."); return; }
+    if (error) {
+      toast.error("Couldn't save the model.");
+      return;
+    }
     toast.success(`Mira now uses ${modelLabel(model)}.`);
     qc.invalidateQueries({ queryKey: ["app-settings"] });
   };
@@ -637,18 +1621,31 @@ function FloModelSettings() {
     <div className="mt-6 space-y-6">
       <section className="rounded-lg border border-border bg-card p-4">
         <h2 className="font-medium">AI model for Mira</h2>
-        <p className="mt-1 text-sm text-muted-foreground">Used for website chat, WhatsApp, phone replies through Bolna, and delegated answers during website voice calls. Changes apply to the next reply.</p>
-        {setting.isLoading ? <div className="mt-3"><LoadingIndicator label="Loading…" /></div> : setting.isError ? (
+        <p className="mt-1 text-sm text-muted-foreground">
+          Used for website chat, WhatsApp, phone replies through Bolna, and delegated answers during
+          website voice calls. Changes apply to the next reply.
+        </p>
+        {setting.isLoading ? (
+          <div className="mt-3">
+            <LoadingIndicator label="Loading…" />
+          </div>
+        ) : setting.isError ? (
           <p className="mt-3 text-sm text-destructive">Couldn't load the current setting.</p>
         ) : (
           <div className="mt-3 max-w-xs">
             <Select value={setting.data ?? ""} onValueChange={save} disabled={saving}>
-              <SelectTrigger aria-label="Mira model"><SelectValue /></SelectTrigger>
+              <SelectTrigger aria-label="Mira model">
+                <SelectValue />
+              </SelectTrigger>
               <SelectContent>
                 {vendors.map((v) => (
                   <SelectGroup key={v}>
                     <SelectLabel className="text-[10px] uppercase tracking-wider">{v}</SelectLabel>
-                    {FLO_MODELS.filter((m) => m.vendor === v).map((m) => <SelectItem key={m.id} value={m.id}>{m.label}</SelectItem>)}
+                    {FLO_MODELS.filter((m) => m.vendor === v).map((m) => (
+                      <SelectItem key={m.id} value={m.id}>
+                        {m.label}
+                      </SelectItem>
+                    ))}
                   </SelectGroup>
                 ))}
               </SelectContent>
@@ -660,39 +1657,91 @@ function FloModelSettings() {
       <section className="border-t border-border pt-4">
         <h2 className="font-medium">Website voice</h2>
         <dl className="mt-3 grid gap-3 text-sm sm:grid-cols-2">
-          <div><dt className="text-muted-foreground">Live speech model</dt><dd>OpenAI GPT Live 1 <span className="font-mono text-xs">({ASSISTANT_VOICE_MODEL})</span></dd></div>
-          <div><dt className="text-muted-foreground">Voice</dt><dd className="capitalize">{ASSISTANT_VOICE_NAME}</dd></div>
-          <div><dt className="text-muted-foreground">Speech recognition & spoken replies</dt><dd>Handled together by the live speech model; no separate STT or TTS model.</dd></div>
-          <div><dt className="text-muted-foreground">Knowledge & contact capture</dt><dd>{setting.data ? modelLabel(setting.data) : "Current Mira model"} handles delegated questions and tools.</dd></div>
+          <div>
+            <dt className="text-muted-foreground">Live speech model</dt>
+            <dd>
+              OpenAI GPT Live 1 <span className="font-mono text-xs">({ASSISTANT_VOICE_MODEL})</span>
+            </dd>
+          </div>
+          <div>
+            <dt className="text-muted-foreground">Voice</dt>
+            <dd className="capitalize">{ASSISTANT_VOICE_NAME}</dd>
+          </div>
+          <div>
+            <dt className="text-muted-foreground">Speech recognition & spoken replies</dt>
+            <dd>Handled together by the live speech model; no separate STT or TTS model.</dd>
+          </div>
+          <div>
+            <dt className="text-muted-foreground">Knowledge & contact capture</dt>
+            <dd>
+              {setting.data ? modelLabel(setting.data) : "Current Mira model"} handles delegated
+              questions and tools.
+            </dd>
+          </div>
         </dl>
-        <p className="mt-3 text-xs text-muted-foreground">Phone speech is configured separately in Bolna; its speech models are not reported by the chat connection. Reply costs below cover the assistant LLM, not voice or phone charges.</p>
+        <p className="mt-3 text-xs text-muted-foreground">
+          Phone speech is configured separately in Bolna; its speech models are not reported by the
+          chat connection. Reply costs below cover the assistant LLM, not voice or phone charges.
+        </p>
       </section>
       <section className="rounded-lg border border-border bg-card p-4">
         <h2 className="font-medium">Performance by model</h2>
-        <p className="mt-1 text-sm text-muted-foreground">Median times from the last 500 replies. "First words" is how long until Mira starts writing. Costs are estimates from list prices.</p>
-        {logs.isLoading && <div className="mt-3"><LoadingIndicator label="Loading…" /></div>}
-        {logs.data && logs.data.length === 0 && <p className="mt-3 text-sm text-muted-foreground">No replies recorded yet.</p>}
+        <p className="mt-1 text-sm text-muted-foreground">
+          Median times from the last 500 replies. "First words" is how long until Mira starts
+          writing. Costs are estimates from list prices.
+        </p>
+        {logs.isLoading && (
+          <div className="mt-3">
+            <LoadingIndicator label="Loading…" />
+          </div>
+        )}
+        {logs.data && logs.data.length === 0 && (
+          <p className="mt-3 text-sm text-muted-foreground">No replies recorded yet.</p>
+        )}
         {byModel.size > 0 && (
           <div className="mt-3 overflow-x-auto">
             <table className="w-full text-sm">
               <thead className="text-left font-mono text-[11px] uppercase text-muted-foreground">
-                <tr><th className="py-1 pr-4">Model</th><th className="pr-4">Replies</th><th className="pr-4">First words</th><th className="pr-4">Full reply</th><th className="pr-4">Avg tokens in/out</th><th className="pr-4">Total cost</th><th className="pr-4">Avg cost / reply</th><th className="pr-4">Per 1,000 replies</th><th>Failed</th></tr>
+                <tr>
+                  <th className="py-1 pr-4">Model</th>
+                  <th className="pr-4">Replies</th>
+                  <th className="pr-4">First words</th>
+                  <th className="pr-4">Full reply</th>
+                  <th className="pr-4">Avg tokens in/out</th>
+                  <th className="pr-4">Total cost</th>
+                  <th className="pr-4">Avg cost / reply</th>
+                  <th className="pr-4">Per 1,000 replies</th>
+                  <th>Failed</th>
+                </tr>
               </thead>
               <tbody>
                 {[...byModel.entries()].map(([m, ls]) => {
                   const ok = ls.filter((l) => l.ok);
-                  const ft = median(ok.flatMap((l) => (l.first_token_ms == null ? [] : [l.first_token_ms])));
+                  const ft = median(
+                    ok.flatMap((l) => (l.first_token_ms == null ? [] : [l.first_token_ms])),
+                  );
                   const tt = median(ok.map((l) => l.total_ms));
                   const out = ok.filter((l) => l.output_tokens != null);
-                  const costs = ls.flatMap((l) => { const c = floTurnCostUsd(l.model, l.input_tokens, l.output_tokens); return c == null ? [] : [c]; });
+                  const costs = ls.flatMap((l) => {
+                    const c = floTurnCostUsd(l.model, l.input_tokens, l.output_tokens);
+                    return c == null ? [] : [c];
+                  });
                   const total = costs.reduce((a, c) => a + c, 0);
                   const avg = costs.length ? total / costs.length : null;
-                  const avgIn = out.length ? Math.round(out.reduce((a, l) => a + (l.input_tokens ?? 0), 0) / out.length) : null;
+                  const avgIn = out.length
+                    ? Math.round(out.reduce((a, l) => a + (l.input_tokens ?? 0), 0) / out.length)
+                    : null;
                   return (
                     <tr key={m} className="border-t border-border">
-                      <td className="py-2 pr-4">{modelLabel(m)}</td><td className="pr-4">{ls.length}</td>
-                      <td className="pr-4">{ft == null ? "—" : `${ft} ms`}</td><td className="pr-4">{tt == null ? "—" : `${tt} ms`}</td>
-                      <td className="pr-4">{out.length ? `${avgIn}/${Math.round(out.reduce((a, l) => a + (l.output_tokens ?? 0), 0) / out.length)}` : "—"}</td>
+                      <td className="py-2 pr-4">{modelLabel(m)}</td>
+                      <td className="pr-4">{ls.length}</td>
+                      <td className="pr-4">{ft == null ? "—" : `${ft} ms`}</td>
+                      <td className="pr-4">{tt == null ? "—" : `${tt} ms`}</td>
+                      <td className="pr-4">
+                        {out.length
+                          ? `${avgIn}/${Math.round(out.reduce((a, l) => a + (l.output_tokens ?? 0), 0) / out.length)}`
+                          : "—"}
+                      </td>
                       <td className="pr-4">{costs.length ? fmt(total) : "—"}</td>
                       <td className="pr-4">{avg == null ? "—" : fmt(avg)}</td>
                       <td className="pr-4">{avg == null ? "—" : fmt(avg * 1000)}</td>
@@ -711,14 +1760,44 @@ function FloModelSettings() {
           <h2 className="font-medium">Recent replies</h2>
           <div className="mt-3 overflow-x-auto">
             <table className="w-full text-left text-xs">
-              <thead className="text-muted-foreground"><tr>{["Date & time", "Channel", "LLM model", "First response", "Total response", "Estimated cost", "Status"].map(label => <th key={label} scope="col" className="whitespace-nowrap px-3 py-2 font-medium">{label}</th>)}</tr></thead>
-              <tbody>{logs.data.slice(0, 50).map(l => {
-                const cost = floTurnCostUsd(l.model, l.input_tokens, l.output_tokens);
-                return <tr key={l.id} className={`border-t border-border ${l.ok ? "" : "text-destructive"}`}>
-                  <td className="whitespace-nowrap px-3 py-2">{format(l.created_at)}</td><td className="px-3">{l.channel === "Bolna" ? "Phone" : l.channel}</td><td className="whitespace-nowrap px-3">{modelLabel(l.model)}</td>
-                  <td className="whitespace-nowrap px-3">{l.first_token_ms == null ? "—" : `${l.first_token_ms} ms`}</td><td className="whitespace-nowrap px-3">{l.total_ms} ms</td><td className="whitespace-nowrap px-3">{cost == null ? "—" : fmt(cost)}</td><td className="px-3">{l.ok ? "Success" : l.error ?? "Failed"}</td>
-                </tr>;
-              })}</tbody>
+              <thead className="text-muted-foreground">
+                <tr>
+                  {[
+                    "Date & time",
+                    "Channel",
+                    "LLM model",
+                    "First response",
+                    "Total response",
+                    "Estimated cost",
+                    "Status",
+                  ].map((label) => (
+                    <th key={label} scope="col" className="whitespace-nowrap px-3 py-2 font-medium">
+                      {label}
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {logs.data.slice(0, 50).map((l) => {
+                  const cost = floTurnCostUsd(l.model, l.input_tokens, l.output_tokens);
+                  return (
+                    <tr
+                      key={l.id}
+                      className={`border-t border-border ${l.ok ? "" : "text-destructive"}`}
+                    >
+                      <td className="whitespace-nowrap px-3 py-2">{format(l.created_at)}</td>
+                      <td className="px-3">{l.channel === "Bolna" ? "Phone" : l.channel}</td>
+                      <td className="whitespace-nowrap px-3">{modelLabel(l.model)}</td>
+                      <td className="whitespace-nowrap px-3">
+                        {l.first_token_ms == null ? "—" : `${l.first_token_ms} ms`}
+                      </td>
+                      <td className="whitespace-nowrap px-3">{l.total_ms} ms</td>
+                      <td className="whitespace-nowrap px-3">{cost == null ? "—" : fmt(cost)}</td>
+                      <td className="px-3">{l.ok ? "Success" : (l.error ?? "Failed")}</td>
+                    </tr>
+                  );
+                })}
+              </tbody>
             </table>
           </div>
         </section>

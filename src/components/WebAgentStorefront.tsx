@@ -5,6 +5,7 @@ import {
   Clock3,
   ExternalLink,
   Globe,
+  HelpCircle,
   MapPin,
   MessageCircle,
   Mic,
@@ -16,6 +17,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { assistantClock } from "@/lib/assistant-speech";
 import { DAYS, type ClinicInput } from "@/lib/clinic";
+import { parseClinicNotes } from "@/lib/clinic-form-helpers";
 import {
   PHONE_ASSISTANT_DISPLAY,
   PHONE_ASSISTANT_URL,
@@ -90,8 +92,10 @@ export function WebAgentStorefront({
     "Suite 204, Willow Health Centre, Green Park Neighbourhood, Hyderabad (Illustrative address)";
   const mapUrl = clinic?.map_url?.trim();
   const clinicPhone = clinic?.phone?.trim();
+  const insurance = clinic?.insurance?.trim();
   const shortCode = clinic?.shortCode?.trim();
   const waHref = isDemoPreview ? WHATSAPP_ASSISTANT_URL : whatsappAssistantHref(shortCode);
+  const { overview, faqs } = parseClinicNotes(clinic?.notes ?? "");
 
   return (
     <div className="min-h-screen overflow-x-hidden bg-background text-foreground">
@@ -150,6 +154,11 @@ export function WebAgentStorefront({
             <a href="#visit" className="hover:text-foreground">
               Hours &amp; Location
             </a>
+            {faqs.length > 0 && (
+              <a href="#faqs" className="hover:text-foreground">
+                FAQs
+              </a>
+            )}
           </nav>
           <Button size="sm" className="shrink-0" onClick={openAssistantBubble}>
             <MessageCircle className="h-4 w-4" />
@@ -174,8 +183,9 @@ export function WebAgentStorefront({
             </h1>
             <p className="text-base leading-relaxed text-muted-foreground sm:text-lg">
               {isDemoPreview
-                ? "This is how your clinic's own website looks once our assistant is embedded. Patients can tap the expandable chat & voice bubble in the bottom-right corner at any hour — or reach you on WhatsApp and phone."
-                : clinic?.notes?.trim() ||
+                ? overview ||
+                  "This is how your clinic's own website looks once our assistant is embedded. Patients can tap the expandable chat & voice bubble in the bottom-right corner at any hour — or reach you on WhatsApp and phone."
+                : overview ||
                   `Ask about doctor timings, consultation fees, or request an appointment at ${clinicName} anytime via the web assistant bubble, WhatsApp, or phone.`}
             </p>
             <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap">
@@ -301,7 +311,7 @@ export function WebAgentStorefront({
                 <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
                 <div className="space-y-1">
                   <p>{address}</p>
-                  {!isDemoPreview && mapUrl && (
+                  {mapUrl && (
                     <a
                       href={mapUrl}
                       target="_blank"
@@ -322,9 +332,40 @@ export function WebAgentStorefront({
                   </a>
                 </div>
               )}
+              {insurance && (
+                <div className="flex items-start gap-2.5 pt-1 text-sm text-muted-foreground">
+                  <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
+                  <span>
+                    <strong className="font-medium text-foreground">
+                      Insurance &amp; Payments:
+                    </strong>{" "}
+                    {insurance}
+                  </span>
+                </div>
+              )}
             </div>
           </div>
         </section>
+
+        {faqs.length > 0 && (
+          <section id="faqs" className="space-y-5">
+            <div className="flex items-center gap-2">
+              <HelpCircle className="h-5 w-5 text-primary" />
+              <h2 className="text-2xl font-semibold tracking-tight">Frequently Asked Questions</h2>
+            </div>
+            <div className="grid gap-4 md:grid-cols-2">
+              {faqs.map((faq, idx) => (
+                <div
+                  key={`${faq.question}-${idx}`}
+                  className="space-y-1.5 rounded-xl border border-border bg-card p-5"
+                >
+                  <h3 className="font-semibold text-foreground">{faq.question}</h3>
+                  <p className="text-sm leading-relaxed text-muted-foreground">{faq.answer}</p>
+                </div>
+              ))}
+            </div>
+          </section>
+        )}
       </main>
     </div>
   );

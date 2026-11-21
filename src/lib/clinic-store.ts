@@ -1,20 +1,65 @@
 // Browser-side persistence for clinic onboarding: keeps the clinic row, its knowledge base and its
 // receptionist scenario in sync so the playground and WhatsApp test use the same information.
 import { supabase } from "@/integrations/supabase/client";
-import { CLINIC_SAMPLE, clinicKnowledge, clinicPrompt, receptionistAudience, type ClinicInput } from "@/lib/clinic";
+import {
+  CLINIC_SAMPLE,
+  clinicKnowledge,
+  clinicPrompt,
+  receptionistAudience,
+  type ClinicInput,
+} from "@/lib/clinic";
 import { PUBLIC_SAMPLE_BUSINESS_ID } from "@/lib/public-clinic-demo";
 
-export type ClinicRow = ClinicInput & { id: string; scenario_id: string | null; kb_id: string | null; test_code: string; portal_token?: string; created_at: string; call_settings?: unknown };
+export type ClinicRow = ClinicInput & {
+  id: string;
+  scenario_id: string | null;
+  kb_id: string | null;
+  test_code: string;
+  portal_token?: string;
+  created_at: string;
+  updated_at?: string;
+  call_settings?: unknown;
+};
 
-export const CLINIC_COLUMNS = "id,name,phone,emergency_phone,email,address,map_url,hours,doctors,insurance,notes,scenario_id,kb_id,test_code,portal_token,created_at,call_settings";
+export const CLINIC_COLUMNS =
+  "id,name,phone,emergency_phone,email,address,map_url,hours,doctors,insurance,notes,scenario_id,kb_id,test_code,portal_token,created_at,updated_at,call_settings";
 
-export async function saveClinic(userId: string, input: ClinicInput, existing?: Pick<ClinicRow, "id" | "scenario_id" | "kb_id">) {
+export function readLastUpdatedBy(callSettings: unknown): string | null {
+  if (!callSettings || typeof callSettings !== "object" || Array.isArray(callSettings)) return null;
+  const val = (callSettings as Record<string, unknown>)["last_updated_by"];
+  return typeof val === "string" && val.trim() ? val.trim() : null;
+}
+
+export function mergeUpdateMeta(callSettings: unknown, updatedBy: string): Record<string, unknown> {
+  const base =
+    callSettings && typeof callSettings === "object" && !Array.isArray(callSettings)
+      ? (callSettings as Record<string, unknown>)
+      : {};
+  return {
+    ...base,
+    last_updated_by: updatedBy,
+    last_updated_at: new Date().toISOString(),
+  };
+}
+
+export async function saveClinic(
+  userId: string,
+  input: ClinicInput,
+  existing?: Pick<ClinicRow, "id" | "scenario_id" | "kb_id" | "call_settings">,
+  options?: { shortCode?: string; updatedBy?: string },
+) {
   const clean = { ...input, doctors: input.doctors.filter((d) => d.name.trim()) };
   const publicSample = existing?.id === PUBLIC_SAMPLE_BUSINESS_ID;
   if (publicSample) clean.name = "Aura Health Clinic";
-  const sampleSafety = "This is a fictional Aura sample. All details are hypothetical. Simulate appointment requests only; never save patient appointments or claim real bookings. Offer custom business setup and collect contact details only with consent.";
+  const sampleSafety =
+    "This is a fictional Aura sample. All details are hypothetical. Simulate appointment requests only; never save patient appointments or claim real bookings. Offer custom business setup and collect contact details only with consent.";
   const firm = receptionistAudience(clean.name, clean.doctors) === "client";
-  const kb = { user_id: userId, name: `${clean.name} — ${firm ? "firm" : "clinic"} guide`, content: clinicKnowledge(clean) + (publicSample ? `\n${sampleSafety}` : ""), updated_at: new Date().toISOString() };
+  const kb = {
+    user_id: userId,
+    name: `${clean.name} — ${firm ? "firm" : "clinic"} guide`,
+    content: clinicKnowledge(clean) + (publicSample ? `\n${sampleSafety}` : ""),
+    updated_at: new Date().toISOString(),
+  };
   let kbId = existing?.kb_id ?? null;
   if (kbId) {
     const { error } = await supabase.from("knowledge_bases").update(kb).eq("id", kbId);
@@ -24,17 +69,44 @@ export async function saveClinic(userId: string, input: ClinicInput, existing?: 
     if (error) throw error;
     kbId = data.id;
   }
-  const scenario = { user_id: userId, label: `${clean.name} assistant`, prompt: publicSample ? `You are Mira, the 24/7 assistant for Aura Health Clinic. Use the attached current sample guide for clinic questions. ${sampleSafety}` : clinicPrompt(clean.name, clean.doctors), sample: CLINIC_SAMPLE, kb_ids: [kbId], updated_at: new Date().toISOString() };
+  const scenario = {
+    user_id: userId,
+    label: `${clean.name} assistant`,
+    prompt: publicSample
+      ? `You are Mira, the 24/7 assistant for Aura Health Clinic. Use the attached current sample guide for clinic questions. ${sampleSafety}`
+      : clinicPrompt(clean.name, clean.doctors),
+    sample: CLINIC_SAMPLE,
+    kb_ids: [kbId],
+    updated_at: new Date().toISOString(),
+  };
   let scenarioId = existing?.scenario_id ?? null;
   if (scenarioId) {
     const { error } = await supabase.from("custom_scenarios").update(scenario).eq("id", scenarioId);
     if (error) throw error;
   } else {
-    const { data, error } = await supabase.from("custom_scenarios").insert(scenario).select("id").single();
+    const { data, error } = await supabase
+      .from("custom_scenarios")
+      .insert(scenario)
+      .select("id")
+      .single();
     if (error) throw error;
     scenarioId = data.id;
   }
-  const row = { ...clean, hours: clean.hours as never, doctors: clean.doctors as never, owner_id: userId, kb_id: kbId, scenario_id: scenarioId, updated_at: new Date().toISOString() };
+  const nextCode = options?.shortCode?.trim().toUpperCase();
+  const row = {
+    ...clean,
+    ...(nextCode ? { test_code: nextCode } : {}),
+    call_settings: mergeUpdateMeta(
+      existing?.call_settings,
+      options?.updatedBy ?? "Super Admin",
+    ) as never,
+    hours: clean.hours as never,
+    doctors: clean.doctors as never,
+    owner_id: userId,
+    kb_id: kbId,
+    scenario_id: scenarioId,
+    updated_at: new Date().toISOString(),
+  };
   if (existing) {
     const { error } = await supabase.from("clinics").update(row).eq("id", existing.id);
     if (error) throw error;
