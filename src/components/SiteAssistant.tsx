@@ -199,11 +199,11 @@ export function EmbeddedClinicAssistant({ className }: { className?: string }) {
 
 export function SiteAssistant() {
   const [open, setOpen] = useState(false);
-  const { scopedClinicId, scopedClinicUuid } = useRouterState({
+  const { scopedClinicId, scopedClinicUuid, scopedShortCode } = useRouterState({
     select: (state) => {
       const match = state.matches.find((m) => m.routeId === "/web-agent_/$id");
       const params = match?.params as { id?: string } | undefined;
-      const loader = match?.loaderData as { id?: string } | null | undefined;
+      const loader = match?.loaderData as { id?: string; shortCode?: string } | null | undefined;
       const rawId = params?.id?.trim() || undefined;
       const uuid =
         loader?.id && UUID_RE.test(loader.id)
@@ -211,7 +211,10 @@ export function SiteAssistant() {
           : rawId && UUID_RE.test(rawId)
             ? rawId
             : undefined;
-      return { scopedClinicId: rawId, scopedClinicUuid: uuid };
+      const shortCode =
+        loader?.shortCode?.trim().toUpperCase() ||
+        (rawId && !UUID_RE.test(rawId) ? rawId.toUpperCase() : undefined);
+      return { scopedClinicId: rawId, scopedClinicUuid: uuid, scopedShortCode: shortCode };
     },
   });
   const { id, initial, demoBusiness, busy, setBusy, restart } = useFloSession(
@@ -252,6 +255,7 @@ export function SiteAssistant() {
               key={`${scopedClinicId ?? "default"}:${id}`}
               visitorId={id}
               clinicId={scopedClinicId}
+              shortCode={scopedShortCode}
               initial={initial}
               demoBusiness={demoBusiness}
               onBusyChange={setBusy}
@@ -279,12 +283,14 @@ export function SiteAssistant() {
 function ChatBody({
   visitorId,
   clinicId,
+  shortCode,
   initial,
   demoBusiness,
   onBusyChange,
 }: {
   visitorId: string;
   clinicId?: string | undefined;
+  shortCode?: string | undefined;
   initial: UIMessage[];
   demoBusiness: string | null;
   onBusyChange: (busy: boolean) => void;
@@ -467,7 +473,15 @@ function ChatBody({
         )}
         <div className="mt-1 flex flex-wrap gap-x-4 gap-y-1">
           <Button asChild variant="link" size="sm" className="h-auto px-0 text-xs">
-            <a href={WHATSAPP_ASSISTANT_URL} target="_blank" rel="noopener noreferrer">
+            <a
+              href={
+                shortCode
+                  ? `https://wa.me/916302392274?text=${encodeURIComponent(`TRY ${shortCode}`)}`
+                  : WHATSAPP_ASSISTANT_URL
+              }
+              target="_blank"
+              rel="noopener noreferrer"
+            >
               <MessageCircle className="h-3 w-3" />
               Chat on WhatsApp
             </a>

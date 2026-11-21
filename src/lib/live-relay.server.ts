@@ -477,6 +477,14 @@ export function bindLiveConnection(
     if (gateway?.readyState !== 1) return stop();
     try {
       const urls = extractUrls(answer);
+      const latestUserText = transcripts.filter((t) => t.role === "user").at(-1)?.text ?? "";
+      if (
+        !urls.length &&
+        flo?.mapUrl &&
+        /\b(?:google\s*maps?|map\s*link|location\s*link|directions?)\b/i.test(latestUserText)
+      ) {
+        urls.push(flo.mapUrl);
+      }
       const spoken = urls.length
         ? `${stripUrlsForSpeech(answer)} I have placed the clickable link in the chat for you. Do not read the URL aloud.`.trim()
         : answer;
